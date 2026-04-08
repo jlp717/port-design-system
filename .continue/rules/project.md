@@ -5,16 +5,10 @@
 description: Project conventions for AI Website Clone Template
 alwaysApply: true
 ---
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
-
-# Website Reverse-Engineer Template
+# Port Design System
 
 ## What This Is
-A reusable template for reverse-engineering any website into a clean, modern Next.js codebase using AI coding agents, and for porting visual design systems between projects. The Next.js + shadcn/ui + Tailwind v4 base is pre-scaffolded — run `/clone-website <url1> [<url2> ...]` to clone a site, or `/port-design-system <source-path> <target-path>` to transplant a design to another project.
+A production-grade template for two complementary AI coding skills: (1) reverse-engineering any website into a clean Next.js codebase with `/clone-website`, and (2) transplanting visual design systems between projects with `/port-design-system`. The Next.js + shadcn/ui + Tailwind v4 base is pre-scaffolded — run `/clone-website <url1> [<url2> ...]` to clone a site, or `/port-design-system <source-path> <target-path>` to port a design to another project.
 
 ## Tech Stack
 - **Framework:** Next.js 16 (App Router, React 19, TypeScript strict)

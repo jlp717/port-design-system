@@ -1,27 +1,31 @@
 {
-  "name": "ai-website-clone-template",
-  "version": "0.3.1",
+  "name": "port-design-system",
+  "version": "0.4.0",
   "private": true,
-  "description": "Clone any website into a clean, modern Next.js codebase using AI coding agents",
-  "author": "JCodesMore",
+  "description": "Port visual design systems between Next.js projects — clone any site's design, then transplant it to your production app while preserving all business logic and content",
+  "author": "jlp717",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/JCodesMore/ai-website-cloner-template.git"
+    "url": "https://github.com/jlp717/port-design-system.git"
   },
-  "homepage": "https://github.com/JCodesMore/ai-website-cloner-template",
+  "homepage": "https://github.com/jlp717/port-design-system",
   "bugs": {
-    "url": "https://github.com/JCodesMore/ai-website-cloner-template/issues"
+    "url": "https://github.com/jlp717/port-design-system/issues"
   },
   "keywords": [
-    "claude-code",
+    "design-system",
     "website-clone",
     "reverse-engineering",
     "nextjs",
-    "ai",
+    "ai-coding",
+    "claude-code",
     "template",
     "tailwindcss",
-    "shadcn-ui"
+    "shadcn-ui",
+    "port-design",
+    "gsap",
+    "lenis"
   ],
   "engines": {
     "node": ">=24"
