@@ -1,146 +1,268 @@
-<!-- AUTO-GENERATED from AGENTS.md — do not edit directly.
+<!-- AUTO-GENERATED from AGENTS.md - do not edit directly.
      Run `bash scripts/sync-agent-rules.sh` to regenerate. -->
 
 ---
-description: Project conventions for Port Design System
+description: Project conventions for Port Design System From Local Clone
 alwaysApply: true
 ---
-# Port Design System
+# Port Design System From Local Clone
 
 ## What This Is
-A production-grade template for two complementary AI coding skills: (1) reverse-engineering any website into a clean Next.js codebase with `/clone-website`, and (2) transplanting visual design systems between projects with `/port-design-system`. The Next.js + shadcn/ui + Tailwind v4 base is pre-scaffolded — run `/clone-website <url1> [<url2> ...]` to clone a site, or `/port-design-system <source-path> <target-path>` to port a design to another project.
+This repository is a production-grade template for one skill:
+
+- `/port-design-system-from-local-clone`
+
+The skill ports the full visual layer from a local source clone into an existing Next.js target project. It keeps target content and business logic intact while transplanting design tokens, typography, assets, animation systems, and interaction behavior.
+
+## Mission
+Given:
+1. `<source-path>` (absolute path to local clone design system)
+2. `<target-path>` (absolute path to existing Next.js project)
+3. `<commit-hash>` (exact baseline commit in target)
+
+Produce a target frontend that is visually identical to the source design system while preserving target routing, copy, backend integrations, server actions, API routes, auth, and business logic.
 
 ## Tech Stack
-- **Framework:** Next.js 16 (App Router, React 19, TypeScript strict)
-- **UI:** shadcn/ui (Radix primitives, Tailwind CSS v4, `cn()` utility)
-- **Icons:** Lucide React (default — will be replaced/supplemented by extracted SVGs)
-- **Styling:** Tailwind CSS v4 with oklch design tokens
-- **Deployment:** Vercel
+- Framework: Next.js 16 (App Router, React 19, TypeScript strict)
+- UI: shadcn/ui + Tailwind CSS v4
+- Animation stack: GSAP, ScrollTrigger, Lenis, optional Three.js
+- Deployment target: GitHub + server deploy flow
 
 ## Commands
-- `npm run dev` — Start dev server
-- `npm run build` — Production build
-- `npm run lint` — ESLint check
-- `npm run typecheck` — TypeScript check
-- `npm run check` — Run lint + typecheck + build
+- `npm run dev` - start dev server
+- `npm run build` - production build
+- `npm run lint` - eslint
+- `npm run typecheck` - typescript check
+- `npm run check` - lint + typecheck + build
+- `node scripts/sync-skills.mjs` - regenerate all platform skill files
+- `bash scripts/sync-agent-rules.sh` - regenerate platform agent rules
 
-## Code Style
-- TypeScript strict mode, no `any`
-- Named exports, PascalCase components, camelCase utils
-- Tailwind utility classes, no inline styles
-- 2-space indentation
-- Responsive: mobile-first
+## Input Contract
+Skill invocation:
 
-## Design Principles
-- **Pixel-perfect emulation** — match the target's spacing, colors, typography exactly
-- **No personal aesthetic changes during emulation phase** — match 1:1 first, customize later
-- **Real content** — use actual text and assets from the target site, not placeholders
-- **Beauty-first** — every pixel matters
-
-## Project Structure
-```
-src/
-  app/              # Next.js routes
-  components/       # React components
-    ui/             # shadcn/ui primitives
-    icons.tsx       # Extracted SVG icons as React components
-  lib/
-    utils.ts        # cn() utility (shadcn)
-  types/            # TypeScript interfaces
-  hooks/            # Custom React hooks
-public/
-  images/           # Downloaded images from target site
-  videos/           # Downloaded videos from target site
-  seo/              # Favicons, OG images, webmanifest
-docs/
-  research/         # Inspection output (design tokens, components, layout)
-  design-references/ # Screenshots and visual references
-scripts/            # Asset download scripts
+```txt
+/port-design-system-from-local-clone "<source-path>" "<target-path>" "<commit-hash>"
 ```
 
-## MOST IMPORTANT NOTES
-- When launching Claude Code agent teams, ALWAYS have each teammate work in their own worktree branch and merge everyone's work at the end, resolving any merge conflicts smartly since you are basically serving the orchestrator role and have full context to our goals, work given, work achieved, and desired outcomes.
-- After editing `AGENTS.md`, run `bash scripts/sync-agent-rules.sh` to regenerate platform-specific instruction files.
-- After editing `.claude/skills/clone-website/SKILL.md`, run `node scripts/sync-skills.mjs` to regenerate the skill for all platforms.
-- After editing `.claude/skills/port-design-system/SKILL.md`, run `node scripts/sync-skills.mjs` to regenerate the skill for all platforms.
+Example:
 
-# Website Inspection Guide
+```txt
+/port-design-system-from-local-clone "C:\Users\Javier\Desktop\Repositorios\mari-pepa-redesign" "C:\Users\Javier\Desktop\Repositorios\granja_mari_pepa" "dc376a2cd4a33b9485f550fc8ae7a287f0041c96"
+```
 
-## How to Reverse-Engineer Any Website
+## Hard Constraints (Never Violate)
 
-This guide outlines what to capture when inspecting a target website via Chrome MCP or browser DevTools.
+### 1) Asset policy
+- All visual assets must come from `<source-path>`.
+- Never reference external CDNs for source visuals.
+- Never reuse old target design assets if source equivalents exist.
 
-## Phase 1: Visual Audit
+### 2) Pixel fidelity policy
+Extract and apply literally:
+- CSS variables and token values
+- font families, font scales, tracking, line-height
+- GSAP timelines: duration, ease, stagger, delay, repeat
+- ScrollTrigger config: trigger, start, end, scrub, pin, toggle behavior
+- Lenis constructor options and raf integration
+- parallax speed multipliers and direction
+- hover, focus, active visual states
+- breakpoint behavior and responsive shifts
+- 3D scene parameters where present
 
-### Screenshots to Capture
-- [ ] Every distinct page — desktop, tablet, mobile
-- [ ] Dark mode variants (if applicable)
-- [ ] Light mode variants (if applicable)
-- [ ] Key interaction states (hover, active, open menus, modals)
-- [ ] Loading/skeleton states
-- [ ] Empty states
-- [ ] Error states
+### 3) Backend isolation policy
+Never modify:
+- backend code
+- API routes
+- server actions
+- database schema and queries
+- auth logic
+- business logic
 
-### Design Tokens to Extract
-- [ ] **Colors** — background, text (primary/secondary/muted), accent, border, hover, error, success, warning
-- [ ] **Typography** — font family, sizes (h1-h6, body, caption, label), weights, line heights, letter spacing
-- [ ] **Spacing** — padding/margin patterns (look for a scale: 4px, 8px, 12px, 16px, 24px, 32px, etc.)
-- [ ] **Border radius** — buttons, cards, avatars, inputs
-- [ ] **Shadows/elevation** — card shadows, dropdown shadows, modal overlay
-- [ ] **Breakpoints** — when does the layout shift? (inspect with DevTools responsive mode)
-- [ ] **Icons** — which icon library? custom SVGs? sizes?
-- [ ] **Avatars** — sizes, shapes, fallback behavior
-- [ ] **Buttons** — all variants (primary, secondary, ghost, icon-only, danger)
-- [ ] **Inputs** — text fields, textareas, selects, checkboxes, toggles
+Only visual wrappers and css/class changes are allowed around functional areas.
 
-## Phase 2: Component Inventory
+### 4) Content integrity policy
+- Keep all target copy and text content.
+- Keep route structure and URL contract.
+- Keep data loading and mutation flows.
 
-For each distinct UI component, document:
-1. **Name** — what would you call this component?
-2. **Structure** — what HTML elements / child components does it contain?
-3. **Variants** — does it have different sizes, colors, or states?
-4. **States** — default, hover, active, disabled, loading, error, empty
-5. **Responsive behavior** — how does it change at different breakpoints?
-6. **Interactions** — click, hover, focus, keyboard navigation
-7. **Animations** — transitions, entrance/exit animations, micro-interactions
+### 5) MCP policy
+- Use Chrome DevTools MCP for deep extraction in Phase 0 when available.
+- Use Chrome DevTools MCP for visual QA in Phase 5 when available.
 
-### Common Components to Look For
-- Navigation (top bar, sidebar, bottom bar)
-- Cards / list items
-- Buttons and links
-- Forms and inputs
-- Modals and dialogs
-- Dropdowns and menus
-- Tabs and segmented controls
-- Avatars and user badges
-- Loading skeletons
-- Toast notifications
-- Tooltips and popovers
+### 6) GitHub readiness policy
+At completion target must be push-ready:
+- no temporary files
+- no broken imports
+- no unresolved asset refs
+- build passes
 
-## Phase 3: Layout Architecture
+## Execution Workflow (Strict Order)
 
-- [ ] **Grid system** — CSS Grid? Flexbox? Fixed widths?
-- [ ] **Column layout** — how many columns at each breakpoint?
-- [ ] **Max-width** — main content area max-width
-- [ ] **Sticky elements** — header, sidebar, floating buttons
-- [ ] **Z-index layers** — navigation, modals, tooltips, overlays
-- [ ] **Scroll behavior** — infinite scroll, pagination, virtual scrolling
+### Phase 0 - Setup and Deep Audit
+1. `git checkout <commit-hash>` in target project.
+2. Verify clean working tree in target branch before migration edits.
+3. Read source and target trees fully.
+4. Extract source design system literally:
+   - css custom properties
+   - typography tokens
+   - spacing and radius scales
+   - all animation values
+   - Lenis/GSAP/ScrollTrigger setup
+   - parallax and 3D configs
+5. Build extraction report before changing target styles.
 
-## Phase 4: Technical Stack Analysis
+Required output for phase:
+- token extraction report
+- source asset inventory
+- target protected-surface map
 
-- [ ] **Framework** — React? Vue? Angular? Check `__NEXT_DATA__`, `__NUXT__`, `ng-version`
-- [ ] **CSS approach** — Tailwind (utility classes), CSS Modules, Styled Components, Emotion, vanilla CSS
-- [ ] **State management** — Redux (check DevTools), React Query, Zustand, Pinia
-- [ ] **API patterns** — REST, GraphQL (check network tab for `/graphql` requests)
-- [ ] **Font loading** — Google Fonts, self-hosted, system fonts
-- [ ] **Image strategy** — CDN, lazy loading, srcset, WebP/AVIF
-- [ ] **Animation library** — Framer Motion, GSAP, CSS transitions only
+### Phase 1 - Global Base
+Apply globally in target:
+- source token system in `globals.css`
+- font setup from source
+- base utility classes
+- Lenis and GSAP global bootstrapping
+- Navbar visual shell
+- Footer visual shell
 
-## Phase 5: Documentation Output
+Do not alter protected logic.
 
-After inspection, create these files in `docs/research/`:
-1. `DESIGN_TOKENS.md` — All extracted colors, typography, spacing
-2. `COMPONENT_INVENTORY.md` — Every component with structure notes
-3. `LAYOUT_ARCHITECTURE.md` — Page layouts, grid system, responsive behavior
-4. `INTERACTION_PATTERNS.md` — Animations, transitions, hover states
-5. `TECH_STACK_ANALYSIS.md` — What the site uses and our chosen equivalents
+### Phase 2 - Home Page
+Apply source visual system to home page end-to-end:
+- hero and media behavior
+- section structure order
+- text reveal animations
+- parallax motion
+- 3D/scroll effects
+- hover state fidelity
+
+Keep target content and bindings.
+
+### Phase 3 - Remaining Pages
+Apply same process to:
+1. products/services pages
+2. contact/about pages
+3. legal pages
+4. client area views (style only)
+
+For auth and dashboard pages:
+- style shell only
+- zero business logic changes
+
+### Phase 4 - Asset Integration and Verification
+1. Copy required source assets into target with absolute source paths logged.
+2. Fix and verify all asset references.
+3. Ensure no broken path at runtime.
+4. Produce asset manifest.
+
+### Phase 5 - Internal QA and Final Report
+1. Run visual QA page-by-page (desktop + mobile).
+2. Validate animation checklist PASS/FAIL.
+3. Run build/typecheck/lint where available and report exact status.
+4. Produce final modified-file report.
+5. Confirm target is ready for git push and server deploy.
+
+## Required Per-Phase Output Format
+After every phase output exactly:
+
+1. Files modified
+- `<path>`: one-line change summary
+
+2. Assets used
+- absolute source path per asset
+
+3. Phase checklist
+- `[PASS|FAIL] <item>`
+
+## Final Completion Report Format
+Include:
+- Source path
+- Target path
+- Baseline commit hash used
+- files modified list with one-line reason
+- assets copied with absolute source paths
+- page QA matrix (PASS/FAIL)
+- animation QA matrix (PASS/FAIL)
+- build/typecheck/lint result
+- deployment readiness confirmation
+- known gaps (if any)
+
+## Safety Checklist Before Finishing
+- No backend files changed
+- No API/server actions modified
+- No target text content changed unintentionally
+- No broken imports or missing assets
+- Build succeeds in target frontend
+- Docs generated in target project under `docs/port-design-system/`
+
+## Repository Structure (this template)
+```txt
+.claude/skills/port-design-system-from-local-clone/SKILL.md   # source-of-truth skill prompt
+.codex/skills/port-design-system-from-local-clone/SKILL.md    # generated skill copy
+scripts/sync-skills.mjs                                        # sync skill to all platforms
+scripts/sync-agent-rules.sh                                    # sync AGENTS to platform rule files
+```
+
+## Most Important Notes
+- When launching multi-agent teams, isolate each teammate in a dedicated worktree branch.
+- After editing `AGENTS.md`, run `bash scripts/sync-agent-rules.sh`.
+- After editing `.claude/skills/port-design-system-from-local-clone/SKILL.md`, run `node scripts/sync-skills.mjs`.
+
+# Local Clone Inspection Guide
+
+## Goal
+Extract the complete visual system from a local source clone so it can be ported to a separate target Next.js project with literal fidelity.
+
+## Inputs
+- `<source-path>`: local clone with desired design language
+- `<target-path>`: production Next.js app receiving the visual port
+- `<commit-hash>`: baseline target commit
+
+## Phase 0 Extraction Checklist
+
+### Design tokens
+- [ ] Every css custom property in `:root`, `.dark`, and scoped blocks
+- [ ] Full color system values
+- [ ] Typography system: font family, size, line-height, letter-spacing, weights
+- [ ] Spacing, radius, shadow, blur, z-index tokens
+- [ ] Responsive breakpoints and media queries
+
+### Animation system
+- [ ] Lenis constructor options and raf wiring
+- [ ] GSAP global config and plugin registration
+- [ ] All timelines with exact values
+- [ ] ScrollTrigger trigger/start/end/scrub/pin settings
+- [ ] Parallax multipliers and transform maps
+- [ ] Hover/focus transitions and easing curves
+- [ ] 3D scene settings if present
+
+### Component mapping
+- [ ] Navbar visual shell and states
+- [ ] Footer visual shell and states
+- [ ] Home page section ordering and behavior
+- [ ] Inner page section equivalents
+- [ ] Auth/client area visual wrappers only
+
+### Asset mapping
+- [ ] Fonts used by source
+- [ ] Images, videos, SVGs, models used by source UI
+- [ ] Absolute source paths recorded for every copied asset
+
+### Protected target surface
+- [ ] API routes listed (read-only)
+- [ ] server actions listed (read-only)
+- [ ] auth/business logic files listed (read-only)
+
+## Recommended MCP Steps
+If Chrome DevTools MCP is available:
+1. Load source app route-by-route.
+2. Capture computed styles for body, headings, nav, buttons, cards, footer.
+3. Inspect runtime animation registrations (GSAP/ScrollTrigger) where accessible.
+4. Validate key breakpoints at 390, 768, 1024, 1440 widths.
+
+## Target Verification Checklist
+- [ ] `npm run build` passes after each phase
+- [ ] no broken asset references
+- [ ] no backend/auth/server-action edits
+- [ ] visual QA pass for each page and animation
+- [ ] final report includes PASS/FAIL per check item

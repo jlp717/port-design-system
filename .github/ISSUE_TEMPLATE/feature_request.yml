@@ -6,14 +6,14 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for suggesting a feature! Please describe the problem and your proposed solution.
+        Thanks for suggesting an improvement. Please describe the migration problem and proposal.
 
   - type: textarea
     id: problem
     attributes:
       label: Problem
-      description: What problem does this feature solve? What's missing or frustrating?
-      placeholder: "I'm always frustrated when..."
+      description: What migration or workflow problem does this solve?
+      placeholder: I am blocked when...
     validations:
       required: true
 
@@ -21,7 +21,7 @@ body:
     id: solution
     attributes:
       label: Proposed Solution
-      description: How would you like this to work?
+      description: How should the tool behave?
     validations:
       required: true
 
@@ -29,22 +29,23 @@ body:
     id: alternatives
     attributes:
       label: Alternatives Considered
-      description: Any other approaches you've thought about?
+      description: Any alternative approaches you considered.
 
   - type: dropdown
     id: category
     attributes:
       label: Category
       options:
-        - Cloning pipeline
-        - Asset extraction
-        - Component generation
+        - Local clone extraction
+        - Visual token migration
+        - Animation and interaction parity
+        - Asset pipeline
+        - Validation and QA
         - Documentation
         - Developer experience
-        - Other
 
   - type: textarea
     id: additional
     attributes:
       label: Additional Context
-      description: Screenshots, mockups, links, or any other context.
+      description: Screenshots, links, constraints, or examples.

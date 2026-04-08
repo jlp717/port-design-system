@@ -2,7 +2,7 @@
   "name": "port-design-system",
   "version": "0.4.0",
   "private": true,
-  "description": "Port visual design systems between Next.js projects — clone any site's design, then transplant it to your production app while preserving all business logic and content",
+  "description": "Port full visual design systems from a local clone folder into an existing Next.js app while preserving business logic and content",
   "author": "jlp717",
   "license": "MIT",
   "repository": {
@@ -16,7 +16,7 @@
   "keywords": [
     "design-system",
     "design-system-port",
-    "reverse-engineering",
+    "local-clone",
     "nextjs",
     "ai-coding",
     "claude-code",
@@ -61,3 +61,4 @@
     "typescript": "^5"
   }
 }
+

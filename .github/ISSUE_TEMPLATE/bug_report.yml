@@ -6,13 +6,13 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to report a bug! Please fill out the form below so we can reproduce and fix it.
+        Thanks for reporting this issue. Please provide enough detail to reproduce the migration behavior.
 
   - type: textarea
     id: description
     attributes:
       label: Description
-      description: A clear description of what the bug is.
+      description: A clear description of the bug.
       placeholder: What happened?
     validations:
       required: true
@@ -21,19 +21,40 @@ body:
     id: reproduction
     attributes:
       label: Steps to Reproduce
-      description: Step-by-step instructions to reproduce the behavior.
+      description: Exact steps to reproduce.
       placeholder: |
-        1. Run `/clone-website https://example.com`
-        2. Wait for agents to finish
-        3. See error in terminal...
+        1. Run `/port-design-system-from-local-clone "<source-path>" "<target-path>" "<commit-hash>"`
+        2. Wait for phase output
+        3. Observe error...
     validations:
       required: true
+
+  - type: input
+    id: source-path
+    attributes:
+      label: Source Path
+      description: Absolute local path used as source.
+      placeholder: C:\\Users\\you\\Desktop\\Repositorios\\source-clone
+
+  - type: input
+    id: target-path
+    attributes:
+      label: Target Path
+      description: Absolute local path used as target.
+      placeholder: C:\\Users\\you\\Desktop\\Repositorios\\target-project
+
+  - type: input
+    id: commit-hash
+    attributes:
+      label: Commit Hash
+      description: Baseline target commit hash used.
+      placeholder: dc376a2cd4a33b9485f550fc8ae7a287f0041c96
 
   - type: textarea
     id: expected
     attributes:
       label: Expected Behavior
-      description: What did you expect to happen?
+      description: What should have happened?
     validations:
       required: true
 
@@ -41,16 +62,9 @@ body:
     id: actual
     attributes:
       label: Actual Behavior
-      description: What actually happened? Include error messages or screenshots if possible.
+      description: What happened instead? Include logs if possible.
     validations:
       required: true
-
-  - type: input
-    id: target-url
-    attributes:
-      label: Target URL
-      description: The website URL you were trying to clone (if applicable).
-      placeholder: https://example.com
 
   - type: dropdown
     id: os
@@ -67,20 +81,13 @@ body:
     id: node-version
     attributes:
       label: Node.js Version
-      description: Run `node -v` to find this.
+      description: Output of `node -v`.
       placeholder: v24.x.x
     validations:
       required: true
-
-  - type: input
-    id: claude-code-version
-    attributes:
-      label: Claude Code Version
-      description: Run `claude --version` to find this.
-      placeholder: 1.x.x
 
   - type: textarea
     id: additional
     attributes:
       label: Additional Context
-      description: Any other context, logs, or screenshots.
+      description: Any extra context, screenshots, or logs.

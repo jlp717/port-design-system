@@ -2,82 +2,62 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
 ## [Unreleased]
 
 ### Added
-- `/port-design-system` skill for transplanting visual design systems between Next.js projects
-- `docs/port-design-system/SKILL_USAGE_GUIDE.md` with usage examples and workflow guide
+- New source-of-truth skill: `/port-design-system-from-local-clone`.
+- New skill file: `.claude/skills/port-design-system-from-local-clone/SKILL.md`.
+- Legacy generated file pruning in `scripts/sync-skills.mjs`.
 
 ### Changed
-- Raised the project Node.js baseline to 24 across local development, CI, Docker, and contributor-facing documentation
-- `scripts/sync-skills.mjs` refactored to support multiple skills — generates both `/clone-website` and `/port-design-system` for all 9 platforms
-- `AGENTS.md` updated to reference both skills
-- `README.md` updated with `/port-design-system` documentation
+- `AGENTS.md` rewritten for local-clone porting workflow and strict phase outputs.
+- `README.md` fully rewritten for the new skill contract and 3-argument invocation.
+- `scripts/sync-skills.mjs` now generates only `port-design-system-from-local-clone` artifacts.
+- `scripts/sync-agent-rules.sh` updated for new project conventions text.
+- `docs/research/INSPECTION_GUIDE.md` updated to local clone extraction process.
+- `src/app/page.tsx` updated to display new invocation command.
+
+### Removed
+- Legacy skill source folders for `/clone-website` and `/port-design-system`.
 
 ## [0.3.1] - 2026-03-29
 
 ### Fixed
-- `sync-agent-rules.sh` failing to resolve `@file` imports on Windows due to CRLF line endings — platform instruction files now correctly inline the Inspection Guide content
+- `sync-agent-rules.sh` import resolution on Windows with CRLF content.
 
 ## [0.3.0] - 2026-03-29
 
 ### Added
-- Multi-URL support for `/clone-website` — clone multiple sites in a single command with parallel processing and isolated output
-- CI quality gates via GitHub Actions — automated lint, typecheck, and build on every push and PR
-- `npm run typecheck` and `npm run check` scripts for local quality validation
-- `.gitattributes` for cross-platform line ending normalization
-- `.nvmrc` to pin Node.js 20 for contributor consistency
+- Multi-URL support for `/clone-website`.
+- CI quality gates via GitHub Actions.
+- `npm run typecheck` and `npm run check` scripts.
+- `.gitattributes` and `.nvmrc` baseline updates.
 
 ### Changed
-- Streamlined PR template — removed redundant checklist items and screenshots section
-- Improved project description and README — clearer use cases, limitations, and modern wording
-- Refined documentation and agent rules across all platforms for clarity and consistency
-- Fixed CRLF handling in `sync-skills.mjs` for reliable Windows operation
-
-### Removed
-- Outdated use case from README documentation
+- Documentation and sync scripts improved for multi-platform generation.
 
 ## [0.2.0] - 2026-03-28
 
 ### Added
-- Multi-platform AI agent support: Claude Code, Codex CLI, OpenCode, GitHub Copilot, Cursor, Windsurf, Gemini CLI, Cline/Roo Code, Continue, Amazon Q, Augment Code, Aider
-- Platform-specific instruction files and `/clone-website` skill for each supported agent
-- `scripts/sync-agent-rules.sh` to regenerate platform instruction files from AGENTS.md
-- `scripts/sync-skills.mjs` to regenerate `/clone-website` skill across all platforms
-- GEMINI.md for Gemini CLI configuration
-- Supported Platforms table in README
-- "Updating for Other Platforms" documentation section in README
-
-### Changed
-- README now describes the project as multi-agent (Claude Code recommended, not required)
-- AGENTS.md updated with sync script reminders
+- Multi-platform AI agent support.
+- Platform-specific instruction files.
+- Initial sync scripts for rules and skills.
 
 ## [0.1.1] - 2026-03-28
 
 ### Added
-- Bug report and feature request issue templates
-- Pull request template with checklist
-- CHANGELOG.md following Keep a Changelog format
-- Package.json metadata (description, repository, homepage, keywords, engines)
+- Issue templates and PR template.
+- Keep-a-changelog setup and package metadata.
 
 ### Fixed
-- LICENSE copyright holder now attributed to jlp717
+- MIT license attribution.
 
 ## [0.1.0] - 2026-03-28
 
 ### Added
-- Initial template scaffold for website reverse-engineering with Claude Code
-- `/clone-website` skill for full-site cloning pipeline
-- `/build-from-spec` and `/customize` skills
-- Parallel builder agents with git worktree isolation
-- Chrome MCP integration for design token extraction
-- Comprehensive inspection guide and project structure documentation
-- Next.js 16 + shadcn/ui + Tailwind CSS v4 base scaffold
-- MIT license
-- README with badges, demo section, quick start, and star history
+- Initial template scaffold and first-generation cloning workflow.
 
 [Unreleased]: https://github.com/jlp717/port-design-system/compare/v0.3.1...HEAD
 [0.3.1]: https://github.com/jlp717/port-design-system/compare/v0.3.0...v0.3.1
