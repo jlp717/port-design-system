@@ -8,6 +8,8 @@ A reusable template for reverse-engineering any website into a clean, modern Nex
 
 Point it at a URL, run `/clone-website`, and your AI agent will inspect the site, extract design tokens and assets, write component specs, and dispatch parallel builders to reconstruct every section.
 
+Or point it at two local projects — a source design and your production app — run `/port-design-system`, and the agent will transplant the entire visual layer while preserving your business logic, content, and integrations.
+
 ## Demo
 
 [![Watch the demo](docs/design-references/comparison.png)](https://youtu.be/O669pVZ_qr0)
@@ -79,6 +81,25 @@ The `/clone-website` skill runs a multi-phase pipeline:
 
 Each builder agent receives the full component specification inline — exact `getComputedStyle()` values, interaction models, multi-state content, responsive breakpoints, and asset paths. No guessing.
 
+### /port-design-system
+
+The `/port-design-system` skill runs a multi-phase pipeline across two local projects:
+
+1. **Source Audit** — reads every file in the source project, extracts all visual tokens, animations, and configs
+2. **Global Foundation** — installs visual dependencies, merges globals.css, Tailwind config, fonts, sets up Lenis/GSAP in target
+3. **Page Porting** — applies the source's visual shell to each page in the target, preserving all content and logic
+4. **Asset Integration** — copies decorative assets, updates references, verifies build
+5. **QA & Cleanup** — visual comparison, content integrity check, functional verification
+
+The target's business logic, text content, API routes, auth, and routing are never modified.
+
+**Usage:**
+```
+/port-design-system "<source-path>" "<target-path>"
+```
+
+See [`docs/port-design-system/SKILL_USAGE_GUIDE.md`](docs/port-design-system/SKILL_USAGE_GUIDE.md) for the full guide.
+
 ## Use Cases
 
 - **Platform migration** — rebuild a site you own from WordPress/Webflow/Squarespace into a modern Next.js codebase
@@ -111,7 +132,7 @@ docs/
   design-references/ # Screenshots
 scripts/
   sync-agent-rules.sh  # Regenerate agent instruction files
-  sync-skills.mjs      # Regenerate /clone-website for all platforms
+  sync-skills.mjs      # Regenerate /clone-website and /port-design-system for all platforms
 AGENTS.md           # Agent instructions (single source of truth)
 CLAUDE.md           # Claude Code config (imports AGENTS.md)
 GEMINI.md           # Gemini CLI config (imports AGENTS.md)
@@ -142,6 +163,7 @@ Two source-of-truth files power all platform support. Edit the source, then run 
 | ---------------------- | --------------------------------------- | ---------------------------------- |
 | Project instructions   | `AGENTS.md`                             | `bash scripts/sync-agent-rules.sh` |
 | `/clone-website` skill | `.claude/skills/clone-website/SKILL.md` | `node scripts/sync-skills.mjs`     |
+| `/port-design-system` skill | `.claude/skills/port-design-system/SKILL.md` | `node scripts/sync-skills.mjs`     |
 
 Each script regenerates the platform-specific copies automatically. Agents that read the source files natively need no regeneration.
 

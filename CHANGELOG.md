@@ -7,8 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `/port-design-system` skill for transplanting visual design systems between Next.js projects
+- `docs/port-design-system/SKILL_USAGE_GUIDE.md` with usage examples and workflow guide
+
 ### Changed
 - Raised the project Node.js baseline to 24 across local development, CI, Docker, and contributor-facing documentation
+- `scripts/sync-skills.mjs` refactored to support multiple skills — generates both `/clone-website` and `/port-design-system` for all 9 platforms
+- `AGENTS.md` updated to reference both skills
+- `README.md` updated with `/port-design-system` documentation
 
 ## [0.3.1] - 2026-03-29
 
