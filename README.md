@@ -27,6 +27,40 @@ Then in your AI agent:
 
 Both projects must exist locally. The source is the design you want to copy. The target is your production Next.js app.
 
+## Prerequisites
+
+- **Node.js 24+** (check with `node -v`)
+- **Git** installed
+- Both the **source** and **target** projects cloned locally with `npm install` completed
+- The **target** project must be a Next.js app (`next` in its `package.json`)
+- The **target** must build cleanly before porting — run `npm run build` in it first
+- **Claude Code** recommended for best results (`npm i -g @anthropic-ai/claude-code`)
+
+## Argument Syntax
+
+```
+/port-design-system "<source-path>" "<target-path>"
+```
+
+| Argument | Description |
+|----------|-------------|
+| `<source-path>` | Absolute path to the project containing the design you want to copy. Can be a `/clone-website` output or any web project with a coherent visual layer. |
+| `<target-path>` | Absolute path to your production Next.js project that will receive the new visual identity. Its business logic, content, and routing are never modified. |
+
+**Paths with spaces must be quoted.** Both paths must be absolute.
+
+### Example (Windows)
+
+```
+/port-design-system "C:\Users\TuUsuario\Desktop\Repositorios\mi-proyecto-origen" "C:\Users\TuUsuario\Desktop\Repositorios\mi-proyecto-destino"
+```
+
+### Example (macOS / Linux)
+
+```
+/port-design-system "/Users/tuusuario/projects/mi-proyecto-origen" "/Users/tuusuario/projects/mi-proyecto-destino"
+```
+
 ## What Gets Ported
 
 | Visual Layer (everything the user sees) | Protected Layer (never touched) |
@@ -70,21 +104,47 @@ Both projects must exist locally. The source is the design you want to copy. The
 
 ## Supported Agents
 
-| Agent | Status |
-|-------|--------|
-| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | **Recommended** — Opus 4.6 |
-| [Codex CLI](https://github.com/openai/codex) | Supported |
-| [OpenCode](https://opencode.ai/) | Supported |
-| [GitHub Copilot](https://github.com/features/copilot) | Supported |
-| [Cursor](https://cursor.com/) | Supported |
-| [Windsurf](https://codeium.com/windsurf) | Supported |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | Supported |
-| [Cline](https://github.com/cline/cline) | Supported |
-| [Roo Code](https://github.com/RooCodeInc/Roo-Code) | Supported |
-| [Continue](https://continue.dev/) | Supported |
-| [Amazon Q](https://aws.amazon.com/q/developer/) | Supported |
-| [Augment Code](https://www.augmentcode.com/) | Supported |
-| [Aider](https://aider.chat/) | Supported |
+| Agent | Status | Invocation |
+|-------|--------|------------|
+| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | **Recommended** | `/port-design-system "<source>" "<target>"` |
+| [Codex CLI](https://github.com/openai/codex) | Supported | Uses `.codex/skills/port-design-system/SKILL.md` |
+| [OpenCode](https://opencode.ai/) | Supported | Uses `.opencode/commands/port-design-system.md` |
+| [GitHub Copilot](https://github.com/features/copilot) | Supported | Uses `.github/skills/port-design-system/SKILL.md` |
+| [Cursor](https://cursor.com/) | Supported | Uses `.cursor/commands/port-design-system.md` |
+| [Windsurf](https://codeium.com/windsurf) | Supported | Uses `.windsurf/workflows/port-design-system.md` |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | Supported | Uses `.gemini/commands/port-design-system.toml` |
+| [Cline](https://github.com/cline/cline) | Supported | Reads `.clinerules` automatically |
+| [Roo Code](https://github.com/RooCodeInc/Roo-Code) | Supported | Reads `.clinerules` automatically |
+| [Continue](https://continue.dev/) | Supported | Uses `.continue/commands/port-design-system.md` |
+| [Amazon Q](https://aws.amazon.com/q/developer/) | Supported | Uses `.amazonq/cli-agents/port-design-system.json` |
+| [Augment Code](https://www.augmentcode.com/) | Supported | Uses `.augment/commands/port-design-system.md` |
+| [Aider](https://aider.chat/) | Supported | Reads `AGENTS.md` via `.aider.conf.yml` |
+
+### How to Invoke per Platform
+
+**Claude Code** (recommended — supports `$ARGUMENTS` natively):
+```bash
+claude --chrome   # optional: enables visual QA via Chrome DevTools
+# Then in the session:
+/port-design-system "C:\Users\TuUsuario\Desktop\Repositorios\mi-origen" "C:\Users\TuUsuario\Desktop\Repositorios\mi-destino"
+```
+
+**Cursor / Windsurf / Continue / Augment / OpenCode:**
+Open the project in the editor. The skill file is auto-detected from the corresponding dotfolder. Invoke via the agent's command palette or chat, providing both paths as arguments.
+
+**Gemini CLI:**
+```bash
+gemini run port-design-system "C:\Users\TuUsuario\Desktop\Repositorios\mi-origen" "C:\Users\TuUsuario\Desktop\Repositorios\mi-destino"
+```
+
+**Codex CLI:**
+```bash
+codex --skill port-design-system "C:\ruta\origen" "C:\ruta\destino"
+```
+
+**Amazon Q / Cline / Roo Code / Aider:**
+The agent reads the skill from its config directory automatically. Describe the task in natural language:
+> "Port the visual design system from C:\ruta\origen to C:\ruta\destino"
 
 ## Tech Stack
 
@@ -145,6 +205,42 @@ Each skill auto-generates platform-specific files for all 13 agents. Edit the so
 node scripts/sync-skills.mjs        # Regenerate skill files
 bash scripts/sync-agent-rules.sh    # Regenerate agent instructions
 ```
+
+## Verifying a Successful Port
+
+After the skill completes, verify with this checklist:
+
+```bash
+# 1. Build passes in the target
+cd "<target-path>"
+npm run build          # Must exit 0 with zero errors
+
+# 2. Check generated reports exist
+ls docs/port-design-system/extraction-report.md   # Source audit
+ls docs/port-design-system/changelog.md            # Every file changed
+ls docs/port-design-system/asset-manifest.md       # Copied assets
+```
+
+**Visual checks** (open the target in a browser):
+
+- [ ] Colors match the source design
+- [ ] Fonts are loading (check DevTools → Network → Font)
+- [ ] Navbar and Footer visual design matches the source
+- [ ] Animations fire at correct scroll positions (GSAP/ScrollTrigger)
+- [ ] Smooth scroll works (Lenis)
+- [ ] Hover states on buttons, cards, and links match  
+- [ ] Mobile layout at 375px is correct
+- [ ] Zero console errors, zero 404s in Network tab
+
+**Content integrity** (the most critical check):
+
+- [ ] All text content (headings, paragraphs, labels) is unchanged
+- [ ] All navigation links still work
+- [ ] Forms still submit correctly
+- [ ] Auth still works (if applicable)
+- [ ] API routes return correct responses
+
+If any text, route, or API behavior changed, the port has a bug — revert those specific files via `git diff`.
 
 ## License
 

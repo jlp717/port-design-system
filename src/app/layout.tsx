@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Website Clone",
-  description: "Pixel-perfect website clone",
+  title: "Port Design System",
+  description: "Clone websites and port design systems between Next.js projects",
 };
 
 export default function RootLayout({
