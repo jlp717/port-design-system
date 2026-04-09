@@ -5,7 +5,80 @@ This repository is a production-grade template for one skill:
 
 - `/port-design-system-from-local-clone`
 
-The skill ports the full visual layer from a local source clone into an existing Next.js target project. It keeps target content and business logic intact while transplanting design tokens, typography, assets, animation systems, and interaction behavior.
+The skill ports the **COMPLETE visual layer** from a local source clone into an existing Next.js target project. This means copying **EVERY SINGLE FILE** related to frontend design: CSS tokens, fonts, images, animations, component shells, layouts, etc. The target should look **VISUALLY IDENTICAL** to the source when opened side-by-side in a browser.
+
+## CRITICAL: What This Actually Means
+
+This is a **COMPLETE FRONTEND VISUAL REPLACEMENT**. The target project's entire visual appearance gets replaced with the source clone's visual system.
+
+Think of it like this:
+- The source clone is the **blueprint for how everything looks**
+- The target project is the **house that keeps its rooms and plumbing** (content, routes, backend)
+- Your job: rebuild the target's **entire exterior and interior design** to match the source blueprint exactly
+
+### The ENTIRE frontend visual layer gets replaced:
+
+**Structure & Layout:**
+- ALL section ordering and page structure from source
+- ALL grid systems, flex layouts, and positioning
+- ALL spacing scales (margins, paddings, gaps)
+- ALL container widths and responsive breakpoints
+
+**Visual Assets:**
+- ALL CSS/SCSS files with complete token systems
+- ALL font files, font families, font configurations
+- ALL images, SVGs, videos, 3D models used in the UI
+- ALL decorative elements, gradients, shadows, borders, backgrounds
+
+**Animations & Interactions:**
+- ALL GSAP timelines, ScrollTrigger configs, Lenis setup
+- ALL parallax effects, scroll-triggered animations
+- ALL 3D scenes and depth effects
+- ALL hover/focus/active/click states and transitions
+- ALL text reveal animations, stagger effects, entrance animations
+
+**Components:**
+- ALL Navbar variants (desktop, mobile, scrolled, transparent, solid, etc.)
+- ALL Footer layouts and states
+- ALL card designs, button styles, modal/dialog shells
+- ALL form visual styling (inputs, selects, textareas - validation visuals only)
+- ALL hero sections, section dividers, CTA blocks
+
+### What stays from target (ONLY these - NOTHING ELSE):
+
+**Content (words only):**
+- All text content and copy stays from target
+- All headings, paragraphs, labels, descriptions use target's text
+- BUT they get wrapped in source's visual structure with source's fonts, colors, sizes, animations
+
+**Routes & URLs:**
+- Route structure and URL contracts stay from target
+- Navigation links point to target's routes
+- BUT the navbar/footer that contains those links looks like source's
+
+**Backend & Logic (zero changes):**
+- API routes, server actions, database queries
+- Auth flows, session management, redirects
+- Form validation logic, submission handlers
+- Data fetching, state management, mutations
+- Business rules, calculations, API integrations
+
+### Concrete example:
+
+Source has a hero section with:
+- Full-screen background image with parallax
+- Heading that splits and reveals with GSAP
+- Subtitle that fades up with stagger
+- CTA button with hover scale + glow effect
+
+Target has different content but needs the SAME hero treatment:
+- Target's text/heading goes inside source's parallax background
+- Target's CTA text goes inside source's animated button shell
+- All animations, timings, easings, effects come from source
+
+### Simple test:
+If you open source and target in browsers side by side → they should look **VISUALLY IDENTICAL** (same layout, same animations, same fonts, same colors, same spacing).
+The only difference: target displays target's own text content and targets its own API routes.
 
 ## Mission
 Given:
@@ -13,7 +86,7 @@ Given:
 2. `<target-path>` (absolute path to existing Next.js project)
 3. `<commit-hash>` (exact baseline commit in target)
 
-Produce a target frontend that is visually identical to the source design system while preserving target routing, copy, backend integrations, server actions, API routes, auth, and business logic.
+Produce a target frontend that is **VISUALLY IDENTICAL** to the source design system while preserving target routing, copy, backend integrations, server actions, API routes, auth, and business logic.
 
 ## Tech Stack
 - Framework: Next.js 16 (App Router, React 19, TypeScript strict)

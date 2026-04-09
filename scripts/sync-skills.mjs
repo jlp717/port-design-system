@@ -24,9 +24,9 @@ const SKILLS = [
   {
     name: 'port-design-system-from-local-clone',
     shortDesc:
-      'Port a full visual design system from a local clone folder into an existing Next.js project while preserving business logic',
-    argumentHint: '<source-path> <target-path> <commit-hash>',
-    noArgsText: 'the source path, target path, and baseline commit hash provided by the user',
+      'Port a complete visual design system from a local clone into an existing Next.js project. Target keeps content, routes, and backend but looks visually identical to source.',
+    argumentHint: '<source-path> <target-path> [commit-hash]',
+    noArgsText: 'the source path and target path provided by the user',
   },
 ];
 

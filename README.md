@@ -6,34 +6,43 @@ Production template for one high-reliability AI skill:
 
 - `/port-design-system-from-local-clone`
 
-This skill ports a full visual design system from a local clone project into an existing Next.js app while preserving target content and business logic.
+This skill ports the **COMPLETE visual design system** from a local clone project into an existing Next.js app. This is a **full frontend visual replacement** — the target project's entire visual appearance gets replaced with the source's visual system.
+
+**The target should look VISUALLY IDENTICAL to the source** when opened side-by-side in a browser: same layout, same animations, same fonts, same colors, same spacing, same hover effects, same scroll behavior, same parallax, same 3D effects.
+
+The only things that stay from target:
+- **Text content** (target's words in source's visual structure)
+- **Routes** (target's URL contracts)
+- **Backend** (API routes, server actions, database, auth, business logic — ZERO changes)
 
 ## What This Skill Does
 
 Given:
-- `source-path` (local clone design system)
-- `target-path` (existing Next.js app)
-- `commit-hash` (baseline commit in target)
+- `source-path` (local clone with the design you want to copy)
+- `target-path` (existing Next.js app that receives the design)
+- `commit-hash` (baseline commit in target to restore)
 
-It ports:
-- CSS tokens and global styles
-- typography and font setup
-- navbar/footer visual shell
-- page-level layout styles
-- GSAP/ScrollTrigger/Lenis behavior
-- responsive breakpoints
-- decorative assets from source
+It ports **EVERYTHING VISUAL**:
+- ALL CSS/SCSS files and design tokens
+- ALL font files and typography configs
+- ALL images, SVGs, videos, 3D models used in UI
+- ALL animation configs (GSAP, ScrollTrigger, Lenis, etc.)
+- ALL component visual shells (Navbar, Footer, Cards, Buttons, etc.)
+- ALL layout structures, spacing scales, grid systems
+- ALL hover/focus/active states and transitions
+- ALL scroll-triggered animations and parallax effects
+- ALL decorative elements, gradients, shadows, borders
 
 ## What This Skill Does Not Do
 
-It never changes:
+It NEVER changes:
 - API routes
-- server actions
-- auth logic
-- database code
-- business logic
-- route contracts
-- target copy/content
+- Server actions
+- Auth logic
+- Database code
+- Business logic
+- Route contracts
+- Target copy/content (keeps target's text)
 
 ## Installation
 

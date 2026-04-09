@@ -1,6 +1,6 @@
 ---
-description: "Port a full visual design system from a local clone folder into an existing Next.js project while preserving business logic"
-argument-hint: "<source-path> <target-path> <commit-hash>"
+description: "Port a complete visual design system from a local clone into an existing Next.js project. Target keeps content, routes, and backend but looks visually identical to source."
+argument-hint: "<source-path> <target-path> [commit-hash]"
 ---
 <!-- AUTO-GENERATED from .claude/skills/port-design-system-from-local-clone/SKILL.md - do not edit directly.
      Run `node scripts/sync-skills.mjs` to regenerate. -->
@@ -9,27 +9,87 @@ argument-hint: "<source-path> <target-path> <commit-hash>"
 # Port Design System From Local Clone
 
 Parse `$ARGUMENTS` as:
-1. `<source-path>`
-2. `<target-path>`
-3. `<commit-hash>`
+1. `<source-path>` (required — absolute path to local clone with the design)
+2. `<target-path>` (required — absolute path to existing Next.js project)
+3. `<commit-hash>` (optional — baseline commit in target to restore before porting)
 
-If any argument is missing, stop and ask for the missing argument.
+If `<commit-hash>` is provided, run `git checkout <commit-hash>` in target before starting.
+If not provided, work with the target's current state.
 
-## Mission
-Port 100% of the source visual layer into the target Next.js app:
-- design tokens
-- typography
-- component visual shells
-- animations and scroll behavior
-- decorative assets
+If `<source-path>` or `<target-path>` is missing, stop and ask for it.
 
-Preserve in target without exception:
-- content text
-- routes
-- backend integrations
-- API routes
-- server actions
-- auth and business logic
+## CRITICAL: What This Actually Means
+
+This is a **COMPLETE FRONTEND VISUAL REPLACEMENT**. The target project's entire visual appearance gets replaced with the source clone's visual system.
+
+Think of it like this:
+- The source clone is the **blueprint for how everything looks**
+- The target project is the **house that keeps its rooms and plumbing** (content, routes, backend)
+- Your job: rebuild the target's **entire exterior and interior design** to match the source blueprint exactly
+
+### The ENTIRE frontend visual layer gets replaced:
+
+**Structure & Layout:**
+- ALL section ordering and page structure from source
+- ALL grid systems, flex layouts, and positioning
+- ALL spacing scales (margins, paddings, gaps)
+- ALL container widths and responsive breakpoints
+
+**Visual Assets:**
+- ALL CSS/SCSS files with complete token systems
+- ALL font files, font families, font configurations
+- ALL images, SVGs, videos, 3D models used in the UI
+- ALL decorative elements, gradients, shadows, borders, backgrounds
+
+**Animations & Interactions:**
+- ALL GSAP timelines, ScrollTrigger configs, Lenis setup
+- ALL parallax effects, scroll-triggered animations
+- ALL 3D scenes and depth effects
+- ALL hover/focus/active/click states and transitions
+- ALL text reveal animations, stagger effects, entrance animations
+
+**Components:**
+- ALL Navbar variants (desktop, mobile, scrolled, transparent, solid, etc.)
+- ALL Footer layouts and states
+- ALL card designs, button styles, modal/dialog shells
+- ALL form visual styling (inputs, selects, textareas - validation visuals only)
+- ALL hero sections, section dividers, CTA blocks
+
+### What stays from target (ONLY these - NOTHING ELSE):
+
+**Content (words only):**
+- All text content and copy stays from target
+- All headings, paragraphs, labels, descriptions use target's text
+- BUT they get wrapped in source's visual structure with source's fonts, colors, sizes, animations
+
+**Routes & URLs:**
+- Route structure and URL contracts stay from target
+- Navigation links point to target's routes
+- BUT the navbar/footer that contains those links looks like source's
+
+**Backend & Logic (zero changes):**
+- API routes, server actions, database queries
+- Auth flows, session management, redirects
+- Form validation logic, submission handlers
+- Data fetching, state management, mutations
+- Business rules, calculations, API integrations
+
+### Concrete example:
+
+Source has a hero section with:
+- Full-screen background image with parallax
+- Heading that splits and reveals with GSAP
+- Subtitle that fades up with stagger
+- CTA button with hover scale + glow effect
+
+Target has different content but needs the SAME hero treatment:
+- Target's text/heading goes inside source's parallax background
+- Target's CTA text goes inside source's animated button shell
+- All animations, timings, easings, effects come from source
+
+### Simple test:
+If you open source and target in browsers side by side → they should look **VISUALLY IDENTICAL** (same layout, same animations, same fonts, same colors, same spacing).
+The only difference: target displays target's own text content and targets its own API routes.
 
 ## Non-Negotiable Constraints
 
@@ -72,11 +132,13 @@ Leave target in push-ready state with no manual cleanup required.
 ## Workflow (strict order)
 
 ## Phase 0 - Setup + Deep Audit
-1. Go to target project and checkout baseline:
+1. Go to target project.
+2. If `<commit-hash>` was provided:
    - `git checkout <commit-hash>`
-2. If working tree is dirty, stash first and report stash ref.
-3. Capture source and target directory trees.
-4. Extract source visual system literally:
+   - If working tree is dirty, stash first and report stash ref.
+3. If no `<commit-hash>`: verify current state is clean and proceed.
+4. Capture source and target directory trees.
+5. Extract source visual system literally:
    - css variables and token maps
    - typography scales and font setup
    - Lenis config and bootstrap
@@ -84,11 +146,11 @@ Leave target in push-ready state with no manual cleanup required.
    - ScrollTrigger configurations
    - parallax and 3D configs
    - hover/focus/active transitions
-5. Build target protected-surface map:
+6. Build target protected-surface map:
    - api routes
    - server actions
    - auth/business logic files
-6. Write extraction report before editing target visuals.
+7. Write extraction report before editing target visuals.
 
 Create in target:
 - `docs/port-design-system/extraction-report.md`
@@ -205,17 +267,23 @@ Stop with:
 Stop with:
 `ERROR: target path is not a Next.js project: <target-path>`
 
-### Invalid commit hash
+### Invalid commit hash (if provided)
 Stop with:
 `ERROR: commit hash not found in target repository: <commit-hash>`
 
 ### Build breaks after phase
 Stop phase progression, fix build, then continue.
 
-## Example invocation
+## Example invocations
 
+With commit hash (restore target to baseline first):
 ```txt
 /port-design-system-from-local-clone "C:\Users\Javier\Desktop\Repositorios\mari-pepa-redesign" "C:\Users\Javier\Desktop\Repositorios\granja_mari_pepa" "dc376a2cd4a33b9485f550fc8ae7a287f0041c96"
+```
+
+Without commit hash (use target's current state):
+```txt
+/port-design-system-from-local-clone "C:\Users\Javier\Desktop\Repositorios\mari-pepa-redesign" "C:\Users\Javier\Desktop\Repositorios\granja_mari_pepa"
 ```
 
 ## Completion criteria
@@ -224,4 +292,5 @@ Mark complete only when:
 - protected logic untouched
 - asset references valid
 - reports generated in target docs folder
+- if commit-hash was provided: target is at that commit and clean
 - project is push-ready for deployment
