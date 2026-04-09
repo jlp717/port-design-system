@@ -8,119 +8,134 @@ text = '''
 
 # /port-design-system-from-local-clone
 
-## THE ONLY RULE THAT MATTERS
+## Core Mission
+
+This skill performs a literal visual transplant.
 
 ```text
-THE ONLY RULE THAT MATTERS
-══════════════════════════
-This skill does NOT produce a redesign. It does NOT produce an adaptation.
-It produces an EXACT CLONE of the source visual system transplanted into
-the target codebase.
-
-"Exact clone" means:
-
-Every CSS value in source exists verbatim in target
-Every GSAP timeline property (duration, ease, scrub, trigger) matches source
-Every Lenis config option matches source
-Every IntersectionObserver threshold and rootMargin matches source
-Every animation keyframe, every transition duration, every transform value matches source
-git diff between a source component and its target counterpart must show
-ZERO differences in any line that is not text content, image path, or route
-
-The test is simple: open source and target side by side in a browser.
-Scroll both simultaneously. They must be indistinguishable.
-If a human can tell them apart, the migration has failed.
-This is not a style guide port. This is a surgical transplant.
-The source frontend is the donor. The target frontend is the recipient.
-Every cell of the donor's visual system must live in the recipient.
+El source es la unica fuente de verdad visual.
+El target debe convertirse visualmente en una copia exacta del source.
+Lo unico que se conserva del target es el texto, el contenido, las rutas y la logica de negocio.
 ```
 
-Non-negotiable consequences:
-- For every file that is purely visual, the default action is COPY, not REWRITE.
-- Copy the file from source to target, then do a single pass replacing only text strings, image paths, and route refs.
-- Do NOT rewrite CSS, do NOT rewrite GSAP configs, do NOT refactor purely visual files.
-- Refactoring is explicitly forbidden for purely visual files because it introduces visual drift.
-- The target keeps only text, content, routes, and business logic.
-- The target must finish with zero residual target visual identity.
+No redesign. No reinterpretation. No adaptation.
 
-Mandatory per-component verification rule:
-- After writing each component, run the visual-property diff gate below.
-- If the diff shows anything not explained by text content or asset paths, the component is not done.
-- Never advance until the diff is clean.
+If source and target are distinguishable during scroll, the migration has failed.
+
+## Accepted Command Forms
+
+```text
+/port-design-system-from-local-clone "<source-path>" "<target-path>"
+/port-design-system-from-local-clone "<source-path>" "<target-path>" "<commit-hash>"
+```
+
+Argument parsing rules:
+- Keep quoted Windows paths exactly as-is.
+- Do not split inside quotes.
+- If arguments are missing but present in the user request, recover them exactly.
+- If fewer than two absolute paths are available, stop and ask for the missing path.
+- Optional `<commit-hash>` is baseline only. Never rewrite history.
+
+## Scope Boundaries
+
+Preserve from target:
+- Text and business content data only.
+- Routes, params, redirects, rewrites.
+- API routes, server actions, auth, middleware, integrations, analytics, business logic.
+- Content-bearing assets that are business data.
+
+Replace from source (complete visual layer):
+- Global CSS, design tokens, theme variables, spacing scales, type system, breakpoints.
+- All presentational components and wrappers (nav, hero, sections, footer, cards, buttons, forms, dialogs, drawers, tables, shells).
+- All states (hover/focus/active/open/sticky/loading/scrolled).
+- GSAP, ScrollTrigger, Lenis, IntersectionObserver, scroll listeners, RAF animation loops, parallax, scrubbed media, reveal choreography, responsive behavior.
+- Source visual assets required for fidelity (images, videos, SVGs, masks, textures, decorative media, fonts).
+
+Do not preserve from target:
+- Any target visual token, visual utility class, component skin, decorative asset, motion timing, spacing scale, or typography system.
+- Any pre-existing target visual identity pattern, even if "similar".
+
+Never modify:
+- Backend logic and API behavior.
+- Server actions and auth behavior.
+- Data models, validation logic, business calculations.
+- Environment and deployment configuration.
+
+## Non-Negotiable Execution Rules
+
+### Rule 1: COPY-FIRST policy (literal clone behavior)
+- For any purely visual file, copy from source first.
+- After copy, only change:
+- text strings
+- route references
+- asset paths (when mapping to target placeholders/replacements)
+- Do not refactor visual files.
+- Do not rewrite animation values.
+- Do not "approximate" CSS values.
+
+### Rule 2: Visual diff zero tolerance per component
+- Each migrated component must pass visual-property diff gate before moving on.
+- Allowed differences: text content, asset path, route path, business-logic hooks required by target.
+- Any other difference is blocking failure.
+
+Use this gate:
 
 ```bash
-# Extract all visual properties from source component
-grep -nE "(animation|transition|transform|@keyframes|gsap|ScrollTrigger|lenis|parallax|scrub|duration|ease|delay|opacity|scale|translate|rotate|clip-path|will-change|backdrop-filter|background|gradient|border-radius|box-shadow|font-|letter-spacing|line-height|color:|gap:|padding:|margin:)" \
+# SOURCE visual extraction
+grep -nE "(animation|transition|transform|@keyframes|gsap|ScrollTrigger|lenis|IntersectionObserver|parallax|scrub|duration|ease|delay|opacity|scale|translate|rotate|clip-path|will-change|backdrop-filter|background|gradient|border-radius|box-shadow|font-|letter-spacing|line-height|color:|gap:|padding:|margin:|top:|left:|right:|bottom:)" \
   source/src/components/ComponentName.tsx > /tmp/source_visual.txt
 
-# Same for target
-grep -nE "(animation|transition|transform|@keyframes|gsap|ScrollTrigger|lenis|parallax|scrub|duration|ease|delay|opacity|scale|translate|rotate|clip-path|will-change|backdrop-filter|background|gradient|border-radius|box-shadow|font-|letter-spacing|line-height|color:|gap:|padding:|margin:)" \
+# TARGET visual extraction
+grep -nE "(animation|transition|transform|@keyframes|gsap|ScrollTrigger|lenis|IntersectionObserver|parallax|scrub|duration|ease|delay|opacity|scale|translate|rotate|clip-path|will-change|backdrop-filter|background|gradient|border-radius|box-shadow|font-|letter-spacing|line-height|color:|gap:|padding:|margin:|top:|left:|right:|bottom:)" \
   target/src/components/ComponentName.tsx > /tmp/target_visual.txt
 
 diff /tmp/source_visual.txt /tmp/target_visual.txt
 ```
 
-## Exact Command Forms
+### Rule 3: No fold-only QA
+- Screenshot at scrollY=0 is not verification.
+- Scroll-driven sites must be validated across the entire document.
+- A section is not verified until entry, mid-scroll, and settled states are captured and matched.
 
-Accept exactly these command forms:
+### Rule 4: Chrome DevTools MCP is mandatory for QA
+- Use Chrome DevTools MCP for runtime checks.
+- Do not replace this with static-only tooling.
+- If MCP is unavailable, mark migration as blocked in report and stop claiming success.
 
-```txt
-/port-design-system-from-local-clone "<source-path>" "<target-path>"
-/port-design-system-from-local-clone "<source-path>" "<target-path>" "<commit-hash>"
-```
+### Rule 5: Regression gates are mandatory
+- After each newly ported component, rerun verification on previously verified components/pages.
+- If any regression appears, fix regression first.
+- No forward progress while regression is open.
 
-Parse `{{args}}` as:
-1. `<source-path>`: absolute path to the local source clone that owns the visual system.
-2. `<target-path>`: absolute path to the existing Next.js target project that receives the design.
-3. `<commit-hash>`: optional target baseline commit.
+### Rule 6: Atomic preflight checkpoint before component edits
+- Before touching any component, `STACK_MANIFEST.md`, `ANIMATION_MANIFEST.md`, and `PORT_PLAN.md` must exist and be populated.
+- Record proof via shell output (`git status --short` and file existence checks) in phase output.
+- If preflight proof is missing, migration is blocked.
 
-Argument rules:
-- Preserve quoted Windows paths exactly.
-- Do not split inside quoted strings.
-- If `{{args}}` is missing, recover the same values from the user request.
-- If fewer than two absolute paths are available, stop and ask for the missing path.
-- If a commit hash is present, use it as an optional baseline state only. Never rewrite history.
+### Rule 7: Evidence-first QA (no unverifiable claims)
+- No QA check can be marked PASS without attached artifacts on disk.
+- Every PASS must reference concrete files (screenshots/video/json diff reports).
+- Verbal statements like "looks similar" are invalid.
 
-## Mission Boundaries
+### Rule 8: Immediate FAIL conditions
+- Any missing screenshot pair for required scroll steps is FAIL.
+- Any missing source/target video recording pair is FAIL.
+- Any missing computed-style dump pair is FAIL.
+- Any missing GSAP/Lenis runtime dump pair is FAIL.
+- Any unresolved regression in `PORT_PLAN.md` is FAIL.
+- Any skipped phase output format is FAIL.
 
-Repeat this rule before every meaningful decision:
+### Rule 9: Zero legacy visual residue
+- Final target must not contain active visual residue from the old target design system.
+- "Active residue" means any old target-only visual tokens, classes, CSS variables, decorative assets, or motion definitions still referenced by rendered routes.
+- If residue exists, migration status is FAIL.
 
-```text
-El source es la unica fuente de verdad visual. El target debe convertirse visualmente en una copia exacta del source. Lo unico que se conserva del target es el texto, el contenido, las rutas y la logica de negocio.
-```
+### Rule 10: Status cannot be self-declared
+- A phase/component status can be marked PASS only when its required artifacts exist and are referenced in docs.
+- Manual PASS without evidence is invalid and must be treated as FAIL.
 
-Preserve only:
-- Text and content.
-- Routes, route params, redirects, and rewrites.
-- API routes, server actions, auth logic, middleware, analytics, integrations, and business logic.
-- Target content assets when those assets are business content rather than visual-system assets.
+## Required Deliverables (must exist in target)
 
-Replace completely:
-- Global styles, tokens, themes, and every presentational wrapper.
-- Typography, spacing, radius, shadow, gradient, border, surface, and breakpoint systems.
-- Navbar, footer, hero, sections, cards, forms, dialogs, drawers, tables, shells, and every interactive state.
-- GSAP, ScrollTrigger, Lenis, IntersectionObserver, requestAnimationFrame loops, parallax, scrubbed media, 3D, canvas, and every visual motion primitive.
-- Decorative source assets including images, videos, SVGs, masks, textures, fonts, models, and shaders.
-
-Never change:
-- Backend behavior.
-- Data models and calculations.
-- Validation and submission logic.
-- Environment configuration.
-
-## Package Manager Detection
-
-Detect the package manager from the target lockfiles before any install command:
-- `pnpm-lock.yaml` means `pnpm`.
-- `yarn.lock` means `yarn`.
-- `bun.lock` or `bun.lockb` means `bun`.
-- Otherwise use `npm`.
-
-When this skill says "install", use the detected package manager with exact version strings and never use `latest`, `^`, or `~`.
-
-## Mandatory Deliverables In The Target
-
-Always create and maintain these docs or manifests:
 - `docs/port-design-system/extraction-report.md`
 - `docs/port-design-system/protected-surface-map.md`
 - `docs/port-design-system/source-asset-inventory.md`
@@ -128,51 +143,54 @@ Always create and maintain these docs or manifests:
 - `docs/port-design-system/asset-manifest.md`
 - `docs/port-design-system/modified-files.md`
 - `docs/port-design-system/assets-reemplazo-ia.md`
+- `docs/port-design-system/qa-evidence-index.md`
+- `docs/port-design-system/legacy-visual-fingerprint-source.md`
+- `docs/port-design-system/legacy-visual-fingerprint-target-baseline.md`
+- `docs/port-design-system/zero-legacy-residue-report.md`
 - `STACK_MANIFEST.md`
 - `ANIMATION_MANIFEST.md`
 - `PORT_PLAN.md`
 
-`assets-reemplazo-ia.md` must contain a top-level heading exactly equal to:
+`docs/port-design-system/assets-reemplazo-ia.md` must start with:
 
 ```md
 # ASSETS REEMPLAZO IA
 ```
 
-## Required Workflow Order
+## Workflow (strict order, blocking)
 
-Nothing may skip ahead. Every phase below is blocking until its checklist passes.
+### Phase 0a: Setup and deep audit
 
-### Phase 0a - Setup, Baseline, And Deep Audit
+1. Resolve source/target absolute paths.
+2. Validate both repos.
+3. If commit hash exists:
+- Validate commit.
+- Record `git status --short`.
+- If dirty, create stash (with untracked) and record stash reference.
+- Checkout commit.
+4. If commit hash does not exist:
+- Record dirty/clean baseline.
+5. Deep-read source and target trees before edits.
+6. Generate initial docs.
+7. Inventory source routes/layouts/components/styles/animations/assets.
+8. Map protected target backend surfaces and visual surfaces to replace.
+9. Build fingerprint files before edits:
+- `legacy-visual-fingerprint-source.md`
+- `legacy-visual-fingerprint-target-baseline.md`
 
-1. Resolve `<source-path>` and `<target-path>`.
-2. Validate that both paths exist and are the intended repos.
-3. If `<commit-hash>` exists:
-   - enter target
-   - verify the commit resolves
-   - inspect `git status --short`
-   - if dirty, create a safe stash including untracked files and record the stash reference
-   - checkout the requested commit
-4. If `<commit-hash>` does not exist:
-   - work from current target state
-   - record whether the tree was already dirty
-5. Read source and target deeply before edits.
-6. Create the required docs and manifests.
-7. Build the extraction report, protected-surface map, asset inventory, modified-files map, and initial legacy purge plan.
-8. Inventory every route, layout, component shell, style entrypoint, animation hook, asset import, and responsive breakpoint in source.
-9. Map protected backend surfaces in target so visual edits never cross into business logic.
+Fingerprint minimum content:
+- CSS custom properties.
+- Hex/rgb/hsl color sets.
+- Font-family set.
+- Spacing/radius/shadow token sets.
+- Animation names and keyframe names.
+- Visual utility classes and component skin classes.
 
-Audit requirements:
-- Extract every CSS custom property, typography value, spacing token, radius, border, shadow, gradient, and transform from source.
-- Extract every hover, focus, active, open, sticky, loading, and scrolled state from source.
-- Extract every source asset path that participates in the visual system.
-- Mark every target visual file as one of `copy`, `rewrite-in-place-with-logic-preserved`, `delete`, or `keep-non-visual`.
+### Phase 0b: STACK_MANIFEST lock (blocking)
 
-## PHASE 0b - STACK LOCK (IMMUTABLE)
-══════════════════════════════════
+Read `source/package.json`, then create `STACK_MANIFEST.md` with exact versions.
 
-Read `source/package.json`.
-
-Generate `STACK_MANIFEST.md` in the target root with this exact structure:
+Use this format:
 
 ```md
 # STACK MANIFEST
@@ -181,379 +199,376 @@ Generate `STACK_MANIFEST.md` in the target root with this exact structure:
 
 | Package | Source version | Installed in target | Status |
 | --- | --- | --- | --- |
-| gsap | 3.11.4 | 3.11.4 | ✅ |
-| lenis | 1.0.28 | 1.0.28 | ✅ |
+| gsap | 3.11.4 | 3.11.4 | [x] |
+| lenis | 1.0.28 | 1.0.28 | [x] |
 ```
 
-Install every frontend package at the EXACT source version.
-Use exact version strings only. No `^`, no `~`, no `latest`.
+Rules:
+- Detect target package manager by lockfile.
+- Install exact source versions only (no `latest`, no `^`, no `~`).
+- No silent version drift.
+- No silent conflict resolution.
+- If visual dependency conflicts backend, stop and ask.
 
-Hard rule: `stack_lock = true`
-- No frontend package may differ from its source version.
-- No package may be added that was not in source, except target backend dependencies that are unrelated to the visual layer.
-- No package may be removed that was in source.
-- If a version conflict arises with a target backend dependency, report it and ask the user explicitly. Never resolve it silently.
-
-Installation rule:
-- Use the detected target package manager for install commands.
-- The equivalent of `npm install gsap@3.11.4 lenis@1.0.28 framer-motion@10.x ...` must preserve the exact source version strings.
-
-After install, run:
+Verify with package-manager equivalent of:
 
 ```bash
-npm ls gsap lenis framer-motion [all animation libs]
+npm ls gsap lenis framer-motion
 ```
 
-Confirm installed versions match source versions exactly.
-If any mismatch exists, uninstall and reinstall at the exact version before continuing.
+If versions mismatch, fix before continuing.
 
-## PHASE 0c - ANIMATION INVENTORY (BLOCKING - NOTHING PROCEEDS UNTIL COMPLETE)
-════════════════════════════════════════════════════════════════════════════
+### Phase 0c: ANIMATION_MANIFEST exhaustive inventory (blocking)
 
-Generate `ANIMATION_MANIFEST.md` in the target root.
+Generate `ANIMATION_MANIFEST.md` and do not start phase 1 until exhaustive.
 
-Use this exact structure for every discovered entry:
+Use exact schema:
 
 ```md
 # ANIMATION MANIFEST
 
 | Status | ID | File | Type | Properties | Trigger | Expected behavior |
 | --- | --- | --- | --- | --- | --- | --- |
-| ☐ | A001 | Hero.tsx | gsap ScrollTrigger | scrub: 1.5, start: "top top", end: "+=3000" | scroll | video.currentTime mapped to scroll position |
-| ☐ | A002 | Nav.tsx | CSS transition | opacity 0.3s ease, transform 0.3s ease | scroll past 100px | nav background fades in |
+| [ ] | A001 | Hero.tsx | gsap ScrollTrigger | scrub: 1.5, start: "top top", end: "+=3000" | scroll | video.currentTime follows scroll |
+| [ ] | A002 | Nav.tsx | CSS transition | opacity 0.3s ease, transform 0.3s ease | scroll past 100px | nav bg fades in |
 ```
 
-Each row is a required deliverable, not optional.
-Each row starts as `☐`.
-Each row becomes `✅` only after active scroll verification passes.
-If the manifest has 50 rows, all 50 must be `✅` before the migration is complete.
-Zero tolerance for skipped entries.
+Requirements:
+- Use numeric values exactly as extracted from source.
+- Include every GSAP timeline and every ScrollTrigger (`start`, `end`, `scrub`, `pin`, `markers`, trigger selector).
+- Include every Lenis option and scroll callback behavior.
+- Include every IntersectionObserver threshold/rootMargin/callback behavior.
+- Include every CSS keyframe/transition/animation value.
+- Include all scroll-driven media behavior (`video.currentTime`, canvas/WebGL updates).
+- Include reveal/sticky/pin behavior per section.
 
-Scan exhaustively for the following.
+No phase advance until inventory is complete.
 
-CSS layer:
-- Every `@keyframes` block, including name, duration, timing-function, and keyframe values.
-- Every `animation:` property, including name, duration, delay, fill-mode, and iteration.
-- Every `transition:` property, including property, duration, delay, and easing.
-- Every `will-change:` declaration.
-- Every animated `clip-path`.
-- Every `scroll-timeline` or `animation-timeline`.
-- Every transform inside a `@keyframes` block or transition.
+### Phase 0d: PORT_PLAN creation and lock (blocking)
 
-JS and TS layer:
-- Every `gsap.to()`, `gsap.from()`, `gsap.fromTo()`, and `gsap.timeline()`.
-- Every `ScrollTrigger.create()` with `trigger`, `start`, `end`, `scrub`, `pin`, and `markers`.
-- Every Lenis constructor with `duration`, `easing`, `orientation`, and `smoothTouch`.
-- Every `new Lenis()` scroll event listener.
-- Every `IntersectionObserver` with threshold array, rootMargin, and callback logic.
-- Every `requestAnimationFrame` loop and what it updates per frame.
-- Every scroll event listener and what it reads and modifies.
-- Every `video.currentTime` assignment driven by scroll.
-- Every canvas or WebGL element updated on scroll.
-- Every import from `gsap`, `@gsap/react`, `framer-motion`, `motion`, `lenis`, `@studio-freight/lenis`, `locomotive-scroll`, `scrollmagic`, `aos`, `anime`, `three`, `@react-three/fiber`, `@react-three/drei`, and `popmotion`.
+Create `PORT_PLAN.md` before touching components.
 
-HTML and JSX layer:
-- Every `<video>` element, including `autoplay`, `loop`, `muted`, `playsInline`, and ref usage.
-- Every `<canvas>` element.
-- Every element with `data-scroll`, `data-speed`, or `data-lag`.
-- Every element with a ref later passed to GSAP or `IntersectionObserver`.
-
-Nothing in Phase 1 or later may begin until `ANIMATION_MANIFEST.md` is exhaustive.
-
-### Phase 0d - Chrome DevTools MCP Extraction
-
-Use Chrome DevTools MCP during audit whenever it is available.
-
-Extract, compare, and document:
-- Desktop runtime at 1440 width.
-- Mobile runtime at 390 width.
-- Computed styles for body, headings, nav, buttons, cards, forms, footer, and hero media.
-- Runtime GSAP, ScrollTrigger, Lenis, and scroll state when accessible.
-- Scroll behavior, sticky states, and responsive transitions.
-
-If MCP is unavailable, report that block explicitly in the docs and final report.
-
-### Phase 1 - Global Replacement
-
-1. Port source globals, tokens, fonts, motion bootstrapping, navbar shell, and footer shell first.
-2. Remove target legacy theme values, visual globals, decorative utilities, and dead visual wrappers.
-3. Preserve logic-only wrappers, auth gates, data flows, and route wiring.
-4. Copy purely visual source files directly whenever possible.
-5. When a file mixes logic and visuals, transplant the source visual layer around the target logic with the smallest possible delta.
-
-Global replacement rules:
-- No legacy target design token may remain active.
-- No target-only color, font stack, shadow, radius, or spacing scale may remain unless it also exists verbatim in source.
-- Visual wrappers that do not come from source must be deleted or replaced.
-
-### Phase 2 - Full Page Port
-
-1. Port the home page visually end to end.
-2. Port every remaining route, including auth and dashboard shells.
-3. Pages missing from source still receive the full source design language, using direct source shell patterns rather than improvisation.
-4. After each component or section, update `PORT_PLAN.md`.
-
-Per-component regression gate in `PORT_PLAN.md`:
+Use this template per component/section:
 
 ```md
 # PORT PLAN
 
 ## ComponentName
-- ☐ code diff clean (no visual property differences from source)
-- ☐ static screenshot matches at scrollY=0
-- ☐ scroll crawler screenshots match at all 21 positions
-- ☐ computed styles match within tolerance
-- ☐ video recording indistinguishable
-- Status: ✅ VERIFIED / ☐ IN PROGRESS / ❌ FAILING
+- [ ] visual-property diff clean
+- [ ] scroll crawl screenshots match at 0..100 by 5%
+- [ ] computed style diff within tolerance
+- [ ] full scroll video indistinguishable
+- [ ] regression check against previously verified components
+- Status: [ ] IN PROGRESS / [x] VERIFIED / [ ] FAILING
 ```
 
-Component rules:
-- A component is `VERIFIED` only when all five checks are `✅`.
-- After writing ComponentN, rerun the scroll crawler on all previously verified pages.
-- If any previously `✅` component fails after ComponentN lands, that is a regression.
-- Fix regressions before proceeding to ComponentN+1.
+Hard gate:
+- If any item is unchecked, component is not verified.
+- No next component while current one is failing.
 
-### Phase 3 - Assets And Purge
+### Phase 1: Global replacement
 
-1. Copy source visual assets needed for fidelity.
-2. Wire all target references to the copied assets.
-3. Log every copied asset with its absolute source path in `docs/port-design-system/asset-manifest.md`.
-4. Remove obsolete target visual assets and styles.
-5. Update `docs/port-design-system/legacy-visual-purge.md` with every deleted or replaced legacy surface.
+1. Port source globals/tokens/fonts/motion bootstrap/navbar shell/footer shell.
+2. Remove legacy target visual globals/theme/utilities.
+3. Keep logic wrappers only when non-visual.
+4. Apply COPY-FIRST for pure visual files.
+5. For mixed files, transplant source visuals around target logic with minimal logic touch.
+6. Remove/deactivate any target visual fallback path that can re-enable legacy appearance.
 
-Asset rules:
-- Preserve target content-bearing assets only when they are business content.
-- Copy the full source visual asset set needed to reproduce the source faithfully.
-- Do not keep decorative target assets just because they are already present.
+### Phase 2: Full route port
 
-### Phase 4 - ASSETS REEMPLAZO IA
+1. Port homepage end-to-end visually.
+2. Port all remaining routes (including auth/dashboard shells) with source visual language.
+3. For routes missing in source, reuse source shell patterns literally (not improvisation).
+4. Update `PORT_PLAN.md` continuously.
+5. Run regression checks after each merged component.
+6. For each route, verify section order and shell composition parity against source.
 
-Generate `docs/port-design-system/assets-reemplazo-ia.md`.
+### Phase 3: Assets and purge
 
-It must include:
-- Every copied key asset.
+1. Copy full source visual asset tree required by the frontend (images/videos/svg/fonts/decorative media) as initial fidelity baseline.
+2. Wire references in target.
+3. Log every copied asset with absolute source path in `asset-manifest.md`.
+4. Remove old target visual assets/styles no longer used.
+5. Document purge in `legacy-visual-purge.md`.
+
+Asset policy in practice:
+- During fidelity phase, source assets are allowed as placeholders to reach exact visual match.
+- Before production readiness, replace restricted branding/media with equivalent target assets in same visual slot/timing/composition.
+- Document every replacement path and rationale in `ASSETS REEMPLAZO IA`.
+
+### Phase 4: ASSETS REEMPLAZO IA
+
+Create `docs/port-design-system/assets-reemplazo-ia.md` with:
+- Copied key asset.
 - Recommended target path.
-- Usage explanation.
-- Production-ready prompts for tools such as Flux, Kling, or Runway.
-- Business-adapted replacements, including Granja Mari Pepa-specific prompts when applicable.
+- Current usage location.
+- Production-ready prompts (Flux, Kling, Runway or equivalent).
+- Mari Pepa-adapted replacement guidance preserving composition/timing.
 
-### Phase 5 - ACTIVE SCROLL VERIFICATION PROTOCOL
+### Phase 5: ACTIVE SCROLL VERIFICATION PROTOCOL (mandatory)
 
-Replace all static-only QA with the protocol below.
+Do this per page in source and target with Chrome DevTools MCP.
 
-```text
-ACTIVE SCROLL VERIFICATION PROTOCOL (MANDATORY FOR EVERY SECTION)
-═══════════════════════════════════════════════════════════════════
-A section is NOT verified by a static screenshot.
-A section is verified by the FULL SCROLL THROUGH PROTOCOL below.
-```
+#### Step 1: Run both dev servers
+- Source URL and target URL must both be reachable.
+- Record exact URLs used.
+- Validate these viewports: `390x844`, `768x1024`, `1024x768`, `1440x900`.
+- Every subsequent step runs at all four viewports.
 
-STEP 1 - Run both dev servers
-- source: `http://localhost:3000`
-- target: `http://localhost:3001`
-
-STEP 2 - For each page, inject this scroll crawler via Chrome DevTools MCP in both source and target:
+#### Step 2: Inject scroll crawler in both pages
 
 ```javascript
-// FULL PAGE SCROLL CRAWLER - inject in both source and target
 (async function crawlPage(label) {
-  const steps = 20; // captures at 0%, 5%, 10%, ... 100%
-  const totalHeight = Math.max(
-    document.body.scrollHeight,
-    document.documentElement.scrollHeight
+  const steps = 20; // 0,5,10...100
+  const maxY = Math.max(
+    0,
+    Math.max(document.body.scrollHeight, document.documentElement.scrollHeight) - window.innerHeight
   );
-  const results = [];
+  const out = [];
 
-  // Reset to top
   window.scrollTo({ top: 0, behavior: 'instant' });
   await new Promise((r) => setTimeout(r, 1000));
 
   for (let i = 0; i <= steps; i++) {
-    const pct = (i / steps) * 100;
-    const targetY = (totalHeight - window.innerHeight) * (i / steps);
+    const pct = Math.round((i / steps) * 100);
+    const y = (maxY * i) / steps;
+    window.scrollTo({ top: y, behavior: 'instant' });
+    await new Promise((r) => setTimeout(r, 800));
 
-    window.scrollTo({ top: targetY, behavior: 'instant' });
-    await new Promise((r) => setTimeout(r, 800)); // wait for animations to settle
-
-    // Capture computed styles of key elements at this scroll position
-    const keyElements = [
-      'nav', '[data-section]', '.hero', '.hero-video', 'video',
-      '[class*="parallax"]', '[class*="reveal"]', '[class*="fade"]',
-      'section:nth-child(1)', 'section:nth-child(2)', 'section:nth-child(3)'
+    const selectors = [
+      'nav',
+      '.hero',
+      '.hero video',
+      'video',
+      '[data-section]',
+      '[class*=\"reveal\"]',
+      '[class*=\"parallax\"]',
+      '[class*=\"sticky\"]'
     ];
 
     const styles = {};
-    keyElements.forEach((selector) => {
-      const el = document.querySelector(selector);
-      if (el) {
-        const cs = getComputedStyle(el);
-        styles[selector] = {
-          opacity: cs.opacity,
-          transform: cs.transform,
-          visibility: cs.visibility,
-          display: cs.display,
-          clipPath: cs.clipPath,
-          backgroundColor: cs.backgroundColor,
-        };
-      }
-    });
-
-    results.push({ pct: Math.round(pct), scrollY: Math.round(targetY), styles });
-    // Screenshot captured via MCP at each step
+    for (const sel of selectors) {
+      const el = document.querySelector(sel);
+      if (!el) continue;
+      const cs = getComputedStyle(el);
+      styles[sel] = {
+        opacity: cs.opacity,
+        transform: cs.transform,
+        visibility: cs.visibility,
+        display: cs.display,
+        clipPath: cs.clipPath,
+        backgroundColor: cs.backgroundColor
+      };
+    }
+    out.push({ pct, y: Math.round(y), styles });
   }
 
-  return results;
+  return { label, viewport: { w: window.innerWidth, h: window.innerHeight }, out };
 })('page-audit');
 ```
 
-STEP 3 - Screenshot at EVERY step from 0% through 100% in 5% increments
-- Naming: `source_home_scroll_00pct.png`, `target_home_scroll_00pct.png`
-- Store all screenshots in `docs/port-design-system/scroll-audit/`
+Save crawler JSON outputs:
+- `source_<page>_<viewport>_crawler.json`
+- `target_<page>_<viewport>_crawler.json`
 
-STEP 4 - For EACH scroll position, compare source vs target screenshot
-- Same elements visible.
-- Same opacity and transform state.
-- Same video frame for scroll-scrubbed video.
-- Same parallax layer position.
-- Same text reveal state.
-- If any delta exists, fix target, rerun crawler, and recompare before advancing.
+#### Step 3: Screenshot every 5%
+- Capture 0..100% in both source and target.
+- Store in `docs/port-design-system/scroll-audit/`.
+- Naming:
+- `source_<page>_<viewport>_scroll_00pct.png`
+- `target_<page>_<viewport>_scroll_00pct.png`
+- Required count per page: `21 steps x 4 viewports x 2 sides = 168 screenshots`.
+- If count is not exact, FAIL.
 
-STEP 5 - VIDEO RECORDING of full scroll is mandatory for every page
-- Inject this automated scroll in both servers and record the screen:
+#### Step 4: Per-step comparison gate
+At each step:
+- Same element visibility and composition.
+- Same reveal state.
+- Same parallax/sticky position.
+- Same scrubbed media frame behavior.
+- Same computed style state for tracked selectors.
+- Visual parity target is pixel-level fidelity for practical browser rendering (no visible drift while scrubbing or scrolling).
+
+Any mismatch is blocking failure.
+
+Mandatory step-level logging:
+- Create `docs/port-design-system/scroll-audit/<page>-comparison.md`.
+- Log each step as PASS/FAIL with root cause and fix commit reference.
+
+Mandatory quantitative diff:
+- For each screenshot pair, compute visual delta percentage.
+- Threshold target: <= 1.5% pixel delta for non-video frames.
+- For scrubbed video regions, use frame-state parity + computed-style/runtime parity when raw pixel delta is noisy.
+- Store per-step delta in `<page>-comparison.md`.
+
+#### Step 5: Mandatory full-scroll video
+Record full scroll in source and target using identical script.
 
 ```javascript
-// Smooth automated scroll for screen recording
-(async function recordScroll() {
-  const total = document.body.scrollHeight - window.innerHeight;
-  const duration = 8000; // 8 seconds to scroll full page
+(async function autoScrollForRecording() {
+  const total = Math.max(
+    0,
+    Math.max(document.body.scrollHeight, document.documentElement.scrollHeight) - window.innerHeight
+  );
+  const duration = 8000;
   const start = performance.now();
 
-  function step(now) {
-    const elapsed = now - start;
-    const progress = Math.min(elapsed / duration, 1);
-    // Ease in-out for natural feel
-    const eased = progress < 0.5
-      ? 2 * progress * progress
-      : -1 + (4 - 2 * progress) * progress;
+  function tick(now) {
+    const t = Math.min((now - start) / duration, 1);
+    const eased = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
     window.scrollTo(0, total * eased);
-    if (progress < 1) requestAnimationFrame(step);
+    if (t < 1) requestAnimationFrame(tick);
   }
-  requestAnimationFrame(step);
+  requestAnimationFrame(tick);
 })();
 ```
 
-- Save recordings as `source_home_scroll.webm` and `target_home_scroll.webm`.
-- Watch both recordings. They must be indistinguishable.
-- If any animation, timing, or visual effect differs, that is a blocking failure.
+Save as:
+- `source_<page>_<viewport>_scroll.webm`
+- `target_<page>_<viewport>_scroll.webm`
+- Required count per page: `4 viewports x 2 sides = 8 videos`.
 
-STEP 6 - COMPUTED STYLE DIFF for key animated elements
-- For every element that has animation per `ANIMATION_MANIFEST.md`, compare computed styles at the scroll position where the animation is active.
+If timing or transitions differ, fail and fix.
+
+#### Step 6: Computed style diff gate
+For each key animated element in `ANIMATION_MANIFEST.md`, compare source vs target at active scroll positions.
 
 ```javascript
-// Run at the scroll position where the element is mid-animation
-const el = document.querySelector('.hero-title'); // change selector
+const el = document.querySelector('.hero-title');
 const cs = getComputedStyle(el);
 console.table({
   opacity: cs.opacity,
   transform: cs.transform,
   clipPath: cs.clipPath,
+  filter: cs.filter,
+  backdropFilter: cs.backdropFilter,
+  fontFamily: cs.fontFamily,
+  fontSize: cs.fontSize,
+  lineHeight: cs.lineHeight,
+  letterSpacing: cs.letterSpacing,
+  color: cs.color,
+  backgroundColor: cs.backgroundColor,
+  borderRadius: cs.borderRadius,
+  boxShadow: cs.boxShadow,
   animationPlayState: cs.animationPlayState,
   willChange: cs.willChange
 });
 ```
 
-- Values from source and target must match within plus or minus 2% tolerance.
-- If they do not, the animation is not correctly ported. Fix it before advancing.
+Tolerance:
+- Numeric values: plus/minus 2%.
+- Transform matrices and clip-path state must be semantically equivalent.
+- Typography metrics and spacing metrics must match exactly unless font rendering differences are browser-level.
+- If a value mismatch is explained as browser-level variance, record explicit justification and supporting evidence.
 
-STEP 6b - GSAP and Lenis runtime state inspection
-- After loading target in browser, run the following in both source and target:
+Save style dumps:
+- `source_<page>_<viewport>_computed.json`
+- `target_<page>_<viewport>_computed.json`
+- `diff_<page>_<viewport>_computed.md`
+
+#### Step 7: GSAP/Lenis runtime parity gate
 
 ```javascript
-// Verify GSAP ScrollTrigger instances match source
 ScrollTrigger.getAll().forEach((st) => {
   console.log({
-    trigger: st.trigger?.className,
+    trigger: st.trigger?.className || st.trigger?.id || st.trigger?.tagName,
     start: st.start,
     end: st.end,
-    scrub: st.vars.scrub,
-    pin: st.vars.pin
+    scrub: st.vars?.scrub,
+    pin: st.vars?.pin
   });
 });
 ```
 
-- Every ScrollTrigger instance in source must have a matching instance in target with identical `start`, `end`, `scrub`, and `pin` values.
-- Lenis runtime options and event behavior must also match source exactly.
+Source and target must match trigger behavior and key values.
+Lenis options and scroll-event behavior must also match.
 
-STEP 7 - Mark `ANIMATION_MANIFEST.md` entries as `✅` ONLY when all three conditions below pass
-- Step 3 screenshots match at all scroll positions.
-- Step 5 video recordings are indistinguishable.
-- Step 6 computed styles match within tolerance.
+Save runtime dumps:
+- `source_<page>_<viewport>_scrolltrigger.json`
+- `target_<page>_<viewport>_scrolltrigger.json`
+- `source_<page>_<viewport>_lenis.json`
+- `target_<page>_<viewport>_lenis.json`
+- `diff_<page>_<viewport>_runtime.md`
 
-If any one fails, the entry stays `☐`.
+#### Step 8: Animation manifest status updates
+- Mark an entry `[x]` only when steps 3, 5, 6, and 7 pass.
+- Otherwise keep `[ ]`.
 
-## PHASE FINAL - FILE COVERAGE AUDIT (BLOCKING)
-══════════════════════════════════════════════
+#### Step 9: QA evidence index (blocking)
+- Create `docs/port-design-system/qa-evidence-index.md`.
+- For each page+viewport include:
+- screenshot count
+- video files
+- crawler json files
+- computed style dumps
+- runtime dumps
+- SHA256 hash for each artifact
+- No completion report is valid without this index.
 
-Run:
+#### Step 10: Route-level completion gate
+- A route is verified only when all viewports pass steps 3-9.
+- If one viewport fails, route status is FAIL.
+- No global completion while any route status is FAIL.
 
-```bash
-find source/src -type f \
-  ! -path "/node_modules/" \
-  ! -path "/.next/" \
-  | sort > /tmp/source_files.txt
+## Phase Final: FILE COVERAGE AUDIT (blocking)
 
-find target/src -type f \
-  ! -path "/node_modules/" \
-  ! -path "/.next/" \
-  | sort > /tmp/target_files.txt
-```
+Run source/target file inventory and map every source visual file to target equivalent in `modified-files.md`.
 
-For EVERY file in `source_files.txt`:
-- If it is a visual or frontend file, a ported equivalent must exist in target.
-- Map the source path to its target equivalent and document the mapping in `docs/port-design-system/modified-files.md`.
-
-Visual and frontend files include:
+Visual/frontend file scope includes:
 - `*.css`, `*.scss`, `*.sass`, `*.module.css`, `*.module.scss`
-- Any `*.tsx` or `*.ts` that imports from GSAP, Lenis, Framer Motion, or uses `IntersectionObserver`, `requestAnimationFrame`, or scroll listeners
-- Any `*.tsx` or `*.ts` in `/components/`, `/layouts/`, `/sections/`, or `/ui/`
-- Any `*.tsx` or `*.ts` in `/animations/`, `/motion/`, `/scroll/`, or `/effects/`
-- Any `*.tsx` or `*.ts` in `/hooks/` that reads `scrollY` or window dimensions
-- Any `*.tsx` or `*.ts` in `/context/` that provides scroll or animation state
-- Any `*.tsx` or `*.ts` in `/store/` that holds scroll or animation state
-- Any file in `/public/fonts/`, `/public/videos/`, or `/public/images/`
-- `tailwind.config.*`, `postcss.config.*`, and `next.config.*`
+- visual `*.tsx`/`*.ts` under components/layouts/sections/ui/animations/motion/scroll/effects/hooks/context/store
+- files that import/use gsap/lenis/framer-motion/IntersectionObserver/RAF/scroll listeners
+- `tailwind.config.*`, `postcss.config.*`, `next.config.*` visual-related parts
+- visual assets under public images/videos/fonts
 
-Run this grep across the target to catch missing design tokens:
+Color/font parity checks are mandatory:
 
 ```bash
-# Find every hex color used in source
+# source colors
 grep -rhoE '#[0-9a-fA-F]{3,8}' source/src | sort -u > /tmp/source_colors.txt
 
-# Check each one exists in target
+# missing colors in target
 while read color; do
   if ! grep -qr "$color" target/src; then
     echo "MISSING COLOR: $color"
   fi
 done < /tmp/source_colors.txt
 
-# Find every font-family used in source
-grep -rhoE "font-family:[^;']+" source/src | sort -u > /tmp/source_fonts.txt
+# source font-family declarations
+grep -rhoE "font-family:[^;]+" source/src | sort -u > /tmp/source_fonts.txt
 
+# missing fonts in target
 while read font; do
-  if ! grep -qr "${font//font-family:/}" target/src; then
+  name="${font#font-family:}"
+  if ! grep -qr "$name" target/src; then
     echo "MISSING FONT: $font"
   fi
 done < /tmp/source_fonts.txt
 ```
 
-Every `MISSING COLOR` and every `MISSING FONT` is a blocking failure.
-Fix all of them before generating the completion report.
+Any `MISSING COLOR` or `MISSING FONT` is blocking failure.
 
-## Required Per-Phase Output Format
+Zero legacy residue scan (blocking):
+
+```bash
+# Example workflow:
+# 1) extract visual identifiers from baseline target fingerprint
+# 2) remove identifiers that also exist in source fingerprint
+# 3) scan current target for any remaining target-only identifiers
+# 4) if any are found in active codepaths, FAIL
+```
+
+Required output:
+- `docs/port-design-system/zero-legacy-residue-report.md`
+- Must list every scanned identifier and match result.
+- If any target-only legacy identifier remains active, report FAIL and do not close.
+
+## Per-Phase Output Format (mandatory)
 
 After every phase output exactly:
 
-```txt
+```text
 1. Files modified
 - <path>: one-line change summary
 
@@ -564,38 +579,40 @@ After every phase output exactly:
 - [PASS|FAIL] <item>
 ```
 
-## Final Completion Report Format
+## Final Completion Report Format (mandatory)
 
-The final completion report must include:
-- Source path.
-- Target path.
-- Baseline commit hash used.
-- Stash reference created, if any.
-- Package manager used.
-- Dependency additions.
-- Files modified with one-line reasons.
-- Assets copied with absolute source paths.
-- Legacy visual purge result.
-- Page QA matrix.
-- Animation QA matrix.
-- Chrome DevTools MCP inspection result and verdict.
-- Lint, typecheck, and build result.
-- Deployment readiness confirmation.
-- Known gaps, if any.
-- A reproduced section titled exactly `ASSETS REEMPLAZO IA`.
+Include all:
+- Source path
+- Target path
+- Baseline commit hash used
+- Stash reference created, if any
+- Package manager used
+- Dependency additions
+- Files modified with one-line reasons
+- Assets copied with absolute source paths
+- Legacy visual purge result
+- Page QA matrix
+- Animation QA matrix
+- Chrome DevTools MCP inspection result and verdict
+- Lint, typecheck, and build result
+- Deployment readiness confirmation
+- Known gaps, if any
+- Reproduced section titled exactly `ASSETS REEMPLAZO IA`
 
-## Completion Standard
+## Completion Criteria
 
-The migration is complete only when all of the following are true:
-- The target is visually indistinguishable from source during active scrolling.
-- `STACK_MANIFEST.md` shows exact version parity for locked frontend packages.
-- `ANIMATION_MANIFEST.md` has no remaining `☐` entries.
-- `PORT_PLAN.md` shows every component as `✅ VERIFIED`.
-- `docs/port-design-system/legacy-visual-purge.md` confirms the old target visual system is gone.
-- `docs/port-design-system/modified-files.md` covers every visual frontend file from source.
-- Chrome DevTools MCP inspection declares the result faithful and spectacular, or the report explicitly states that MCP was unavailable.
-- Lint, typecheck, and build all pass.
+Migration is complete only if all are true:
+- Source and target are visually indistinguishable during full scroll-driven QA.
+- `STACK_MANIFEST.md` shows exact frontend dependency parity.
+- `ANIMATION_MANIFEST.md` has zero pending entries.
+- `PORT_PLAN.md` has all components verified.
+- `legacy-visual-purge.md` confirms old target visual system removal.
+- `zero-legacy-residue-report.md` confirms no active target-only visual residue.
+- `modified-files.md` covers all source visual files in scope.
+- `qa-evidence-index.md` exists and includes full artifact inventory with hashes.
+- Chrome DevTools MCP verdict is faithful (or explicit blocked status reported).
+- Lint, typecheck, and build pass.
 
-If any one of those conditions fails, the skill must report failure instead of pretending the migration is done.
+If any criterion fails, final status must be failure, not success.
 
 '''
