@@ -1,278 +1,222 @@
 # Port Design System From Local Clone
 
-## What This Is
-This repository is a production-grade template for one skill:
+## What This Repo Is
 
-- `/port-design` — Port the COMPLETE visual design system from a local clone into an existing Next.js project
+This repository exists for one production skill only:
 
-The skill ports the **COMPLETE visual layer** from a local source clone into an existing Next.js target project. This means copying **EVERY SINGLE FILE** related to frontend design: CSS tokens, fonts, images, animations, component shells, layouts, etc. The target should look **VISUALLY IDENTICAL** to the source when opened side-by-side in a browser.
+- `/port-design-system-from-local-clone`
 
-## CRITICAL: What This Actually Means
+That skill performs a complete frontend visual replacement of an existing Next.js target project using a local source clone as the only visual source of truth.
 
-This is a **COMPLETE FRONTEND VISUAL REPLACEMENT**. The target project's entire visual appearance gets replaced with the source clone's visual system.
+The governing rule is not optional:
 
-Think of it like this:
-- The source clone is the **blueprint for how everything looks**
-- The target project is the **house that keeps its rooms and plumbing** (content, routes, backend)
-- Your job: rebuild the target's **entire exterior and interior design** to match the source blueprint exactly
+"El source es la unica fuente de verdad visual. El target debe convertirse visualmente en una copia exacta del source. Lo unico que se conserva del target es el texto, el contenido, las rutas y la logica de negocio."
 
-### The ENTIRE frontend visual layer gets replaced:
+Repeat it during planning, implementation, and QA:
 
-**Structure & Layout:**
-- ALL section ordering and page structure from source
-- ALL grid systems, flex layouts, and positioning
-- ALL spacing scales (margins, paddings, gaps)
-- ALL container widths and responsive breakpoints
-
-**Visual Assets:**
-- ALL CSS/SCSS files with complete token systems
-- ALL font files, font families, font configurations
-- ALL images, SVGs, videos, 3D models used in the UI
-- ALL decorative elements, gradients, shadows, borders, backgrounds
-
-**Animations & Interactions:**
-- ALL GSAP timelines, ScrollTrigger configs, Lenis setup
-- ALL parallax effects, scroll-triggered animations
-- ALL 3D scenes and depth effects
-- ALL hover/focus/active/click states and transitions
-- ALL text reveal animations, stagger effects, entrance animations
-
-**Components:**
-- ALL Navbar variants (desktop, mobile, scrolled, transparent, solid, etc.)
-- ALL Footer layouts and states
-- ALL card designs, button styles, modal/dialog shells
-- ALL form visual styling (inputs, selects, textareas - validation visuals only)
-- ALL hero sections, section dividers, CTA blocks
-
-### What stays from target (ONLY these - NOTHING ELSE):
-
-**Content (words only):**
-- All text content and copy stays from target
-- All headings, paragraphs, labels, descriptions use target's text
-- BUT they get wrapped in source's visual structure with source's fonts, colors, sizes, animations
-
-**Routes & URLs:**
-- Route structure and URL contracts stay from target
-- Navigation links point to target's routes
-- BUT the navbar/footer that contains those links looks like source's
-
-**Backend & Logic (zero changes):**
-- API routes, server actions, database queries
-- Auth flows, session management, redirects
-- Form validation logic, submission handlers
-- Data fetching, state management, mutations
-- Business rules, calculations, API integrations
-
-### Concrete example:
-
-Source has a hero section with:
-- Full-screen background image with parallax
-- Heading that splits and reveals with GSAP
-- Subtitle that fades up with stagger
-- CTA button with hover scale + glow effect
-
-Target has different content but needs the SAME hero treatment:
-- Target's text/heading goes inside source's parallax background
-- Target's CTA text goes inside source's animated button shell
-- All animations, timings, easings, effects come from source
-
-### Simple test:
-If you open source and target in browsers side by side → they should look **VISUALLY IDENTICAL** (same layout, same animations, same fonts, same colors, same spacing).
-The only difference: target displays target's own text content and targets its own API routes.
+"El source es la unica fuente de verdad visual. El target debe convertirse visualmente en una copia exacta del source. Lo unico que se conserva del target es el texto, el contenido, las rutas y la logica de negocio."
 
 ## Mission
+
 Given:
-1. `<source-path>` (absolute path to local clone design system)
-2. `<target-path>` (absolute path to existing Next.js project)
-3. `<commit-hash>` (optional — exact baseline commit in target)
+1. `<source-path>`: absolute path to the local source clone that owns the visual system
+2. `<target-path>`: absolute path to the existing Next.js target app that receives the design
+3. `<commit-hash>`: optional target baseline commit
 
-Produce a target frontend that is **VISUALLY IDENTICAL** to the source design system while preserving target routing, copy, backend integrations, server actions, API routes, auth, and business logic.
+Produce a target frontend that is visually identical to the source while preserving target text content, content data, routes, auth, server actions, API routes, and business logic.
 
-## Tech Stack
-- Framework: Next.js 16 (App Router, React 19, TypeScript strict)
-- UI: shadcn/ui + Tailwind CSS v4
-- Animation stack: GSAP, ScrollTrigger, Lenis, optional Three.js
-- Deployment target: GitHub + server deploy flow
+## What Gets Replaced
 
-## Commands
-- `npm run dev` - start dev server
-- `npm run build` - production build
-- `npm run lint` - eslint
-- `npm run typecheck` - typescript check
-- `npm run check` - lint + typecheck + build
-- `node scripts/sync-skills.mjs` - regenerate all platform skill files
-- `bash scripts/sync-agent-rules.sh` - regenerate platform agent rules
+Replace the complete visual layer with the source system:
+- tokens, CSS variables, theme files, Tailwind config, CSS Modules, styled-components, and global styles
+- font setup, font files, type scale, line height, tracking, text transforms
+- navbar, footer, hero, sections, cards, buttons, forms, modals, tables, empty states, shells
+- layout structure, section order, spacing scale, grid system, breakpoints, responsive behavior
+- GSAP, ScrollTrigger, Lenis, parallax, pinned sections, scrub behaviors, text reveals, 3D presentation
+- source-owned visual assets such as images, videos, textures, SVGs, icons, gradients, Lottie files, fonts, and 3D models
+
+## What Stays From Target
+
+Preserve all non-visual concerns:
+- text content and copy
+- content data, CMS data, database-driven data, and user data assets
+- route contracts, route groups, redirects, rewrites, and dynamic params
+- API routes, server actions, middleware, auth, integrations, analytics, form handlers, and business logic
+
+Asset rule:
+- replace source-owned decorative or UI-owned assets
+- preserve target content-bearing media and user data assets when they belong to content, catalog, CMS, or account data
+- if an asset is ambiguous, preserve the target content asset and restyle the surrounding shell
+
+## Supported Scope
+
+The skill must be general-purpose across:
+- source Next.js projects using App Router or Pages Router
+- target Next.js projects using App Router or Pages Router
+- Tailwind v3, Tailwind v4, CSS Modules, Sass, styled-components, emotion, vanilla CSS, or mixed styling
+- next/font google and next/font local
+- GSAP, ScrollTrigger, Lenis, Three.js, React Three Fiber, Framer Motion, Motion One, or mixed motion stacks
+- shadcn/ui, Radix, custom component systems, auth areas, dashboards, admin panels, and client areas
 
 ## Input Contract
-Skill invocation:
+
+Use exactly:
 
 ```txt
+/port-design-system-from-local-clone "<source-path>" "<target-path>"
 /port-design-system-from-local-clone "<source-path>" "<target-path>" "<commit-hash>"
 ```
 
-Example:
+Quoted Windows paths are required whenever the path contains spaces.
 
-```txt
-/port-design-system-from-local-clone "C:\Users\Javier\Desktop\Repositorios\mari-pepa-redesign" "C:\Users\Javier\Desktop\Repositorios\granja_mari_pepa" "dc376a2cd4a33b9485f550fc8ae7a287f0041c96"
-```
+## Hard Constraints
 
-## Hard Constraints (Never Violate)
+### 1. Source-Owned Visual Fidelity
+Apply literally:
+- CSS token values
+- typography values
+- spacing and radius scales
+- hover, focus, active, and scrolled states
+- animation timings, eases, staggers, delays, scrubs, pins, and trigger points
+- breakpoint behavior and layout shifts
+- source visual shell structure and rhythm
 
-### 1) Asset policy
-- All visual assets must come from `<source-path>`.
-- Never reference external CDNs for source visuals.
-- Never reuse old target design assets if source equivalents exist.
-
-### 2) Pixel fidelity policy
-Extract and apply literally:
-- CSS variables and token values
-- font families, font scales, tracking, line-height
-- GSAP timelines: duration, ease, stagger, delay, repeat
-- ScrollTrigger config: trigger, start, end, scrub, pin, toggle behavior
-- Lenis constructor options and raf integration
-- parallax speed multipliers and direction
-- hover, focus, active visual states
-- breakpoint behavior and responsive shifts
-- 3D scene parameters where present
-
-### 3) Backend isolation policy
+### 2. Backend Isolation
 Never modify:
-- backend code
 - API routes
 - server actions
-- database schema and queries
 - auth logic
+- database schema or queries
 - business logic
+- environment configuration
 
-Only visual wrappers and css/class changes are allowed around functional areas.
+### 3. Content Integrity
+Preserve:
+- target text content
+- target content data
+- target route structure
+- target data-fetching and mutation flows
 
-### 4) Content integrity policy
-- Keep all target copy and text content.
-- Keep route structure and URL contract.
-- Keep data loading and mutation flows.
+### 4. Asset Policy
+- use the source as the only visual asset truth
+- never reference source visuals from an external CDN
+- copy source visual assets locally into the target
+- keep absolute source paths for every copied asset in the docs
 
-### 5) MCP policy
-- Use Chrome DevTools MCP for deep extraction in Phase 0 when available.
-- Use Chrome DevTools MCP for visual QA in Phase 5 when available.
+### 5. MCP Policy
+- use Chrome DevTools MCP for deep extraction in Phase 0 when available
+- use Chrome DevTools MCP for visual QA in Phase 5 when available
 
-### 6) GitHub readiness policy
-At completion target must be push-ready:
+### 6. Deployment Readiness
+At completion the target must be push-ready:
 - no temporary files
 - no broken imports
 - no unresolved asset refs
-- build passes
+- validation results reported exactly
 
-## Execution Workflow (Strict Order)
+## Required Workflow Order
 
-### Phase 0 - Setup and Deep Audit
-1. `git checkout <commit-hash>` in target project (if provided).
-2. Verify clean working tree in target branch before migration edits.
-3. Read source and target trees fully.
-4. Extract source design system literally:
-   - css custom properties
-   - typography tokens
-   - spacing and radius scales
-   - all animation values
-   - Lenis/GSAP/ScrollTrigger setup
-   - parallax and 3D configs
-5. Build extraction report before changing target styles.
+### Phase 0: Setup And Deep Audit
+1. If commit is provided, resolve it safely in target with stash handling when the tree is dirty.
+2. If commit is not provided, work from the current target state without discarding edits.
+3. Validate source and target.
+4. Read both trees deeply.
+5. Create `docs/port-design-system/` in target.
+6. Produce:
+   - `docs/port-design-system/extraction-report.md`
+   - `docs/port-design-system/protected-surface-map.md`
+   - `docs/port-design-system/asset-manifest.md`
+   - `docs/port-design-system/modified-files.md`
 
-Required output for phase:
-- token extraction report
-- source asset inventory
-- target protected-surface map
-
-### Phase 1 - Global Base
+### Phase 1: Global Base
 Apply globally in target:
-- source token system in `globals.css`
-- font setup from source
-- base utility classes
-- Lenis and GSAP global bootstrapping
-- Navbar visual shell
-- Footer visual shell
+- dependency installation for missing visual packages
+- source token system
+- font setup
+- base utilities and theme scopes
+- Lenis and GSAP bootstrapping where used
+- navbar shell
+- footer shell
 
-Do not alter protected logic.
+### Phase 2: Home Page
+Apply source visual structure and motion to the home page end to end while preserving target text and behavior.
 
-### Phase 2 - Home Page
-Apply source visual system to home page end-to-end:
-- hero and media behavior
-- section structure order
-- text reveal animations
-- parallax motion
-- 3D/scroll effects
-- hover state fidelity
+### Phase 3: Remaining Pages
+Apply the same standard to every route, including:
+- services and product pages
+- about and contact pages
+- legal pages
+- auth, client area, admin, and dashboard shells
+- dynamic routes
 
-Keep target content and bindings.
+Pages that do not exist in the source still receive the full source design language. They are not token-only leftovers.
 
-### Phase 3 - Remaining Pages
-Apply same process to:
-1. products/services pages
-2. contact/about pages
-3. legal pages
-4. client area views (style only)
+### Phase 4: Asset Integration
+1. Copy required source-owned visual assets.
+2. Fix every runtime reference.
+3. Update `docs/port-design-system/asset-manifest.md` with absolute source paths.
+4. Update `docs/port-design-system/modified-files.md` with all touched files.
 
-For auth and dashboard pages:
-- style shell only
-- zero business logic changes
-
-### Phase 4 - Asset Integration and Verification
-1. Copy required source assets into target with absolute source paths logged.
-2. Fix and verify all asset references.
-3. Ensure no broken path at runtime.
-4. Produce asset manifest.
-
-### Phase 5 - Internal QA and Final Report
-1. Run visual QA page-by-page (desktop + mobile).
-2. Validate animation checklist PASS/FAIL.
-3. Run build/typecheck/lint where available and report exact status.
-4. Produce final modified-file report.
-5. Confirm target is ready for git push and server deploy.
+### Phase 5: QA And Final Report
+1. Run visual QA page by page on desktop and mobile.
+2. Run animation QA.
+3. Run lint, typecheck, and build where available.
+4. Confirm no protected-surface regressions.
+5. Produce the final completion report.
 
 ## Required Per-Phase Output Format
+
 After every phase output exactly:
 
+```txt
 1. Files modified
-- `<path>`: one-line change summary
+- <path>: one-line change summary
 
 2. Assets used
-- absolute source path per asset
+- <absolute source path>
 
 3. Phase checklist
-- `[PASS|FAIL] <item>`
+- [PASS|FAIL] <item>
+```
+
+If a phase uses no new assets, write `- none` under Assets used.
 
 ## Final Completion Report Format
+
 Include:
 - Source path
 - Target path
 - Baseline commit hash used
-- files modified list with one-line reason
-- assets copied with absolute source paths
-- page QA matrix (PASS/FAIL)
-- animation QA matrix (PASS/FAIL)
-- build/typecheck/lint result
-- deployment readiness confirmation
-- known gaps (if any)
+- Stash reference created, if any
+- Files modified list with one-line reason
+- Assets copied with absolute source paths
+- Dependency additions with package manager used
+- Page QA matrix with PASS or FAIL
+- Animation QA matrix with PASS or FAIL
+- Build, typecheck, and lint result
+- Deployment readiness confirmation
+- Known gaps, if any
 
-## Safety Checklist Before Finishing
-- No backend files changed
-- No API/server actions modified
-- No target text content changed unintentionally
-- No broken imports or missing assets
-- Build succeeds in target frontend
-- Docs generated in target project under `docs/port-design-system/`
+## Maintenance Notes
 
-## Repository Structure (this template)
-```txt
-.claude/skills/port-design/SKILL.md   # source-of-truth skill prompt
-.codex/skills/port-design/SKILL.md    # generated skill copy
-.github/skills/port-design/SKILL.md   # generated skill copy
-scripts/sync-skills.mjs                # sync skill to all platforms
-scripts/sync-agent-rules.sh            # sync AGENTS to platform rule files
-```
+Source of truth:
+- `.claude/skills/port-design-system-from-local-clone/SKILL.md`
 
-## Most Important Notes
-- When launching multi-agent teams, isolate each teammate in a dedicated worktree branch.
-- After editing `AGENTS.md`, run `bash scripts/sync-agent-rules.sh`.
-- After editing `.claude/skills/port-design/SKILL.md`, run `node scripts/sync-skills.mjs`.
+Generated platform outputs:
+- `.codex/skills/port-design-system-from-local-clone/SKILL.md`
+- `.github/skills/port-design-system-from-local-clone/SKILL.md`
+- `.cursor/commands/port-design-system-from-local-clone.md`
+- `.windsurf/workflows/port-design-system-from-local-clone.md`
+- `.gemini/commands/port-design-system-from-local-clone.toml`
+- `.opencode/commands/port-design-system-from-local-clone.md`
+- `.augment/commands/port-design-system-from-local-clone.md`
+- `.continue/commands/port-design-system-from-local-clone.md`
+- `.amazonq/cli-agents/port-design-system-from-local-clone.json`
+
+After editing the skill source of truth, run:
+- `node scripts/sync-skills.mjs`
+
+After editing `AGENTS.md`, run:
+- `bash scripts/sync-agent-rules.sh`
 
 @docs/research/INSPECTION_GUIDE.md

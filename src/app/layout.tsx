@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Port Design System",
-  description: "Clone websites and port design systems between Next.js projects",
+  title: "Port Design System From Local Clone",
+  description:
+    "Slash command and skill template for /port-design-system-from-local-clone.",
 };
 
 export default function RootLayout({
@@ -27,7 +28,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );
 }

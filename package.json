@@ -23,7 +23,7 @@
     "template",
     "tailwindcss",
     "shadcn-ui",
-    "port-design",
+    "port-design-system-from-local-clone",
     "gsap",
     "lenis"
   ],

@@ -8,14 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- `/port-design` skill — ultra-detailed visual design system porting with full GSAP/ScrollTrigger/Lenis extraction, optional commit hash checkout, and full visual replacement methodology
+- `/port-design-system-from-local-clone` final source-of-truth skill spec for full visual replacement from a local clone into any existing Next.js target
 
 ### Changed
-- `scripts/sync-skills.mjs` simplified to single-skill operation
-- `AGENTS.md` rewritten as single-purpose template for `/port-design`
-- `README.md` rewritten as standalone product page
-- Repository converted from multi-skill to single-skill architecture
-- All 9 platform skill files regenerated for `/port-design` only
+- `scripts/sync-skills.mjs` now syncs the single final skill from `.claude/skills/port-design-system-from-local-clone/SKILL.md`
+- stale `port-design` platform artifacts are removed during sync so the repo exposes one command only
+- `AGENTS.md`, `README.md`, target usage docs, and app copy were aligned to the final command name and full visual replacement philosophy
+- all platform skill files are now generated for `/port-design-system-from-local-clone`
 
 ## [0.3.1] - 2026-03-29
 

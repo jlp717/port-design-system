@@ -2,47 +2,65 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Production template for one high-reliability AI skill:
+Single-skill repository for one high-reliability command:
 
-- `/port-design`
+- `/port-design-system-from-local-clone`
 
-This skill ports the **COMPLETE visual design system** from a local clone project into an existing Next.js app. This is a **full frontend visual replacement** — the target project's entire visual appearance gets replaced with the source's visual system.
+This skill performs a full visual replacement of an existing Next.js target project using a local source clone as the only visual source of truth.
 
-**The target should look VISUALLY IDENTICAL to the source** when opened side-by-side in a browser: same layout, same animations, same fonts, same colors, same spacing, same hover effects, same scroll behavior, same parallax, same 3D effects.
+The operating rule is simple and strict:
 
-The only things that stay from target:
-- **Text content** (target's words in source's visual structure)
-- **Routes** (target's URL contracts)
-- **Backend** (API routes, server actions, database, auth, business logic — ZERO changes)
+"El source es la unica fuente de verdad visual. El target debe convertirse visualmente en una copia exacta del source. Lo unico que se conserva del target es el texto, el contenido, las rutas y la logica de negocio."
 
-## What This Skill Does
+## What The Skill Does
 
 Given:
-- `source-path` (local clone with the design you want to copy)
-- `target-path` (existing Next.js app that receives the design)
-- `commit-hash` (optional — baseline commit in target to restore)
+- `source-path`: local source clone that owns the design system
+- `target-path`: existing Next.js app that receives the design
+- `commit-hash`: optional target baseline commit
 
-It ports **EVERYTHING VISUAL**:
-- ALL CSS/SCSS files and design tokens
-- ALL font files and typography configs
-- ALL images, SVGs, videos, 3D models used in UI
-- ALL animation configs (GSAP, ScrollTrigger, Lenis, etc.)
-- ALL component visual shells (Navbar, Footer, Cards, Buttons, etc.)
-- ALL layout structures, spacing scales, grid systems
-- ALL hover/focus/active states and transitions
-- ALL scroll-triggered animations and parallax effects
-- ALL decorative elements, gradients, shadows, borders
+It ports the full visual layer from source to target:
+- tokens, CSS variables, Tailwind config, CSS Modules, global styles, and theme files
+- fonts, font files, type scale, line height, tracking, and text transforms
+- navbar, footer, hero, section wrappers, cards, buttons, forms, tables, dialogs, shells
+- layout structure, spacing system, breakpoints, responsive behavior, and page rhythm
+- GSAP, ScrollTrigger, Lenis, parallax, text reveals, pinned sections, and 3D presentation
+- source-owned visual assets such as images, videos, SVGs, textures, icons, gradients, fonts, and models
 
-## What This Skill Does Not Do
+## What The Skill Preserves
 
-It NEVER changes:
-- API routes
-- Server actions
-- Auth logic
-- Database code
-- Business logic
-- Route contracts
-- Target copy/content (keeps target's text)
+The target keeps:
+- text content and copy
+- content data and data bindings
+- routes, route params, redirects, and rewrites
+- API routes, server actions, auth, middleware, integrations, and business logic
+- form handlers, validation, and mutation flows
+
+Asset boundary:
+- source-owned decorative and UI-owned assets get replaced from source
+- target content-bearing media stays when it belongs to CMS, catalog, or user data
+
+## Supported Source And Target Stacks
+
+The skill is intended to be general-purpose across:
+- Next.js App Router and Pages Router
+- Tailwind v3 and v4
+- CSS Modules, Sass, styled-components, emotion, vanilla CSS, or mixed styling
+- next/font local and google
+- GSAP, ScrollTrigger, Lenis, Three.js, React Three Fiber, Framer Motion, and mixed motion stacks
+- shadcn/ui, Radix, custom component systems, auth areas, client areas, dashboards, and admin surfaces
+
+## Why This Repo Exists
+
+The repo is tuned for one job only: make the target look like the source without breaking target behavior.
+
+That means the skill must:
+- audit both projects deeply before editing
+- optionally check out a safe target baseline when a commit hash is provided
+- install missing visual dependencies automatically
+- apply the source design language to every target route, including pages not present in the source
+- document copied assets and modified files
+- finish in a deploy-ready state
 
 ## Installation
 
@@ -52,102 +70,79 @@ cd port-design-system
 npm install
 ```
 
-Optional maintenance commands:
+## Usage In Codex Or Cursor
+
+Use exactly one of these command forms:
+
+```txt
+/port-design-system-from-local-clone "<source-path>" "<target-path>"
+/port-design-system-from-local-clone "<source-path>" "<target-path>" "<commit-hash>"
+```
+
+Example without commit:
+
+```txt
+/port-design-system-from-local-clone "C:\Users\Javier\Desktop\Repositorios\mari-pepa-redesign" "C:\Users\Javier\Desktop\Repositorios\granja_mari_pepa"
+```
+
+Example with commit:
+
+```txt
+/port-design-system-from-local-clone "C:\Users\Javier\Desktop\Repositorios\mari-pepa-redesign" "C:\Users\Javier\Desktop\Repositorios\granja_mari_pepa" "dc376a2cd4a33b9485f550fc8ae7a287f0041c96"
+```
+
+## Workflow Summary
+
+1. Phase 0: setup, optional checkout, full audit, extraction report, protected-surface map
+2. Phase 1: install dependencies, port tokens, fonts, global motion, navbar, footer
+3. Phase 2: port the home page shell and motion
+4. Phase 3: port every remaining route, including auth and dashboard shells
+5. Phase 4: copy source-owned visual assets and verify references
+6. Phase 5: run visual QA, animation QA, and validation commands; produce final report
+
+## Reports Written Into The Target
+
+The target receives docs under `docs/port-design-system/`, including:
+- `extraction-report.md`
+- `protected-surface-map.md`
+- `asset-manifest.md`
+- `modified-files.md`
+
+## Repository Structure
+
+Source of truth:
+- `.claude/skills/port-design-system-from-local-clone/SKILL.md`
+
+Generated platform files:
+- `.codex/skills/port-design-system-from-local-clone/SKILL.md`
+- `.github/skills/port-design-system-from-local-clone/SKILL.md`
+- `.cursor/commands/port-design-system-from-local-clone.md`
+- `.windsurf/workflows/port-design-system-from-local-clone.md`
+- `.gemini/commands/port-design-system-from-local-clone.toml`
+- `.opencode/commands/port-design-system-from-local-clone.md`
+- `.augment/commands/port-design-system-from-local-clone.md`
+- `.continue/commands/port-design-system-from-local-clone.md`
+- `.amazonq/cli-agents/port-design-system-from-local-clone.json`
+
+## Maintenance Commands
 
 ```bash
-node scripts/sync-skills.mjs        # Regenerate skill files for all platforms
-bash scripts/sync-agent-rules.sh    # Regenerate agent instruction files
-```
-
-## Usage
-
-Command format:
-
-```txt
-/port-design "<source-path>" "<target-path>" "<commit-hash>"
-```
-
-Real example:
-
-```txt
-/port-design "C:\Users\Javier\Desktop\Repositorios\mari-pepa-redesign" "C:\Users\Javier\Desktop\Repositorios\granja_mari_pepa"
-```
-
-With optional commit hash:
-
-```txt
-/port-design "C:\Users\Javier\Desktop\Repositorios\mari-pepa-redesign" "C:\Users\Javier\Desktop\Repositorios\granja_mari_pepa" "dc376a2cd4a33b9485f550fc8ae7a287f0041c96"
-```
-
-## Expected Workflow
-
-1. **Phase 0:** checkout target baseline (optional) + deep extraction report
-2. **Phase 1:** global tokens/fonts/lenis/gsap + navbar/footer
-3. **Phase 2:** home page visual port
-4. **Phase 3:** remaining pages visual port
-5. **Phase 4:** asset copy and reference verification
-6. **Phase 5:** visual QA + final report
-
-Each phase must output:
-- files modified
-- assets used (absolute source path)
-- PASS/FAIL checklist
-
-## Reports Generated In Target
-
-- `docs/port-design-system/extraction-report.md`
-- `docs/port-design-system/changelog.md`
-- `docs/port-design-system/asset-manifest.md`
-
-## Supported Agents
-
-Source-of-truth skill file:
-- `.claude/skills/port-design/SKILL.md`
-
-Generated equivalents:
-- `.codex/skills/port-design/SKILL.md`
-- `.github/skills/port-design/SKILL.md`
-- `.cursor/commands/port-design.md`
-- `.windsurf/workflows/port-design.md`
-- `.gemini/commands/port-design.toml`
-- `.opencode/commands/port-design.md`
-- `.augment/commands/port-design.md`
-- `.continue/commands/port-design.md`
-- `.amazonq/cli-agents/port-design.json`
-
-## Troubleshooting
-
-### Error: source path not found
-- Confirm absolute path exists.
-- Confirm source has web project structure and visual assets.
-
-### Error: target is not a Next.js project
-- Confirm `next` exists in target `package.json`.
-- Confirm target has `app/` or `pages/` routes.
-
-### Error: commit hash not found
-- Run `git fetch --all` in target.
-- Confirm hash exists with `git show <commit-hash>`.
-
-### Build fails after migration
-- Check broken imports and missing assets first.
-- Verify fonts and media files were copied from source.
-- Keep backend/auth/server-action files untouched.
-
-### Visual mismatch vs source
-- Re-check extracted token values and animation constants.
-- Validate responsive behavior at 390/768/1024/1440 widths.
-- Use Chrome DevTools MCP for computed-style and animation QA.
-
-## Development
-
-```bash
-npm run dev
-npm run build
+node scripts/sync-skills.mjs
+bash scripts/sync-agent-rules.sh
 npm run lint
 npm run typecheck
+npm run build
 npm run check
 ```
+
+## Validation Standard
+
+The job is only complete when all of the following are true:
+- the target is visually a source twin at desktop and mobile breakpoints
+- target text, content data, routes, and business logic still work
+- copied visual assets are fully resolved
+- lint, typecheck, and build results are reported explicitly
+- the final report documents files, assets, QA, and readiness
 
 ## License
 
