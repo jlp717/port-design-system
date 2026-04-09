@@ -7,14 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- `/port-design-system-from-local-clone` final source-of-truth skill spec for full visual replacement from a local clone into any existing Next.js target
-
 ### Changed
-- `scripts/sync-skills.mjs` now syncs the single final skill from `.claude/skills/port-design-system-from-local-clone/SKILL.md`
-- stale `port-design` platform artifacts are removed during sync so the repo exposes one command only
-- `AGENTS.md`, `README.md`, target usage docs, and app copy were aligned to the final command name and full visual replacement philosophy
-- all platform skill files are now generated for `/port-design-system-from-local-clone`
+- the source-of-truth skill now enforces hard full-visual-replacement semantics, explicit legacy visual purge, full source visual asset copy, mandatory `ASSETS REEMPLAZO IA` generation, and final local Chrome DevTools MCP inspection
+- `scripts/sync-skills.mjs`, `AGENTS.md`, `README.md`, and platform artifacts were aligned to the stronger final contract
 
 ## [0.3.1] - 2026-03-29
 

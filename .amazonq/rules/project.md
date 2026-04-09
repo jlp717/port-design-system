@@ -9,15 +9,16 @@ This repository exists for one production skill only:
 
 - `/port-design-system-from-local-clone`
 
-That skill performs a complete frontend visual replacement of an existing Next.js target project using a local source clone as the only visual source of truth.
+The skill performs a true FULL VISUAL REPLACEMENT of an existing Next.js target project using a local source clone as the only visual source of truth.
 
-The governing rule is not optional:
-
-"El source es la unica fuente de verdad visual. El target debe convertirse visualmente en una copia exacta del source. Lo unico que se conserva del target es el texto, el contenido, las rutas y la logica de negocio."
-
-Repeat it during planning, implementation, and QA:
+The governing rule is mandatory:
 
 "El source es la unica fuente de verdad visual. El target debe convertirse visualmente en una copia exacta del source. Lo unico que se conserva del target es el texto, el contenido, las rutas y la logica de negocio."
+
+That rule also means:
+- the target's old visual system must be removed
+- the source visual system must replace it completely
+- the target keeps only text, content, routes, and business logic
 
 ## Mission
 
@@ -26,146 +27,104 @@ Given:
 2. `<target-path>`: absolute path to the existing Next.js target app that receives the design
 3. `<commit-hash>`: optional target baseline commit
 
-Produce a target frontend that is visually identical to the source while preserving target text content, content data, routes, auth, server actions, API routes, and business logic.
+Produce a target frontend that is visually identical to the source, with zero residual target visual identity.
 
 ## What Gets Replaced
 
-Replace the complete visual layer with the source system:
-- tokens, CSS variables, theme files, Tailwind config, CSS Modules, styled-components, and global styles
-- font setup, font files, type scale, line height, tracking, text transforms
-- navbar, footer, hero, sections, cards, buttons, forms, modals, tables, empty states, shells
-- layout structure, section order, spacing scale, grid system, breakpoints, responsive behavior
-- GSAP, ScrollTrigger, Lenis, parallax, pinned sections, scrub behaviors, text reveals, 3D presentation
-- source-owned visual assets such as images, videos, textures, SVGs, icons, gradients, Lottie files, fonts, and 3D models
+Replace the entire visual layer with source-derived implementation:
+- globals, theme tokens, Tailwind config, CSS Modules, Sass, styled-components, and visual wrappers
+- font system, type scale, spacing, radius, shadows, gradients, backgrounds, responsive behavior
+- navbar, footer, hero, sections, cards, buttons, forms, dialogs, tables, drawers, shells
+- hover, focus, active, sticky, loading, and open states
+- GSAP, ScrollTrigger, Lenis, parallax, scrub, cinematic motion, and 3D presentation
+- source visual assets including images, videos, SVGs, textures, fonts, models, and decorative media
 
 ## What Stays From Target
 
-Preserve all non-visual concerns:
+Preserve all non-visual behavior:
 - text content and copy
-- content data, CMS data, database-driven data, and user data assets
-- route contracts, route groups, redirects, rewrites, and dynamic params
-- API routes, server actions, middleware, auth, integrations, analytics, form handlers, and business logic
+- content data, CMS data, and user data assets
+- routes, redirects, rewrites, and dynamic params
+- API routes, server actions, auth, middleware, integrations, analytics, form handlers, and business logic
 
-Asset rule:
-- replace source-owned decorative or UI-owned assets
-- preserve target content-bearing media and user data assets when they belong to content, catalog, CMS, or account data
-- if an asset is ambiguous, preserve the target content asset and restyle the surrounding shell
+## Non-Negotiable Rules
 
-## Supported Scope
+### 1. No Legacy Visual System Left Behind
+- remove old target tokens, visual classes, theme values, and decorative assets
+- delete old target visual files once source replacements are wired
+- do not finish with a hybrid design
 
-The skill must be general-purpose across:
-- source Next.js projects using App Router or Pages Router
-- target Next.js projects using App Router or Pages Router
-- Tailwind v3, Tailwind v4, CSS Modules, Sass, styled-components, emotion, vanilla CSS, or mixed styling
-- next/font google and next/font local
-- GSAP, ScrollTrigger, Lenis, Three.js, React Three Fiber, Framer Motion, Motion One, or mixed motion stacks
-- shadcn/ui, Radix, custom component systems, auth areas, dashboards, admin panels, and client areas
+### 2. Source Visual Fidelity
+Apply the source literally:
+- tokens, typography, spacing, breakpoints, shell structure, and motion values
+- GSAP, ScrollTrigger, Lenis, parallax, 3D, and responsive behavior
 
-## Input Contract
-
-Use exactly:
-
-```txt
-/port-design-system-from-local-clone "<source-path>" "<target-path>"
-/port-design-system-from-local-clone "<source-path>" "<target-path>" "<commit-hash>"
-```
-
-Quoted Windows paths are required whenever the path contains spaces.
-
-## Hard Constraints
-
-### 1. Source-Owned Visual Fidelity
-Apply literally:
-- CSS token values
-- typography values
-- spacing and radius scales
-- hover, focus, active, and scrolled states
-- animation timings, eases, staggers, delays, scrubs, pins, and trigger points
-- breakpoint behavior and layout shifts
-- source visual shell structure and rhythm
-
-### 2. Backend Isolation
+### 3. Backend Isolation
 Never modify:
 - API routes
 - server actions
 - auth logic
-- database schema or queries
+- database code
 - business logic
 - environment configuration
 
-### 3. Content Integrity
-Preserve:
-- target text content
-- target content data
-- target route structure
-- target data-fetching and mutation flows
-
 ### 4. Asset Policy
-- use the source as the only visual asset truth
-- never reference source visuals from an external CDN
-- copy source visual assets locally into the target
-- keep absolute source paths for every copied asset in the docs
+- copy the full source visual asset set needed for fidelity
+- log absolute source paths for copied assets
+- preserve target content-bearing assets when they are business content
 
-### 5. MCP Policy
-- use Chrome DevTools MCP for deep extraction in Phase 0 when available
-- use Chrome DevTools MCP for visual QA in Phase 5 when available
+### 5. ASSETS REEMPLAZO IA
+Always generate:
+- `docs/port-design-system/assets-reemplazo-ia.md`
 
-### 6. Deployment Readiness
-At completion the target must be push-ready:
-- no temporary files
-- no broken imports
-- no unresolved asset refs
-- validation results reported exactly
+That doc must contain `# ASSETS REEMPLAZO IA` and include:
+- every copied key asset
+- recommended target path
+- usage explanation
+- production-ready prompts for tools such as Flux, Kling, or Runway
+- business-adapted replacements, including Granja Mari Pepa-specific prompts when applicable
+
+### 6. MCP Requirement
+- use Chrome DevTools MCP for deep extraction when available
+- use Chrome DevTools MCP after migration to inspect the local target and report whether it looks spectacular and faithful to the source
+- if MCP is unavailable, report the block explicitly
 
 ## Required Workflow Order
 
-### Phase 0: Setup And Deep Audit
-1. If commit is provided, resolve it safely in target with stash handling when the tree is dirty.
-2. If commit is not provided, work from the current target state without discarding edits.
-3. Validate source and target.
-4. Read both trees deeply.
-5. Create `docs/port-design-system/` in target.
-6. Produce:
-   - `docs/port-design-system/extraction-report.md`
-   - `docs/port-design-system/protected-surface-map.md`
-   - `docs/port-design-system/asset-manifest.md`
-   - `docs/port-design-system/modified-files.md`
+### Phase 0: Setup And Audit
+- resolve optional commit safely with stash handling
+- validate source and target
+- read both trees deeply
+- generate docs in `docs/port-design-system/`
+- extract the full source visual system
+- map target protected surfaces and target legacy visual surfaces to purge
 
-### Phase 1: Global Base
-Apply globally in target:
-- dependency installation for missing visual packages
-- source token system
-- font setup
-- base utilities and theme scopes
-- Lenis and GSAP bootstrapping where used
-- navbar shell
-- footer shell
+### Phase 1: Global Replacement
+- install missing visual dependencies
+- replace source globals, tokens, fonts, motion bootstrapping, navbar shell, and footer shell
+- remove target legacy theme values and visual globals
 
-### Phase 2: Home Page
-Apply source visual structure and motion to the home page end to end while preserving target text and behavior.
+### Phase 2: Full Page Port
+- port the home page visually end to end
+- port every remaining route, including auth and dashboard shells
+- pages missing from the source still receive the full source design language
 
-### Phase 3: Remaining Pages
-Apply the same standard to every route, including:
-- services and product pages
-- about and contact pages
-- legal pages
-- auth, client area, admin, and dashboard shells
-- dynamic routes
+### Phase 3: Assets And Purge
+- copy source visual assets
+- wire references
+- remove obsolete target visual assets and styles
+- write purge documentation and asset manifest
 
-Pages that do not exist in the source still receive the full source design language. They are not token-only leftovers.
+### Phase 4: ASSETS REEMPLAZO IA
+- generate `assets-reemplazo-ia.md`
+- include cinematic prompts and replacement guidance for key assets
 
-### Phase 4: Asset Integration
-1. Copy required source-owned visual assets.
-2. Fix every runtime reference.
-3. Update `docs/port-design-system/asset-manifest.md` with absolute source paths.
-4. Update `docs/port-design-system/modified-files.md` with all touched files.
-
-### Phase 5: QA And Final Report
-1. Run visual QA page by page on desktop and mobile.
-2. Run animation QA.
-3. Run lint, typecheck, and build where available.
-4. Confirm no protected-surface regressions.
-5. Produce the final completion report.
+### Phase 5: Final MCP QA And Validation
+- run the target locally
+- inspect the target in Chrome DevTools MCP when available
+- report if it looks spectacular and faithful to the source
+- run lint, typecheck, and build
+- produce final report
 
 ## Required Per-Phase Output Format
 
@@ -182,8 +141,6 @@ After every phase output exactly:
 - [PASS|FAIL] <item>
 ```
 
-If a phase uses no new assets, write `- none` under Assets used.
-
 ## Final Completion Report Format
 
 Include:
@@ -191,14 +148,18 @@ Include:
 - Target path
 - Baseline commit hash used
 - Stash reference created, if any
-- Files modified list with one-line reason
+- Package manager used
+- Dependency additions
+- Files modified with one-line reasons
 - Assets copied with absolute source paths
-- Dependency additions with package manager used
-- Page QA matrix with PASS or FAIL
-- Animation QA matrix with PASS or FAIL
-- Build, typecheck, and lint result
+- Legacy visual purge result
+- Page QA matrix
+- Animation QA matrix
+- Chrome DevTools MCP inspection result and verdict
+- Lint, typecheck, and build result
 - Deployment readiness confirmation
 - Known gaps, if any
+- A reproduced section titled exactly `ASSETS REEMPLAZO IA`
 
 ## Maintenance Notes
 

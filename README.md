@@ -2,65 +2,77 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Single-skill repository for one high-reliability command:
+Single-skill repository for one command:
 
 - `/port-design-system-from-local-clone`
 
-This skill performs a full visual replacement of an existing Next.js target project using a local source clone as the only visual source of truth.
+This repo exists to define and distribute one high-reliability skill for FULL VISUAL REPLACEMENT of a Next.js target from a local source clone.
 
-The operating rule is simple and strict:
+The operating rule is strict:
 
 "El source es la unica fuente de verdad visual. El target debe convertirse visualmente en una copia exacta del source. Lo unico que se conserva del target es el texto, el contenido, las rutas y la logica de negocio."
 
-## What The Skill Does
+## What This Skill Guarantees
 
-Given:
-- `source-path`: local source clone that owns the design system
-- `target-path`: existing Next.js app that receives the design
-- `commit-hash`: optional target baseline commit
+The skill is designed to:
+- make the target visually identical to the source
+- remove the target's old visual system entirely
+- preserve target text, content data, routes, and business logic
+- copy source visual assets into the target
+- generate an `ASSETS REEMPLAZO IA` appendix with cinematic prompts for adapted asset generation
+- inspect the local target with Chrome DevTools MCP when available and report whether it looks spectacular and faithful to the source
 
-It ports the full visual layer from source to target:
-- tokens, CSS variables, Tailwind config, CSS Modules, global styles, and theme files
-- fonts, font files, type scale, line height, tracking, and text transforms
-- navbar, footer, hero, section wrappers, cards, buttons, forms, tables, dialogs, shells
-- layout structure, spacing system, breakpoints, responsive behavior, and page rhythm
-- GSAP, ScrollTrigger, Lenis, parallax, text reveals, pinned sections, and 3D presentation
-- source-owned visual assets such as images, videos, SVGs, textures, icons, gradients, fonts, and models
+## What Gets Replaced
 
-## What The Skill Preserves
+The full visual layer is in scope:
+- globals, tokens, Tailwind config, CSS Modules, Sass, styled-components, and presentational wrappers
+- font system, type scale, spacing, grids, breakpoints, shadows, gradients, radii, and surfaces
+- navbar, footer, hero, sections, cards, buttons, forms, dialogs, tables, tabs, drawers, and shells
+- hover, focus, active, sticky, open, and loading states
+- GSAP, ScrollTrigger, Lenis, parallax, scrub, cinematic motion, and 3D presentation
+- source-owned visual assets including videos, images, SVGs, fonts, models, textures, and decorative media
+
+## What Stays Untouched
 
 The target keeps:
 - text content and copy
-- content data and data bindings
-- routes, route params, redirects, and rewrites
-- API routes, server actions, auth, middleware, integrations, and business logic
-- form handlers, validation, and mutation flows
+- content data, CMS data, and user data assets
+- routes, redirects, rewrites, and dynamic params
+- API routes, server actions, auth, middleware, analytics, integrations, and business logic
+- form handlers, validation logic, data fetching, and mutation flows
 
-Asset boundary:
-- source-owned decorative and UI-owned assets get replaced from source
-- target content-bearing media stays when it belongs to CMS, catalog, or user data
+## Legacy Visual Purge
 
-## Supported Source And Target Stacks
+This skill is not a merge strategy.
+It explicitly requires removal of the target's legacy visual system:
+- old target tokens must be removed or replaced
+- old target visual classes and wrappers must be removed or rewritten
+- old target decorative assets must be removed when the source equivalents are installed
+- the final target cannot remain a visual hybrid
+
+## ASSETS REEMPLAZO IA
+
+After migration the skill must generate:
+- `docs/port-design-system/assets-reemplazo-ia.md`
+
+That doc must contain `# ASSETS REEMPLAZO IA` and list the copied source assets, including for each key asset:
+- exact filename
+- recommended target path
+- usage in the UI
+- production-ready prompt for Flux, Kling, Runway, or similar tools
+- business adaptation guidance
+
+If the target business is Granja Mari Pepa, the prompts must explicitly adapt the visuals to Granja Mari Pepa.
+
+## Supported Stack Variants
 
 The skill is intended to be general-purpose across:
 - Next.js App Router and Pages Router
 - Tailwind v3 and v4
 - CSS Modules, Sass, styled-components, emotion, vanilla CSS, or mixed styling
 - next/font local and google
-- GSAP, ScrollTrigger, Lenis, Three.js, React Three Fiber, Framer Motion, and mixed motion stacks
-- shadcn/ui, Radix, custom component systems, auth areas, client areas, dashboards, and admin surfaces
-
-## Why This Repo Exists
-
-The repo is tuned for one job only: make the target look like the source without breaking target behavior.
-
-That means the skill must:
-- audit both projects deeply before editing
-- optionally check out a safe target baseline when a commit hash is provided
-- install missing visual dependencies automatically
-- apply the source design language to every target route, including pages not present in the source
-- document copied assets and modified files
-- finish in a deploy-ready state
+- GSAP, ScrollTrigger, Lenis, Framer Motion, Three.js, React Three Fiber, and mixed motion stacks
+- shadcn/ui, Radix, custom component systems, dashboards, auth pages, client areas, and admin panels
 
 ## Installation
 
@@ -72,20 +84,20 @@ npm install
 
 ## Usage In Codex Or Cursor
 
-Use exactly one of these command forms:
+Use exactly:
 
 ```txt
 /port-design-system-from-local-clone "<source-path>" "<target-path>"
 /port-design-system-from-local-clone "<source-path>" "<target-path>" "<commit-hash>"
 ```
 
-Example without commit:
+Example:
 
 ```txt
 /port-design-system-from-local-clone "C:\Users\Javier\Desktop\Repositorios\mari-pepa-redesign" "C:\Users\Javier\Desktop\Repositorios\granja_mari_pepa"
 ```
 
-Example with commit:
+With commit:
 
 ```txt
 /port-design-system-from-local-clone "C:\Users\Javier\Desktop\Repositorios\mari-pepa-redesign" "C:\Users\Javier\Desktop\Repositorios\granja_mari_pepa" "dc376a2cd4a33b9485f550fc8ae7a287f0041c96"
@@ -93,27 +105,31 @@ Example with commit:
 
 ## Workflow Summary
 
-1. Phase 0: setup, optional checkout, full audit, extraction report, protected-surface map
-2. Phase 1: install dependencies, port tokens, fonts, global motion, navbar, footer
-3. Phase 2: port the home page shell and motion
-4. Phase 3: port every remaining route, including auth and dashboard shells
-5. Phase 4: copy source-owned visual assets and verify references
-6. Phase 5: run visual QA, animation QA, and validation commands; produce final report
+1. Setup, optional checkout, deep audit, source extraction, protected-surface map, legacy visual purge plan
+2. Global visual replacement, font port, motion bootstrapping, navbar and footer replacement
+3. Home page and remaining pages full visual port
+4. Full source asset copy and reference verification
+5. Legacy visual purge verification
+6. `ASSETS REEMPLAZO IA` generation
+7. Final Chrome DevTools MCP local inspection and validation
 
-## Reports Written Into The Target
+## Docs Written Into The Target
 
-The target receives docs under `docs/port-design-system/`, including:
+The target must receive docs under `docs/port-design-system/`, including:
 - `extraction-report.md`
 - `protected-surface-map.md`
+- `source-asset-inventory.md`
+- `legacy-visual-purge.md`
 - `asset-manifest.md`
 - `modified-files.md`
+- `assets-reemplazo-ia.md`
 
-## Repository Structure
+## Generated Platform Files
 
 Source of truth:
 - `.claude/skills/port-design-system-from-local-clone/SKILL.md`
 
-Generated platform files:
+Generated outputs:
 - `.codex/skills/port-design-system-from-local-clone/SKILL.md`
 - `.github/skills/port-design-system-from-local-clone/SKILL.md`
 - `.cursor/commands/port-design-system-from-local-clone.md`
@@ -135,14 +151,15 @@ npm run build
 npm run check
 ```
 
-## Validation Standard
+## Completion Standard
 
 The job is only complete when all of the following are true:
-- the target is visually a source twin at desktop and mobile breakpoints
-- target text, content data, routes, and business logic still work
-- copied visual assets are fully resolved
-- lint, typecheck, and build results are reported explicitly
-- the final report documents files, assets, QA, and readiness
+- the target is visually a source twin on desktop and mobile
+- the target's old visual system is gone
+- copied assets are fully wired
+- `ASSETS REEMPLAZO IA` exists and is useful
+- Chrome DevTools MCP local inspection was performed when available and reported honestly
+- lint, typecheck, and build status are reported explicitly
 
 ## License
 

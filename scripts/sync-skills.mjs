@@ -15,7 +15,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SKILL_NAME = 'port-design-system-from-local-clone';
 const STALE_NAMES = ['port-design'];
 const SHORT_DESC =
-  'Full visual replacement of a Next.js target using a local source clone while preserving target text, content data, routes, and business logic.';
+  'Full visual replacement of a Next.js target from a local source clone, including legacy-style purge, full source asset copy, ASSETS REEMPLAZO IA appendix generation, and final Chrome DevTools MCP fidelity inspection.';
 const ARGUMENT_HINT = '<source-path> <target-path> [<commit-hash>]';
 const NO_ARGS_TEXT =
   'the source path, target path, and optional commit hash provided by the user';
