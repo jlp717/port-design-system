@@ -37,9 +37,12 @@ body:
       label: Category
       options:
         - Local clone extraction
+        - Legacy visual purge
         - Visual token migration
         - Animation and interaction parity
         - Asset pipeline
+        - AI asset replacement prompts
+        - Chrome DevTools MCP QA
         - Validation and QA
         - Documentation
         - Developer experience
