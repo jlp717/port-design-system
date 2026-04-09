@@ -12,7 +12,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SKILL_NAME = 'port-design-system-from-local-clone';
+const SKILL_NAME = 'port-design';
 const SHORT_DESC =
   'Port a complete visual design system from a local clone into an existing Next.js project. Target keeps content, routes, and backend but looks visually identical to source.';
 const ARGUMENT_HINT = '<source-path> <target-path> [<commit-hash>]';

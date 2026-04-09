@@ -1,4 +1,4 @@
-<!-- AUTO-GENERATED from .claude/skills/port-design-system-from-local-clone/SKILL.md — do not edit directly.
+<!-- AUTO-GENERATED from .claude/skills/port-design/SKILL.md — do not edit directly.
      Run `node scripts/sync-skills.mjs` to regenerate. -->
 
 
@@ -11,7 +11,7 @@ Parse `the source path and target path provided by the user` as:
 2. `<target-path>` (required — absolute path to existing Next.js project)
 3. `<commit-hash>` (optional — baseline commit in target to restore before porting)
 
-If `<commit-hash>` is provided, run `git stash push -m "pre-port-design-system stash"` then `git checkout <commit-hash>` in target before starting.
+If `<commit-hash>` is provided, run `git stash push -m "pre-port-design stash"` then `git checkout <commit-hash>` in target before starting.
 If not provided, work with the target's current state.
 If `<source-path>` or `<target-path>` is missing, stop and ask for it.
 If either path contains spaces, the user should wrap it in quotes.

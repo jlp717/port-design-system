@@ -4,7 +4,7 @@
 
 Production template for one high-reliability AI skill:
 
-- `/port-design-system-from-local-clone`
+- `/port-design`
 
 This skill ports the **COMPLETE visual design system** from a local clone project into an existing Next.js app. This is a **full frontend visual replacement** — the target project's entire visual appearance gets replaced with the source's visual system.
 
@@ -64,19 +64,19 @@ bash scripts/sync-agent-rules.sh    # Regenerate agent instruction files
 Command format:
 
 ```txt
-/port-design-system-from-local-clone "<source-path>" "<target-path>" "<commit-hash>"
+/port-design "<source-path>" "<target-path>" "<commit-hash>"
 ```
 
 Real example:
 
 ```txt
-/port-design-system-from-local-clone "C:\Users\Javier\Desktop\Repositorios\mari-pepa-redesign" "C:\Users\Javier\Desktop\Repositorios\granja_mari_pepa"
+/port-design "C:\Users\Javier\Desktop\Repositorios\mari-pepa-redesign" "C:\Users\Javier\Desktop\Repositorios\granja_mari_pepa"
 ```
 
 With optional commit hash:
 
 ```txt
-/port-design-system-from-local-clone "C:\Users\Javier\Desktop\Repositorios\mari-pepa-redesign" "C:\Users\Javier\Desktop\Repositorios\granja_mari_pepa" "dc376a2cd4a33b9485f550fc8ae7a287f0041c96"
+/port-design "C:\Users\Javier\Desktop\Repositorios\mari-pepa-redesign" "C:\Users\Javier\Desktop\Repositorios\granja_mari_pepa" "dc376a2cd4a33b9485f550fc8ae7a287f0041c96"
 ```
 
 ## Expected Workflow
@@ -102,18 +102,18 @@ Each phase must output:
 ## Supported Agents
 
 Source-of-truth skill file:
-- `.claude/skills/port-design-system-from-local-clone/SKILL.md`
+- `.claude/skills/port-design/SKILL.md`
 
 Generated equivalents:
-- `.codex/skills/port-design-system-from-local-clone/SKILL.md`
-- `.github/skills/port-design-system-from-local-clone/SKILL.md`
-- `.cursor/commands/port-design-system-from-local-clone.md`
-- `.windsurf/workflows/port-design-system-from-local-clone.md`
-- `.gemini/commands/port-design-system-from-local-clone.toml`
-- `.opencode/commands/port-design-system-from-local-clone.md`
-- `.augment/commands/port-design-system-from-local-clone.md`
-- `.continue/commands/port-design-system-from-local-clone.md`
-- `.amazonq/cli-agents/port-design-system-from-local-clone.json`
+- `.codex/skills/port-design/SKILL.md`
+- `.github/skills/port-design/SKILL.md`
+- `.cursor/commands/port-design.md`
+- `.windsurf/workflows/port-design.md`
+- `.gemini/commands/port-design.toml`
+- `.opencode/commands/port-design.md`
+- `.augment/commands/port-design.md`
+- `.continue/commands/port-design.md`
+- `.amazonq/cli-agents/port-design.json`
 
 ## Troubleshooting
 

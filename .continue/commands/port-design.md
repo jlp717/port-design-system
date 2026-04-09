@@ -1,17 +1,22 @@
-<!-- AUTO-GENERATED from .claude/skills/port-design-system-from-local-clone/SKILL.md — do not edit directly.
+---
+name: port-design
+description: "Port a complete visual design system from a local clone into an existing Next.js project. Target keeps content, routes, and backend but looks visually identical to source."
+invokable: true
+---
+<!-- AUTO-GENERATED from .claude/skills/port-design/SKILL.md — do not edit directly.
      Run `node scripts/sync-skills.mjs` to regenerate. -->
 
 
 # Port Design System From Local Clone
 
-You are about to perform a **FULL VISUAL REPLACEMENT** of a target project using the visual design system from a source project, using the paths provided in `the source path and target path provided by the user`.
+You are about to perform a **FULL VISUAL REPLACEMENT** of a target project using the visual design system from a source project, using the paths provided in `$ARGUMENTS`.
 
-Parse `the source path and target path provided by the user` as:
+Parse `$ARGUMENTS` as:
 1. `<source-path>` (required — absolute path to local clone with the design)
 2. `<target-path>` (required — absolute path to existing Next.js project)
 3. `<commit-hash>` (optional — baseline commit in target to restore before porting)
 
-If `<commit-hash>` is provided, run `git stash push -m "pre-port-design-system stash"` then `git checkout <commit-hash>` in target before starting.
+If `<commit-hash>` is provided, run `git stash push -m "pre-port-design stash"` then `git checkout <commit-hash>` in target before starting.
 If not provided, work with the target's current state.
 If `<source-path>` or `<target-path>` is missing, stop and ask for it.
 If either path contains spaces, the user should wrap it in quotes.
@@ -108,7 +113,7 @@ Every item in this list is extracted from the source and applied to EVERY page i
 
 ## Pre-Flight
 
-1. **Parse arguments.** Split `the source path and target path provided by the user` into `<source-path>`, `<target-path>`, and optionally `<commit-hash>`. If fewer than 2 paths are provided, ask the user. Resolve relative paths to absolute.
+1. **Parse arguments.** Split `$ARGUMENTS` into `<source-path>`, `<target-path>`, and optionally `<commit-hash>`. If fewer than 2 paths are provided, ask the user. Resolve relative paths to absolute.
 
 2. **Handle optional commit hash.** If `<commit-hash>` is provided:
    - `cd <target-path>` and `git stash push -m "pre-port stash"`

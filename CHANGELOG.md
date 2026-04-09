@@ -8,14 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- `/port-design-system-from-local-clone` skill — ultra-detailed visual design system porting with full GSAP/ScrollTrigger/Lenis extraction, optional commit hash checkout, and surgical merge methodology
+- `/port-design` skill — ultra-detailed visual design system porting with full GSAP/ScrollTrigger/Lenis extraction, optional commit hash checkout, and full visual replacement methodology
 
 ### Changed
 - `scripts/sync-skills.mjs` simplified to single-skill operation
-- `AGENTS.md` rewritten as single-purpose template for `/port-design-system-from-local-clone`
+- `AGENTS.md` rewritten as single-purpose template for `/port-design`
 - `README.md` rewritten as standalone product page
 - Repository converted from multi-skill to single-skill architecture
-- All 9 platform skill files regenerated for `/port-design-system-from-local-clone` only
+- All 9 platform skill files regenerated for `/port-design` only
 
 ## [0.3.1] - 2026-03-29
 

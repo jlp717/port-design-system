@@ -1,10 +1,9 @@
 ---
-description: "Port a complete visual design system from a local clone into an existing Next.js project. Target keeps content, routes, and backend but looks visually identical to source."
+name: port-design
+description: Port the COMPLETE visual design system (EVERY visual pixel, layout, animation, token, font, color, spacing, hover state, scroll effect) from a LOCAL source clone folder into an existing Next.js target project. The target becomes VISUALLY IDENTICAL to the source — only text content, routes, and business logic are preserved. Requires <source-path> <target-path>. Optional: <commit-hash>.
 argument-hint: "<source-path> <target-path> [<commit-hash>]"
+user-invocable: true
 ---
-<!-- AUTO-GENERATED from .claude/skills/port-design-system-from-local-clone/SKILL.md — do not edit directly.
-     Run `node scripts/sync-skills.mjs` to regenerate. -->
-
 
 # Port Design System From Local Clone
 
@@ -15,7 +14,7 @@ Parse `$ARGUMENTS` as:
 2. `<target-path>` (required — absolute path to existing Next.js project)
 3. `<commit-hash>` (optional — baseline commit in target to restore before porting)
 
-If `<commit-hash>` is provided, run `git stash push -m "pre-port-design-system stash"` then `git checkout <commit-hash>` in target before starting.
+If `<commit-hash>` is provided, run `git stash push -m "pre-port-design stash"` then `git checkout <commit-hash>` in target before starting.
 If not provided, work with the target's current state.
 If `<source-path>` or `<target-path>` is missing, stop and ask for it.
 If either path contains spaces, the user should wrap it in quotes.

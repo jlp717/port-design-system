@@ -10,7 +10,7 @@ alwaysApply: true
 ## What This Is
 This repository is a production-grade template for one skill:
 
-- `/port-design-system-from-local-clone`
+- `/port-design` — Port the COMPLETE visual design system from a local clone into an existing Next.js project
 
 The skill ports the **COMPLETE visual layer** from a local source clone into an existing Next.js target project. This means copying **EVERY SINGLE FILE** related to frontend design: CSS tokens, fonts, images, animations, component shells, layouts, etc. The target should look **VISUALLY IDENTICAL** to the source when opened side-by-side in a browser.
 
@@ -270,17 +270,17 @@ Include:
 
 ## Repository Structure (this template)
 ```txt
-.claude/skills/port-design-system-from-local-clone/SKILL.md   # source-of-truth skill prompt
-.codex/skills/port-design-system-from-local-clone/SKILL.md    # generated skill copy
-.github/skills/port-design-system-from-local-clone/SKILL.md   # generated skill copy
-scripts/sync-skills.mjs                                        # sync skill to all platforms
-scripts/sync-agent-rules.sh                                    # sync AGENTS to platform rule files
+.claude/skills/port-design/SKILL.md   # source-of-truth skill prompt
+.codex/skills/port-design/SKILL.md    # generated skill copy
+.github/skills/port-design/SKILL.md   # generated skill copy
+scripts/sync-skills.mjs                # sync skill to all platforms
+scripts/sync-agent-rules.sh            # sync AGENTS to platform rule files
 ```
 
 ## Most Important Notes
 - When launching multi-agent teams, isolate each teammate in a dedicated worktree branch.
 - After editing `AGENTS.md`, run `bash scripts/sync-agent-rules.sh`.
-- After editing `.claude/skills/port-design-system-from-local-clone/SKILL.md`, run `node scripts/sync-skills.mjs`.
+- After editing `.claude/skills/port-design/SKILL.md`, run `node scripts/sync-skills.mjs`.
 
 # Local Clone Inspection Guide
 
