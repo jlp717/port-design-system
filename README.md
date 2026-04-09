@@ -20,7 +20,7 @@ The only things that stay from target:
 Given:
 - `source-path` (local clone with the design you want to copy)
 - `target-path` (existing Next.js app that receives the design)
-- `commit-hash` (baseline commit in target to restore)
+- `commit-hash` (optional — baseline commit in target to restore)
 
 It ports **EVERYTHING VISUAL**:
 - ALL CSS/SCSS files and design tokens
@@ -55,8 +55,8 @@ npm install
 Optional maintenance commands:
 
 ```bash
-node scripts/sync-skills.mjs
-bash scripts/sync-agent-rules.sh
+node scripts/sync-skills.mjs        # Regenerate skill files for all platforms
+bash scripts/sync-agent-rules.sh    # Regenerate agent instruction files
 ```
 
 ## Usage
@@ -70,17 +70,23 @@ Command format:
 Real example:
 
 ```txt
+/port-design-system-from-local-clone "C:\Users\Javier\Desktop\Repositorios\mari-pepa-redesign" "C:\Users\Javier\Desktop\Repositorios\granja_mari_pepa"
+```
+
+With optional commit hash:
+
+```txt
 /port-design-system-from-local-clone "C:\Users\Javier\Desktop\Repositorios\mari-pepa-redesign" "C:\Users\Javier\Desktop\Repositorios\granja_mari_pepa" "dc376a2cd4a33b9485f550fc8ae7a287f0041c96"
 ```
 
 ## Expected Workflow
 
-1. Phase 0: checkout target baseline + deep extraction report
-2. Phase 1: global tokens/fonts/lenis/gsap + navbar/footer
-3. Phase 2: home page visual port
-4. Phase 3: remaining pages visual port
-5. Phase 4: asset copy and reference verification
-6. Phase 5: visual QA + final report
+1. **Phase 0:** checkout target baseline (optional) + deep extraction report
+2. **Phase 1:** global tokens/fonts/lenis/gsap + navbar/footer
+3. **Phase 2:** home page visual port
+4. **Phase 3:** remaining pages visual port
+5. **Phase 4:** asset copy and reference verification
+6. **Phase 5:** visual QA + final report
 
 Each phase must output:
 - files modified

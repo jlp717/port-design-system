@@ -84,7 +84,7 @@ The only difference: target displays target's own text content and targets its o
 Given:
 1. `<source-path>` (absolute path to local clone design system)
 2. `<target-path>` (absolute path to existing Next.js project)
-3. `<commit-hash>` (exact baseline commit in target)
+3. `<commit-hash>` (optional — exact baseline commit in target)
 
 Produce a target frontend that is **VISUALLY IDENTICAL** to the source design system while preserving target routing, copy, backend integrations, server actions, API routes, auth, and business logic.
 
@@ -165,7 +165,7 @@ At completion target must be push-ready:
 ## Execution Workflow (Strict Order)
 
 ### Phase 0 - Setup and Deep Audit
-1. `git checkout <commit-hash>` in target project.
+1. `git checkout <commit-hash>` in target project (if provided).
 2. Verify clean working tree in target branch before migration edits.
 3. Read source and target trees fully.
 4. Extract source design system literally:
@@ -265,6 +265,7 @@ Include:
 ```txt
 .claude/skills/port-design-system-from-local-clone/SKILL.md   # source-of-truth skill prompt
 .codex/skills/port-design-system-from-local-clone/SKILL.md    # generated skill copy
+.github/skills/port-design-system-from-local-clone/SKILL.md   # generated skill copy
 scripts/sync-skills.mjs                                        # sync skill to all platforms
 scripts/sync-agent-rules.sh                                    # sync AGENTS to platform rule files
 ```
