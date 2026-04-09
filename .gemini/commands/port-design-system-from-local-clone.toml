@@ -8,23 +8,57 @@ text = '''
 
 # /port-design-system-from-local-clone
 
-## Core Purpose
+## THE ONLY RULE THAT MATTERS
 
-Perform a FULL VISUAL REPLACEMENT of the target using the source as the only visual truth.
+```text
+THE ONLY RULE THAT MATTERS
+══════════════════════════
+This skill does NOT produce a redesign. It does NOT produce an adaptation.
+It produces an EXACT CLONE of the source visual system transplanted into
+the target codebase.
 
-Repeat this rule before every meaningful decision:
+"Exact clone" means:
 
-"El source es la unica fuente de verdad visual. El target debe convertirse visualmente en una copia exacta del source. Lo unico que se conserva del target es el texto, el contenido, las rutas y la logica de negocio."
+Every CSS value in source exists verbatim in target
+Every GSAP timeline property (duration, ease, scrub, trigger) matches source
+Every Lenis config option matches source
+Every IntersectionObserver threshold and rootMargin matches source
+Every animation keyframe, every transition duration, every transform value matches source
+git diff between a source component and its target counterpart must show
+ZERO differences in any line that is not text content, image path, or route
 
-Repeat it again when editing files:
+The test is simple: open source and target side by side in a browser.
+Scroll both simultaneously. They must be indistinguishable.
+If a human can tell them apart, the migration has failed.
+This is not a style guide port. This is a surgical transplant.
+The source frontend is the donor. The target frontend is the recipient.
+Every cell of the donor's visual system must live in the recipient.
+```
 
-"El source es la unica fuente de verdad visual. El target debe convertirse visualmente en una copia exacta del source. Lo unico que se conserva del target es el texto, el contenido, las rutas y la logica de negocio."
+Non-negotiable consequences:
+- For every file that is purely visual, the default action is COPY, not REWRITE.
+- Copy the file from source to target, then do a single pass replacing only text strings, image paths, and route refs.
+- Do NOT rewrite CSS, do NOT rewrite GSAP configs, do NOT refactor purely visual files.
+- Refactoring is explicitly forbidden for purely visual files because it introduces visual drift.
+- The target keeps only text, content, routes, and business logic.
+- The target must finish with zero residual target visual identity.
 
-Repeat it one last time before declaring success:
+Mandatory per-component verification rule:
+- After writing each component, run the visual-property diff gate below.
+- If the diff shows anything not explained by text content or asset paths, the component is not done.
+- Never advance until the diff is clean.
 
-"El source es la unica fuente de verdad visual. El target debe convertirse visualmente en una copia exacta del source. Lo unico que se conserva del target es el texto, el contenido, las rutas y la logica de negocio."
+```bash
+# Extract all visual properties from source component
+grep -nE "(animation|transition|transform|@keyframes|gsap|ScrollTrigger|lenis|parallax|scrub|duration|ease|delay|opacity|scale|translate|rotate|clip-path|will-change|backdrop-filter|background|gradient|border-radius|box-shadow|font-|letter-spacing|line-height|color:|gap:|padding:|margin:)" \
+  source/src/components/ComponentName.tsx > /tmp/source_visual.txt
 
-This skill is not a theme merge, not a token merge, and not a partial redesign. It is a full replacement of the target's visual system.
+# Same for target
+grep -nE "(animation|transition|transform|@keyframes|gsap|ScrollTrigger|lenis|parallax|scrub|duration|ease|delay|opacity|scale|translate|rotate|clip-path|will-change|backdrop-filter|background|gradient|border-radius|box-shadow|font-|letter-spacing|line-height|color:|gap:|padding:|margin:)" \
+  target/src/components/ComponentName.tsx > /tmp/target_visual.txt
+
+diff /tmp/source_visual.txt /tmp/target_visual.txt
+```
 
 ## Exact Command Forms
 
@@ -36,9 +70,9 @@ Accept exactly these command forms:
 ```
 
 Parse `{{args}}` as:
-1. `<source-path>`: absolute path to the local source clone that owns the visual system
-2. `<target-path>`: absolute path to the existing Next.js target project that will receive the design
-3. `<commit-hash>`: optional target baseline commit
+1. `<source-path>`: absolute path to the local source clone that owns the visual system.
+2. `<target-path>`: absolute path to the existing Next.js target project that receives the design.
+3. `<commit-hash>`: optional target baseline commit.
 
 Argument rules:
 - Preserve quoted Windows paths exactly.
@@ -47,154 +81,46 @@ Argument rules:
 - If fewer than two absolute paths are available, stop and ask for the missing path.
 - If a commit hash is present, use it as an optional baseline state only. Never rewrite history.
 
-## What Success Looks Like
+## Mission Boundaries
 
-The target must be visually indistinguishable from the source when compared side by side in a browser.
+Repeat this rule before every meaningful decision:
 
-That means matching literally:
-- layout and section order
-- type system and font rendering
-- spacing, rhythm, and proportions
-- backgrounds, surfaces, gradients, borders, and shadows
-- hover, focus, active, open, sticky, and scrolled states
-- GSAP timelines, ScrollTrigger behavior, Lenis behavior, parallax, scrub effects, and 3D presentation
-- desktop and mobile responsive behavior
-- navbar, footer, hero, section shells, cards, forms, tables, dialogs, and every other visual wrapper
+```text
+El source es la unica fuente de verdad visual. El target debe convertirse visualmente en una copia exacta del source. Lo unico que se conserva del target es el texto, el contenido, las rutas y la logica de negocio.
+```
 
-The only things that remain from the target are:
-- text and content
-- routes and route params
-- backend, auth, data fetching, server actions, API routes, and business logic
+Preserve only:
+- Text and content.
+- Routes, route params, redirects, and rewrites.
+- API routes, server actions, auth logic, middleware, analytics, integrations, and business logic.
+- Target content assets when those assets are business content rather than visual-system assets.
 
-## FULL VISUAL REPLACEMENT Means Zero Legacy Visual Surface
+Replace completely:
+- Global styles, tokens, themes, and every presentational wrapper.
+- Typography, spacing, radius, shadow, gradient, border, surface, and breakpoint systems.
+- Navbar, footer, hero, sections, cards, forms, dialogs, drawers, tables, shells, and every interactive state.
+- GSAP, ScrollTrigger, Lenis, IntersectionObserver, requestAnimationFrame loops, parallax, scrubbed media, 3D, canvas, and every visual motion primitive.
+- Decorative source assets including images, videos, SVGs, masks, textures, fonts, models, and shaders.
 
-The source is the only visual truth.
-The target's legacy visual system must be removed.
+Never change:
+- Backend behavior.
+- Data models and calculations.
+- Validation and submission logic.
+- Environment configuration.
 
-Do not keep any target-origin visual artifact just because it is convenient.
-That includes:
-- old CSS tokens
-- old Tailwind theme values
-- old visual utility classes
-- old CSS Modules and Sass partials
-- old styled-components or emotion styles
-- old visual wrappers in components
-- old decorative assets from the target
-- old animations, transitions, and interaction styling
-- old radius, shadow, gradient, and spacing systems
+## Package Manager Detection
 
-If a legacy target visual definition is no longer source-derived, remove it or replace it.
-If a legacy target file exists only to support the old design, delete it.
-If a file mixes logic and visuals, preserve the logic and rewrite the visual shell completely.
+Detect the package manager from the target lockfiles before any install command:
+- `pnpm-lock.yaml` means `pnpm`.
+- `yarn.lock` means `yarn`.
+- `bun.lock` or `bun.lockb` means `bun`.
+- Otherwise use `npm`.
 
-The target must not finish with a hybrid identity.
+When this skill says "install", use the detected package manager with exact version strings and never use `latest`, `^`, or `~`.
 
-## What Must Be Replaced Completely
+## Mandatory Deliverables In The Target
 
-Replace the complete target frontend visual layer, including:
-- `globals.css` and any other global style entrypoint
-- Tailwind theme config, `@theme` blocks, theme token files, and design-token modules
-- font setup, font files, font variables, font smoothing, variable axes, font fallbacks used by the source
-- CSS custom properties in every scope
-- component shells and presentational wrappers
-- layout shells, grid systems, spacing scales, container widths, breakpoint behavior
-- navbars, menus, drawers, footers, heroes, feature sections, CTA sections, cards, badges, chips, tabs, tables, lists, forms, modals, accordions, pagination, empty states, toasts, skeletons
-- hover, focus, active, disabled, selected, visited, loading, sticky, scrolled, and open states
-- animations and motion libraries, including GSAP, ScrollTrigger, Lenis, Framer Motion, Motion One, Three.js or React Three Fiber presentation code when used visually
-- parallax, pinned sections, scrub videos, split-text reveals, cinematic transitions, background media behavior, depth effects, and 3D presentation
-- all source-owned visual assets: images, hero videos, SVGs, masks, textures, icons, fonts, Lottie files, shaders, models, and decorative media
-
-## What Must Never Change
-
-Never modify the target's non-visual behavior:
-- API routes
-- server actions
-- auth logic
-- middleware and permissions
-- database code and queries
-- business rules and calculations
-- form handlers and validation logic
-- analytics and third-party integrations
-- route structure, route params, redirects, and rewrites
-- text content, labels, descriptions, button text, legal copy, CMS content, and user-facing copy
-- data fetching and mutation flows
-
-If a component contains both logic and visuals:
-- keep the logic intact
-- rebuild the presentation layer so it looks like the source
-
-## Asset Policy
-
-Copy all source visual assets needed to reproduce the source faithfully.
-Treat the source asset tree as authoritative for presentation.
-
-Copy categories include:
-- hero videos
-- background images and overlays
-- section textures and patterns
-- SVG icons, illustrations, masks, and logos used visually
-- fonts and font files
-- Lottie files and JSON animations
-- 3D models, shaders, HDRIs, or media used by visual scenes
-- card, section, and footer media
-- any imported asset referenced from source components or CSS
-
-Target content-bearing assets can remain when they are business content rather than decorative visual-system assets. When in doubt:
-- preserve target content assets
-- still copy the full source visual asset set
-- style the target content inside the source shell
-
-## Required Legacy Visual Purge
-
-This skill must explicitly purge the target's old visual system.
-
-Do all of the following:
-1. Inventory every target visual file, token file, CSS Module, Sass file, styled-component, Tailwind theme entry, and design asset.
-2. Mark each item as one of:
-   - replace completely
-   - rewrite in place while preserving logic
-   - keep only if it is non-visual or content-bearing
-3. Remove or overwrite old target visual tokens so the source system is the only active system.
-4. Delete unused target visual assets and style files once the source replacements are wired.
-5. Search the target for stale target token names, old color constants, old typography utilities, and old class patterns. Remove or replace them.
-6. Confirm no legacy target visual system remains active at runtime.
-
-The post-migration target must not contain a mixed visual identity.
-
-## Supported Source And Target Variants
-
-Support these combinations without changing the mission:
-- source or target using App Router
-- source or target using Pages Router
-- Tailwind v3 or Tailwind v4
-- CSS Modules, Sass, vanilla CSS, styled-components, emotion, or mixed styling
-- `next/font/google` and `next/font/local`
-- GSAP, `@gsap/react`, ScrollTrigger, Lenis, Framer Motion, Motion One
-- Three.js, React Three Fiber, Drei, or visual canvas scenes
-- shadcn/ui, Radix, custom UI systems, dashboards, client areas, auth pages, admin panels
-
-## Detection Checklist
-
-Before editing, inspect:
-- `package.json` and lockfiles in source and target
-- `next.config.*`, `tailwind.config.*`, `postcss.config.*`
-- `app/`, `pages/`, `src/app/`, `src/pages/`
-- `public/` and any asset directories used by imported media
-- `globals.css`, `layout.*`, `_app.*`, `_document.*`
-- imports for `gsap`, `@gsap/react`, `ScrollTrigger`, `lenis`, `@studio-freight/lenis`, `three`, `@react-three/fiber`, `@react-three/drei`, `framer-motion`, `motion`, `styled-components`, `@emotion`, `next/font`
-- presentational components and any file mixing visuals with behavior
-
-Detect the package manager from lockfiles:
-- `pnpm-lock.yaml` -> use `pnpm`
-- `yarn.lock` -> use `yarn`
-- `bun.lock` or `bun.lockb` -> use `bun`
-- otherwise use `npm`
-
-Install missing visual dependencies automatically. Never remove target dependencies unless a dependency exists only for the removed legacy visual system and is provably unused after migration.
-
-## Mandatory Docs Generated In The Target
-
-Always create and maintain these docs inside the target:
+Always create and maintain these docs or manifests:
 - `docs/port-design-system/extraction-report.md`
 - `docs/port-design-system/protected-surface-map.md`
 - `docs/port-design-system/source-asset-inventory.md`
@@ -202,6 +128,9 @@ Always create and maintain these docs inside the target:
 - `docs/port-design-system/asset-manifest.md`
 - `docs/port-design-system/modified-files.md`
 - `docs/port-design-system/assets-reemplazo-ia.md`
+- `STACK_MANIFEST.md`
+- `ANIMATION_MANIFEST.md`
+- `PORT_PLAN.md`
 
 `assets-reemplazo-ia.md` must contain a top-level heading exactly equal to:
 
@@ -209,12 +138,14 @@ Always create and maintain these docs inside the target:
 # ASSETS REEMPLAZO IA
 ```
 
-## Mandatory Workflow Order
+## Required Workflow Order
 
-### Phase 0 - Setup, Baseline, And Deep Audit
+Nothing may skip ahead. Every phase below is blocking until its checklist passes.
+
+### Phase 0a - Setup, Baseline, And Deep Audit
 
 1. Resolve `<source-path>` and `<target-path>`.
-2. Validate source and target.
+2. Validate that both paths exist and are the intended repos.
 3. If `<commit-hash>` exists:
    - enter target
    - verify the commit resolves
@@ -225,178 +156,402 @@ Always create and maintain these docs inside the target:
    - work from current target state
    - record whether the tree was already dirty
 5. Read source and target deeply before edits.
-6. Create the target docs listed above.
-7. Build the extraction report, protected-surface map, source asset inventory, and initial legacy-visual-purge plan.
+6. Create the required docs and manifests.
+7. Build the extraction report, protected-surface map, asset inventory, modified-files map, and initial legacy purge plan.
+8. Inventory every route, layout, component shell, style entrypoint, animation hook, asset import, and responsive breakpoint in source.
+9. Map protected backend surfaces in target so visual edits never cross into business logic.
 
-Extract literally from the source:
-- every CSS custom property
-- every typography value
-- every layout rule and breakpoint shift
-- every hover/focus/active state
-- every GSAP, ScrollTrigger, Lenis, parallax, scrub, or 3D presentation value
-- every component shell and page shell
-- every visual asset path
+Audit requirements:
+- Extract every CSS custom property, typography value, spacing token, radius, border, shadow, gradient, and transform from source.
+- Extract every hover, focus, active, open, sticky, loading, and scrolled state from source.
+- Extract every source asset path that participates in the visual system.
+- Mark every target visual file as one of `copy`, `rewrite-in-place-with-logic-preserved`, `delete`, or `keep-non-visual`.
 
-Map in the target:
-- routes and layouts
-- API routes and server actions
-- auth and middleware
-- business logic modules
-- visual files to purge or overwrite
+## PHASE 0b - STACK LOCK (IMMUTABLE)
+══════════════════════════════════
 
-### Phase 0b - Chrome DevTools MCP Extraction
+Read `source/package.json`.
 
-When Chrome DevTools MCP is available, use it during audit.
-This is mandatory when the tool is available.
+Generate `STACK_MANIFEST.md` in the target root with this exact structure:
 
-If the source can run locally or is reachable:
-- inspect desktop at 1440 width
-- inspect mobile at 390 width
-- inspect computed styles for body, headings, nav, buttons, cards, forms, footer, and hero media
-- inspect runtime GSAP timelines and ScrollTrigger state when accessible
-- inspect scroll behavior and responsive transitions
+```md
+# STACK MANIFEST
 
-If MCP is unavailable, state that explicitly in the report.
+## Frontend Dependencies (LOCKED)
 
-### Phase 1 - Dependency And Global Foundation Replacement
+| Package | Source version | Installed in target | Status |
+| --- | --- | --- | --- |
+| gsap | 3.11.4 | 3.11.4 | ✅ |
+| lenis | 1.0.28 | 1.0.28 | ✅ |
+```
 
-1. Install any missing visual dependencies used by the source.
-2. Replace the target's global visual foundation with the source foundation.
-3. Port source fonts exactly.
-4. Port source globals and theme scopes exactly.
-5. Remove target legacy tokens and theme values that are not source-derived.
-6. Port global motion bootstrapping, including Lenis, GSAP plugin registration, ScrollTrigger setup, and source-specific presentation providers.
-7. Verify the target still builds.
+Install every frontend package at the EXACT source version.
+Use exact version strings only. No `^`, no `~`, no `latest`.
 
-This phase is not a merge-first phase. It is a replacement-first phase.
-Only preserve target code required for non-visual behavior.
+Hard rule: `stack_lock = true`
+- No frontend package may differ from its source version.
+- No package may be added that was not in source, except target backend dependencies that are unrelated to the visual layer.
+- No package may be removed that was in source.
+- If a version conflict arises with a target backend dependency, report it and ask the user explicitly. Never resolve it silently.
 
-### Phase 2 - Structural Shell Replacement
+Installation rule:
+- Use the detected target package manager for install commands.
+- The equivalent of `npm install gsap@3.11.4 lenis@1.0.28 framer-motion@10.x ...` must preserve the exact source version strings.
 
-Replace the target's core page shells with source-derived shells:
-- root layout shell
-- navbar shell
-- footer shell
-- page wrappers
-- section containers
-- shell-level responsive behavior
+After install, run:
 
-Preserve only target logic, routes, and dynamic data wiring.
+```bash
+npm ls gsap lenis framer-motion [all animation libs]
+```
 
-### Phase 3 - Home Page Full Port
+Confirm installed versions match source versions exactly.
+If any mismatch exists, uninstall and reinstall at the exact version before continuing.
 
-Rebuild the home page so it looks like the source home page in structure, motion, and feel:
-- hero media composition
-- section ordering
-- reveal choreography
-- parallax layers
-- scrub or pinned sections
-- cards, CTA blocks, and transitions
+## PHASE 0c - ANIMATION INVENTORY (BLOCKING - NOTHING PROCEEDS UNTIL COMPLETE)
+════════════════════════════════════════════════════════════════════════════
 
-Target text and content stay, but every visual wrapper must be source-derived.
+Generate `ANIMATION_MANIFEST.md` in the target root.
 
-### Phase 4 - All Remaining Pages Full Port
+Use this exact structure for every discovered entry:
 
-Apply the same standard to every route in the target, including pages not present in the source.
+```md
+# ANIMATION MANIFEST
 
-For pages without a direct source equivalent:
-- derive the shell from source primitives
-- use source cards, forms, table chrome, surfaces, spacing, buttons, inputs, tabs, badges, filters, and section patterns
-- ensure those pages still feel native to the source system
+| Status | ID | File | Type | Properties | Trigger | Expected behavior |
+| --- | --- | --- | --- | --- | --- | --- |
+| ☐ | A001 | Hero.tsx | gsap ScrollTrigger | scrub: 1.5, start: "top top", end: "+=3000" | scroll | video.currentTime mapped to scroll position |
+| ☐ | A002 | Nav.tsx | CSS transition | opacity 0.3s ease, transform 0.3s ease | scroll past 100px | nav background fades in |
+```
 
-For auth, client area, dashboard, and admin pages:
-- preserve every handler, session guard, mutation, and permission boundary
-- replace the entire visual shell with source-derived presentation
-- do not settle for token-only styling
+Each row is a required deliverable, not optional.
+Each row starts as `☐`.
+Each row becomes `✅` only after active scroll verification passes.
+If the manifest has 50 rows, all 50 must be `✅` before the migration is complete.
+Zero tolerance for skipped entries.
 
-### Phase 5 - Full Asset Copy And Reference Verification
+Scan exhaustively for the following.
 
-Copy the full set of source visual assets needed for fidelity.
-For each copied asset, record:
-- absolute source path
-- absolute or repo-relative target destination
-- asset purpose
-- pages or components where it is used
+CSS layer:
+- Every `@keyframes` block, including name, duration, timing-function, and keyframe values.
+- Every `animation:` property, including name, duration, delay, fill-mode, and iteration.
+- Every `transition:` property, including property, duration, delay, and easing.
+- Every `will-change:` declaration.
+- Every animated `clip-path`.
+- Every `scroll-timeline` or `animation-timeline`.
+- Every transform inside a `@keyframes` block or transition.
 
-Then:
-- update every import or URL reference
-- remove obsolete target visual assets no longer needed
-- verify no broken asset references remain
+JS and TS layer:
+- Every `gsap.to()`, `gsap.from()`, `gsap.fromTo()`, and `gsap.timeline()`.
+- Every `ScrollTrigger.create()` with `trigger`, `start`, `end`, `scrub`, `pin`, and `markers`.
+- Every Lenis constructor with `duration`, `easing`, `orientation`, and `smoothTouch`.
+- Every `new Lenis()` scroll event listener.
+- Every `IntersectionObserver` with threshold array, rootMargin, and callback logic.
+- Every `requestAnimationFrame` loop and what it updates per frame.
+- Every scroll event listener and what it reads and modifies.
+- Every `video.currentTime` assignment driven by scroll.
+- Every canvas or WebGL element updated on scroll.
+- Every import from `gsap`, `@gsap/react`, `framer-motion`, `motion`, `lenis`, `@studio-freight/lenis`, `locomotive-scroll`, `scrollmagic`, `aos`, `anime`, `three`, `@react-three/fiber`, `@react-three/drei`, and `popmotion`.
 
-### Phase 6 - ASSETS REEMPLAZO IA
+HTML and JSX layer:
+- Every `<video>` element, including `autoplay`, `loop`, `muted`, `playsInline`, and ref usage.
+- Every `<canvas>` element.
+- Every element with `data-scroll`, `data-speed`, or `data-lag`.
+- Every element with a ref later passed to GSAP or `IntersectionObserver`.
 
-After the full visual migration is complete, generate:
-- `docs/port-design-system/assets-reemplazo-ia.md`
+Nothing in Phase 1 or later may begin until `ANIMATION_MANIFEST.md` is exhaustive.
 
-That file must contain a section titled exactly `ASSETS REEMPLAZO IA` and include a complete list of copied source assets.
+### Phase 0d - Chrome DevTools MCP Extraction
 
-For every key asset, provide all of the following:
-1. exact source filename
-2. recommended exact target destination path
-3. asset role in the experience
-4. where it appears in the target UI
-5. what business adaptation is recommended
-6. an ultra-detailed prompt for generating the adapted asset
-7. recommended generation tool or tool family such as Flux for still images, Kling for cinematic motion, or Runway for video
-8. implementation notes for replacing the copied source asset later
+Use Chrome DevTools MCP during audit whenever it is available.
 
-Key assets must include at minimum:
-- hero video or hero background media
-- section backgrounds
-- large cards or featured media
-- CTA media
-- footer or divider media when present
-- any signature visual asset that materially defines the look
+Extract, compare, and document:
+- Desktop runtime at 1440 width.
+- Mobile runtime at 390 width.
+- Computed styles for body, headings, nav, buttons, cards, forms, footer, and hero media.
+- Runtime GSAP, ScrollTrigger, Lenis, and scroll state when accessible.
+- Scroll behavior, sticky states, and responsive transitions.
 
-Prompt-writing rules for `ASSETS REEMPLAZO IA`:
-- tailor prompts to the target business context inferred from the target app's content, metadata, repo name, and page copy
-- if the target is Granja Mari Pepa, explicitly write Granja Mari Pepa-specific prompts
-- prompts must be cinematic, detailed, and production-ready
-- prompts must describe framing, lighting, atmosphere, motion, lens feel, color palette, texture, composition, subject matter, exclusions, and intended emotion
-- prompts must be practical for real tools such as Flux, Kling, and Runway
-- explain clearly how the generated asset will replace the copied source asset without breaking layout fidelity
+If MCP is unavailable, report that block explicitly in the docs and final report.
 
-### Phase 7 - Legacy Visual Purge Verification
+### Phase 1 - Global Replacement
 
-Before final QA, verify the purge is complete:
-- confirm old target token systems are gone
-- confirm old target visual utility classes are gone or no longer used
-- confirm old target CSS Modules or styled visual wrappers are deleted or overwritten
-- confirm old target decorative assets are removed if replaced
-- confirm no runtime screen still renders the legacy design
-- document the result in `docs/port-design-system/legacy-visual-purge.md`
+1. Port source globals, tokens, fonts, motion bootstrapping, navbar shell, and footer shell first.
+2. Remove target legacy theme values, visual globals, decorative utilities, and dead visual wrappers.
+3. Preserve logic-only wrappers, auth gates, data flows, and route wiring.
+4. Copy purely visual source files directly whenever possible.
+5. When a file mixes logic and visuals, transplant the source visual layer around the target logic with the smallest possible delta.
 
-### Phase 8 - Final Local QA With Chrome DevTools MCP
+Global replacement rules:
+- No legacy target design token may remain active.
+- No target-only color, font stack, shadow, radius, or spacing scale may remain unless it also exists verbatim in source.
+- Visual wrappers that do not come from source must be deleted or replaced.
 
-After migration, run the target locally and inspect it with Chrome DevTools MCP.
-This final MCP pass is mandatory when the tool is available.
+### Phase 2 - Full Page Port
 
-Required final QA flow:
-1. run the target locally
-2. open the local target in Chrome DevTools MCP
-3. inspect desktop and mobile views
-4. compare target against source behavior and presentation
-5. verify scroll behavior, hover states, animations, sticky states, and media loading
-6. verify there are no obvious fidelity gaps
-7. report plainly whether the result looks spectacular and faithful to the source
+1. Port the home page visually end to end.
+2. Port every remaining route, including auth and dashboard shells.
+3. Pages missing from source still receive the full source design language, using direct source shell patterns rather than improvisation.
+4. After each component or section, update `PORT_PLAN.md`.
 
-If Chrome DevTools MCP is unavailable, say so explicitly and mark the final MCP inspection as blocked.
-Never pretend the inspection happened if it did not.
+Per-component regression gate in `PORT_PLAN.md`:
 
-### Phase 9 - Validation And Final Report
+```md
+# PORT PLAN
 
-Run target validation commands when available:
-- lint
-- typecheck
-- build
-- any project-level combined check script
+## ComponentName
+- ☐ code diff clean (no visual property differences from source)
+- ☐ static screenshot matches at scrollY=0
+- ☐ scroll crawler screenshots match at all 21 positions
+- ☐ computed styles match within tolerance
+- ☐ video recording indistinguishable
+- Status: ✅ VERIFIED / ☐ IN PROGRESS / ❌ FAILING
+```
 
-Distinguish baseline failures from new failures.
-The migration is not complete while new failures remain.
+Component rules:
+- A component is `VERIFIED` only when all five checks are `✅`.
+- After writing ComponentN, rerun the scroll crawler on all previously verified pages.
+- If any previously `✅` component fails after ComponentN lands, that is a regression.
+- Fix regressions before proceeding to ComponentN+1.
+
+### Phase 3 - Assets And Purge
+
+1. Copy source visual assets needed for fidelity.
+2. Wire all target references to the copied assets.
+3. Log every copied asset with its absolute source path in `docs/port-design-system/asset-manifest.md`.
+4. Remove obsolete target visual assets and styles.
+5. Update `docs/port-design-system/legacy-visual-purge.md` with every deleted or replaced legacy surface.
+
+Asset rules:
+- Preserve target content-bearing assets only when they are business content.
+- Copy the full source visual asset set needed to reproduce the source faithfully.
+- Do not keep decorative target assets just because they are already present.
+
+### Phase 4 - ASSETS REEMPLAZO IA
+
+Generate `docs/port-design-system/assets-reemplazo-ia.md`.
+
+It must include:
+- Every copied key asset.
+- Recommended target path.
+- Usage explanation.
+- Production-ready prompts for tools such as Flux, Kling, or Runway.
+- Business-adapted replacements, including Granja Mari Pepa-specific prompts when applicable.
+
+### Phase 5 - ACTIVE SCROLL VERIFICATION PROTOCOL
+
+Replace all static-only QA with the protocol below.
+
+```text
+ACTIVE SCROLL VERIFICATION PROTOCOL (MANDATORY FOR EVERY SECTION)
+═══════════════════════════════════════════════════════════════════
+A section is NOT verified by a static screenshot.
+A section is verified by the FULL SCROLL THROUGH PROTOCOL below.
+```
+
+STEP 1 - Run both dev servers
+- source: `http://localhost:3000`
+- target: `http://localhost:3001`
+
+STEP 2 - For each page, inject this scroll crawler via Chrome DevTools MCP in both source and target:
+
+```javascript
+// FULL PAGE SCROLL CRAWLER - inject in both source and target
+(async function crawlPage(label) {
+  const steps = 20; // captures at 0%, 5%, 10%, ... 100%
+  const totalHeight = Math.max(
+    document.body.scrollHeight,
+    document.documentElement.scrollHeight
+  );
+  const results = [];
+
+  // Reset to top
+  window.scrollTo({ top: 0, behavior: 'instant' });
+  await new Promise((r) => setTimeout(r, 1000));
+
+  for (let i = 0; i <= steps; i++) {
+    const pct = (i / steps) * 100;
+    const targetY = (totalHeight - window.innerHeight) * (i / steps);
+
+    window.scrollTo({ top: targetY, behavior: 'instant' });
+    await new Promise((r) => setTimeout(r, 800)); // wait for animations to settle
+
+    // Capture computed styles of key elements at this scroll position
+    const keyElements = [
+      'nav', '[data-section]', '.hero', '.hero-video', 'video',
+      '[class*="parallax"]', '[class*="reveal"]', '[class*="fade"]',
+      'section:nth-child(1)', 'section:nth-child(2)', 'section:nth-child(3)'
+    ];
+
+    const styles = {};
+    keyElements.forEach((selector) => {
+      const el = document.querySelector(selector);
+      if (el) {
+        const cs = getComputedStyle(el);
+        styles[selector] = {
+          opacity: cs.opacity,
+          transform: cs.transform,
+          visibility: cs.visibility,
+          display: cs.display,
+          clipPath: cs.clipPath,
+          backgroundColor: cs.backgroundColor,
+        };
+      }
+    });
+
+    results.push({ pct: Math.round(pct), scrollY: Math.round(targetY), styles });
+    // Screenshot captured via MCP at each step
+  }
+
+  return results;
+})('page-audit');
+```
+
+STEP 3 - Screenshot at EVERY step from 0% through 100% in 5% increments
+- Naming: `source_home_scroll_00pct.png`, `target_home_scroll_00pct.png`
+- Store all screenshots in `docs/port-design-system/scroll-audit/`
+
+STEP 4 - For EACH scroll position, compare source vs target screenshot
+- Same elements visible.
+- Same opacity and transform state.
+- Same video frame for scroll-scrubbed video.
+- Same parallax layer position.
+- Same text reveal state.
+- If any delta exists, fix target, rerun crawler, and recompare before advancing.
+
+STEP 5 - VIDEO RECORDING of full scroll is mandatory for every page
+- Inject this automated scroll in both servers and record the screen:
+
+```javascript
+// Smooth automated scroll for screen recording
+(async function recordScroll() {
+  const total = document.body.scrollHeight - window.innerHeight;
+  const duration = 8000; // 8 seconds to scroll full page
+  const start = performance.now();
+
+  function step(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    // Ease in-out for natural feel
+    const eased = progress < 0.5
+      ? 2 * progress * progress
+      : -1 + (4 - 2 * progress) * progress;
+    window.scrollTo(0, total * eased);
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+})();
+```
+
+- Save recordings as `source_home_scroll.webm` and `target_home_scroll.webm`.
+- Watch both recordings. They must be indistinguishable.
+- If any animation, timing, or visual effect differs, that is a blocking failure.
+
+STEP 6 - COMPUTED STYLE DIFF for key animated elements
+- For every element that has animation per `ANIMATION_MANIFEST.md`, compare computed styles at the scroll position where the animation is active.
+
+```javascript
+// Run at the scroll position where the element is mid-animation
+const el = document.querySelector('.hero-title'); // change selector
+const cs = getComputedStyle(el);
+console.table({
+  opacity: cs.opacity,
+  transform: cs.transform,
+  clipPath: cs.clipPath,
+  animationPlayState: cs.animationPlayState,
+  willChange: cs.willChange
+});
+```
+
+- Values from source and target must match within plus or minus 2% tolerance.
+- If they do not, the animation is not correctly ported. Fix it before advancing.
+
+STEP 6b - GSAP and Lenis runtime state inspection
+- After loading target in browser, run the following in both source and target:
+
+```javascript
+// Verify GSAP ScrollTrigger instances match source
+ScrollTrigger.getAll().forEach((st) => {
+  console.log({
+    trigger: st.trigger?.className,
+    start: st.start,
+    end: st.end,
+    scrub: st.vars.scrub,
+    pin: st.vars.pin
+  });
+});
+```
+
+- Every ScrollTrigger instance in source must have a matching instance in target with identical `start`, `end`, `scrub`, and `pin` values.
+- Lenis runtime options and event behavior must also match source exactly.
+
+STEP 7 - Mark `ANIMATION_MANIFEST.md` entries as `✅` ONLY when all three conditions below pass
+- Step 3 screenshots match at all scroll positions.
+- Step 5 video recordings are indistinguishable.
+- Step 6 computed styles match within tolerance.
+
+If any one fails, the entry stays `☐`.
+
+## PHASE FINAL - FILE COVERAGE AUDIT (BLOCKING)
+══════════════════════════════════════════════
+
+Run:
+
+```bash
+find source/src -type f \
+  ! -path "/node_modules/" \
+  ! -path "/.next/" \
+  | sort > /tmp/source_files.txt
+
+find target/src -type f \
+  ! -path "/node_modules/" \
+  ! -path "/.next/" \
+  | sort > /tmp/target_files.txt
+```
+
+For EVERY file in `source_files.txt`:
+- If it is a visual or frontend file, a ported equivalent must exist in target.
+- Map the source path to its target equivalent and document the mapping in `docs/port-design-system/modified-files.md`.
+
+Visual and frontend files include:
+- `*.css`, `*.scss`, `*.sass`, `*.module.css`, `*.module.scss`
+- Any `*.tsx` or `*.ts` that imports from GSAP, Lenis, Framer Motion, or uses `IntersectionObserver`, `requestAnimationFrame`, or scroll listeners
+- Any `*.tsx` or `*.ts` in `/components/`, `/layouts/`, `/sections/`, or `/ui/`
+- Any `*.tsx` or `*.ts` in `/animations/`, `/motion/`, `/scroll/`, or `/effects/`
+- Any `*.tsx` or `*.ts` in `/hooks/` that reads `scrollY` or window dimensions
+- Any `*.tsx` or `*.ts` in `/context/` that provides scroll or animation state
+- Any `*.tsx` or `*.ts` in `/store/` that holds scroll or animation state
+- Any file in `/public/fonts/`, `/public/videos/`, or `/public/images/`
+- `tailwind.config.*`, `postcss.config.*`, and `next.config.*`
+
+Run this grep across the target to catch missing design tokens:
+
+```bash
+# Find every hex color used in source
+grep -rhoE '#[0-9a-fA-F]{3,8}' source/src | sort -u > /tmp/source_colors.txt
+
+# Check each one exists in target
+while read color; do
+  if ! grep -qr "$color" target/src; then
+    echo "MISSING COLOR: $color"
+  fi
+done < /tmp/source_colors.txt
+
+# Find every font-family used in source
+grep -rhoE "font-family:[^;']+" source/src | sort -u > /tmp/source_fonts.txt
+
+while read font; do
+  if ! grep -qr "${font//font-family:/}" target/src; then
+    echo "MISSING FONT: $font"
+  fi
+done < /tmp/source_fonts.txt
+```
+
+Every `MISSING COLOR` and every `MISSING FONT` is a blocking failure.
+Fix all of them before generating the completion report.
 
 ## Required Per-Phase Output Format
 
-After every phase, output exactly:
+After every phase output exactly:
 
 ```txt
 1. Files modified
@@ -409,59 +564,38 @@ After every phase, output exactly:
 - [PASS|FAIL] <item>
 ```
 
-If no new assets were used, write `- none`.
-
 ## Final Completion Report Format
 
 The final completion report must include:
-- Source path
-- Target path
-- Baseline commit hash used
-- Stash reference created, if any
-- Package manager used
-- Dependencies added
-- Files modified with one-line reason
-- Assets copied with absolute source paths
-- Legacy visual purge result
-- Page QA matrix with PASS or FAIL
-- Animation QA matrix with PASS or FAIL
-- Chrome DevTools MCP inspection result with explicit verdict
-- Lint, typecheck, and build result
-- Deployment readiness confirmation
-- Known gaps, if any
-- A reproduced section titled exactly `ASSETS REEMPLAZO IA`
-
-## Required Final Verdict Language
-
-When MCP inspection was performed and fidelity is strong, say explicitly whether:
-- the target looks spectacular
-- the target is faithful to the source
-- the target preserves target content and business logic
-
-If the result is not visually spectacular and faithful, do not declare success.
-
-## What Never To Do
-
-Never do any of the following:
-- never merge old target design language with source design language
-- never leave old target visual tokens active
-- never keep old target styling because it is convenient
-- never preserve old target decorative assets when the source defines the visual equivalent
-- never change text copy to fit the source layout
-- never change route structure or route contracts
-- never replace backend or business logic with source code
-- never skip the legacy visual purge
-- never skip the asset manifest
-- never skip `ASSETS REEMPLAZO IA`
-- never claim Chrome DevTools MCP inspection happened if it did not
-- never declare success if the target is still a visual hybrid
+- Source path.
+- Target path.
+- Baseline commit hash used.
+- Stash reference created, if any.
+- Package manager used.
+- Dependency additions.
+- Files modified with one-line reasons.
+- Assets copied with absolute source paths.
+- Legacy visual purge result.
+- Page QA matrix.
+- Animation QA matrix.
+- Chrome DevTools MCP inspection result and verdict.
+- Lint, typecheck, and build result.
+- Deployment readiness confirmation.
+- Known gaps, if any.
+- A reproduced section titled exactly `ASSETS REEMPLAZO IA`.
 
 ## Completion Standard
 
-Before finishing, state the rule one last time:
+The migration is complete only when all of the following are true:
+- The target is visually indistinguishable from source during active scrolling.
+- `STACK_MANIFEST.md` shows exact version parity for locked frontend packages.
+- `ANIMATION_MANIFEST.md` has no remaining `☐` entries.
+- `PORT_PLAN.md` shows every component as `✅ VERIFIED`.
+- `docs/port-design-system/legacy-visual-purge.md` confirms the old target visual system is gone.
+- `docs/port-design-system/modified-files.md` covers every visual frontend file from source.
+- Chrome DevTools MCP inspection declares the result faithful and spectacular, or the report explicitly states that MCP was unavailable.
+- Lint, typecheck, and build all pass.
 
-"El source es la unica fuente de verdad visual. El target debe convertirse visualmente en una copia exacta del source. Lo unico que se conserva del target es el texto, el contenido, las rutas y la logica de negocio."
-
-If the target still contains the legacy visual system, lacks the `ASSETS REEMPLAZO IA` appendix, or was not visually verified against the source, the migration is incomplete.
+If any one of those conditions fails, the skill must report failure instead of pretending the migration is done.
 
 '''
