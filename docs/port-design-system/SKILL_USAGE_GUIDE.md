@@ -1,43 +1,35 @@
-# /port-design-system-from-local-clone - Usage Guide
+# /port-design-system-from-local-clone — Usage Guide
 
-## Command
-
-```txt
-/port-design-system-from-local-clone "<source-path>" "<target-path>"
-/port-design-system-from-local-clone "<source-path>" "<target-path>" "<commit-hash>"
-```
-
-## Example
+## Comando
 
 ```txt
-/port-design-system-from-local-clone "C:\Users\Javier\Desktop\Repositorios\mari-pepa-redesign" "C:\Users\Javier\Desktop\Repositorios\granja_mari_pepa"
+/port-design-system-from-local-clone "<source-path>" "<target-path>" "<reference-url>"
 ```
 
-## What It Does
+## Ejemplo (Granja Mari Pepa)
 
-- replaces the full target visual system with the source visual system
-- removes the target's legacy visual styles, tokens, and decorative assets
-- preserves text, content, routes, and business logic
-- copies source visual assets
-- generates `# ASSETS REEMPLAZO IA`
-- inspects the local target with Chrome DevTools MCP when available
-
-## Required Target Docs
-
-- `docs/port-design-system/extraction-report.md`
-- `docs/port-design-system/protected-surface-map.md`
-- `docs/port-design-system/source-asset-inventory.md`
-- `docs/port-design-system/legacy-visual-purge.md`
-- `docs/port-design-system/asset-manifest.md`
-- `docs/port-design-system/modified-files.md`
-- `docs/port-design-system/assets-reemplazo-ia.md`
-
-## Validation
-
-Run in the target project when available:
-
-```bash
-npm run lint
-npm run typecheck
-npm run build
+```txt
+/port-design-system-from-local-clone "C:\Users\Javier\Desktop\Repositorios\mari-pepa-redesign" "C:\Users\Javier\Desktop\Repositorios\granja_mari_pepa\frontend" "https://jobyaviation.com"
 ```
+
+## Cómo funciona
+
+1. Abre DOS instancias Chrome DevTools MCP (reference-url + target dev server)
+2. Valida que el source coincide con reference-url (delta <= 10% requerido)
+3. Crea PAGE_MAPPING.md mapeando cada página target a un diseño source
+4. Crea ANIMATION_MANIFEST.md con cada efecto de animación y valores exactos
+5. Copia cada archivo visual del source al target, hace swap solo del texto
+6. Verifica cada componente con scroll dual-MCP (0% a 100% de 5 en 5)
+7. Purga todos los residuos visuales legacy del target
+8. Genera ASSETS REEMPLAZO IA con prompts específicos para Granja Mari Pepa
+
+## Qué se preserva del target
+
+SOLO: texto de contenido visible al usuario y rutas href a páginas del negocio.
+NADA MÁS del target sobrevive. Cero diseño legacy.
+
+## Entregables en el target
+
+PAGE_MAPPING.md · ANIMATION_MANIFEST.md · STACK_MANIFEST.md ·
+docs/pds/build-baseline.txt · docs/pds/qa-evidence/ (168 screenshots mínimo/página) ·
+docs/pds/assets-reemplazo-ia.md · MIGRATION_COMPLETE.md

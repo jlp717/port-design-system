@@ -1,6 +1,6 @@
 ---
 name: port-design-system-from-local-clone
-description: "Full visual replacement of a Next.js target from a local source clone, including legacy-style purge, full source asset copy, ASSETS REEMPLAZO IA appendix generation, and final Chrome DevTools MCP fidelity inspection."
+description: "Literal visual transplant of a Next.js source clone into a target repo. DESIGN 100% from source (copied verbatim). TEXT 100% from target (all user strings preserved). Dual Chrome DevTools MCP (reference-url + target dev server) open from first command to last. Third arg is public reference URL for pre-flight source validation. PAGE_MAPPING.md required before any code. Every visual file is COPIED then text-swapped, never rewritten. Build after every file. Complete when pixel delta <= 1.5% at all scroll positions."
 invokable: true
 ---
 <!-- AUTO-GENERATED from .claude/skills/port-design-system-from-local-clone/SKILL.md - do not edit directly.
@@ -9,1741 +9,194 @@ invokable: true
 
 # /port-design-system-from-local-clone
 
-## Core Mission
+## Regla absoluta
 
-This skill performs a literal visual transplant.
-
-```text
 El source es la unica fuente de verdad visual.
 El target debe convertirse visualmente en una copia exacta del source.
-Lo unico que se conserva del target es el texto, el contenido, las rutas y la logica de negocio.
+Lo unico que se conserva del target es el texto visible al usuario.
+
+## Comando
+
+```txt
+/port-design-system-from-local-clone "<source-path>" "<target-path>" "<reference-url>"
 ```
 
-No redesign. No reinterpretation. No adaptation.
+## DISEÑO vs TEXTO — inmutable
 
-If any automated check in WHAT "EXACT CLONE" MEANS OPERATIONALLY fails, the migration has failed.
+DISEÑO = 100% del source. Copiado verbatim. Cero adaptación.
+TEXTO  = 100% del target. Cada string visible. Cero texto source sobrevive.
 
-## WHAT "EXACT CLONE" MEANS OPERATIONALLY
+Texto = strings visibles al usuario, hrefs a páginas del negocio target.
+Texto NO = clases Tailwind, valores CSS, configs GSAP/Lenis, estructura JSX.
 
-"Exact clone" is not a feeling. It is a set of passing automated checks.
-The migration is an exact clone if and only if ALL of the following pass:
+## Paso 0: Dual MCP — primero que se hace, último que se cierra
+MCP-REF:    <reference-url>        (web pública de referencia)
+MCP-TARGET: http://localhost:3001  (target en desarrollo)
 
-**CHECK A — CSS property diff (run per component):**
+Ambas instancias permanecen abiertas durante toda la migración.
 
-```bash
-grep -nE "(animation|transition|transform|@keyframes|will-change|clip-path|\
-scroll-timeline|animation-timeline|opacity:|scale\(|rotate\(|translate\(|\
-backdrop-filter|background[-:]|gradient|border-radius|box-shadow|\
-font-family|font-size|font-weight|letter-spacing|line-height|\
-color:|gap:|padding:|margin:|z-index:)" \
-  "$SOURCE_COMPONENT" | sed 's/^[0-9]*://' | sort > /tmp/src_css.txt
+## Paso 1: Pre-flight — validar source vs referencia
 
-grep -nE "(animation|transition|transform|@keyframes|will-change|clip-path|\
-scroll-timeline|animation-timeline|opacity:|scale\(|rotate\(|translate\(|\
-backdrop-filter|background[-:]|gradient|border-radius|box-shadow|\
-font-family|font-size|font-weight|letter-spacing|line-height|\
-color:|gap:|padding:|margin:|z-index:)" \
-  "$TARGET_COMPONENT" | sed 's/^[0-9]*://' | sort > /tmp/tgt_css.txt
+Capturar screenshots en MCP-REF para cada página source.
+Delta > 10%: STOPPER. Reportar al usuario. No continuar sin confirmación.
+Delta <= 10%: continuar.
 
-diff /tmp/src_css.txt /tmp/tgt_css.txt
-```
+## Paso 2: PAGE_MAPPING.md — GATE BLOQUEANTE
 
-Any diff line that is not a text string, image path, or route reference = BLOCKING FAILURE.
+Crear antes de cualquier código. Una fila por ruta del target.
 
-**CHECK B — Tailwind class diff (run per component, mandatory for Tailwind projects):**
-
-```bash
-# Extract all Tailwind class tokens from className/class attributes
-grep -noE '(className|class)=[`'"'"'"][^`'"'"'"]*[`'"'"'"]' "$SOURCE_COMPONENT" | \
-  sed 's/^.*[=`'"'"'"]//' | sed 's/[`'"'"'"]$//' | tr ' ' '\n' | \
-  grep -v '^$' | sort -u > /tmp/src_tw.txt
-
-grep -noE '(className|class)=[`'"'"'"][^`'"'"'"]*[`'"'"'"]' "$TARGET_COMPONENT" | \
-  sed 's/^.*[=`'"'"'"]//' | sed 's/[`'"'"'"]$//' | tr ' ' '\n' | \
-  grep -v '^$' | sort -u > /tmp/tgt_tw.txt
-
-# Also catch cn(), clsx(), cva() dynamic class expressions
-grep -noE "(cn|clsx|cva)\([^)]*\)" "$SOURCE_COMPONENT" | sort -u >> /tmp/src_tw.txt
-grep -noE "(cn|clsx|cva)\([^)]*\)" "$TARGET_COMPONENT" | sort -u >> /tmp/tgt_tw.txt
-
-diff /tmp/src_tw.txt /tmp/tgt_tw.txt
-```
-
-Any Tailwind class present in source but absent in target
-(excluding classes that contain text content or route strings) = BLOCKING FAILURE.
-
-**CHECK C — Pixel delta (per scroll position via MCP or fallback):**
-
-<= 1.5% pixel delta for every screenshot pair. Any pair exceeding 1.5% is BLOCKING FAILURE.
-For regions containing video frames: supplement with computed-style parity from the scroll
-verification protocol instead of pixel delta.
-
-**CHECK D — Computed style tolerance:**
-
-All numeric CSS values must match within the thresholds defined in VISUAL PARITY THRESHOLDS.
-Not "close" — exact numeric limits apply. Period.
-
-**CHECK E — Text content preservation:**
-
-```bash
-# After port, verify no original target business copy was overwritten
-while read string; do
-  if ! grep -qrF "$string" "$TARGET_PATH/src"; then
-    echo "MISSING CONTENT: $string"
-  fi
-done < docs/port-design-system/original-target-strings.txt
-# Any output = BLOCKING FAILURE — target business copy was overwritten
-```
-
-Any source placeholder text surviving in target = BLOCKING FAILURE.
-
----
-
-## VISUAL PARITY THRESHOLDS
-
-These thresholds are non-negotiable. Verbal assessments are invalid.
-
-| Property | Threshold |
-|---|---|
-| Pixel delta | <= 1.5% of total pixels per screenshot pair |
-| Transform matrix element (matrix) | each of the 6 values within ±1 |
-| Transform matrix element (matrix3d) | each of the 16 values within ±1 |
-| opacity | ±0.02 |
-| All px values | ±1px |
-| All percentage values | ±0.5% |
-| All timing values (duration, delay) | ±16ms (1 frame at 60fps) |
-| video.currentTime | ±0.1 seconds at any given scrollY |
-| ScrollTrigger start / end | ±10px (scroll pixels) |
-| ScrollTrigger scrub factor | exact match (1.5 ≠ 1.6) |
-| ScrollTrigger pin | exact boolean match |
-| Lenis duration | exact match |
-| Lenis easing output | within ±0.005 at t=0.25, t=0.5, t=0.75 |
-| IntersectionObserver threshold array | exact array match ([0, 0.1, 0.25] ≠ [0, 0.25]) |
-| IntersectionObserver rootMargin | exact string match |
-
-Any value outside these thresholds = BLOCKING FAILURE. No exceptions.
-
----
-
-## Accepted Command Forms
-
-```text
-/port-design-system-from-local-clone "<source-path>" "<target-path>"
-/port-design-system-from-local-clone "<source-path>" "<target-path>" "<commit-hash>"
-```
-
-Argument parsing rules:
-- Keep quoted Windows paths exactly as-is.
-- Do not split inside quotes.
-- If arguments are missing but present in the user request, recover them exactly.
-- If fewer than two absolute paths are available, stop and ask for the missing path.
-- Optional `<commit-hash>` is baseline only. Never rewrite history.
-
----
-
-## Scope Boundaries
-
-Preserve from target:
-- Text and business content data only.
-- Routes, params, redirects, rewrites.
-- API routes, server actions, auth, middleware, integrations, analytics, business logic.
-- Content-bearing assets that are business data.
-
-Replace from source (complete visual layer):
-- Global CSS, design tokens, theme variables, spacing scales, type system, breakpoints.
-- All presentational components and wrappers (nav, hero, sections, footer, cards, buttons, forms, dialogs, drawers, tables, shells).
-- All states (hover/focus/active/open/sticky/loading/scrolled).
-- GSAP, ScrollTrigger, Lenis, IntersectionObserver, scroll listeners, RAF animation loops, parallax, scrubbed media, reveal choreography, responsive behavior.
-- Source visual assets required for fidelity (images, videos, SVGs, masks, textures, decorative media, fonts).
-
-Do not preserve from target:
-- Any target visual token, visual utility class, component skin, decorative asset, motion timing, spacing scale, or typography system.
-- Any pre-existing target visual identity pattern, even if casually "similar" to source.
-
-Never modify:
-- Backend logic and API behavior.
-- Server actions and auth behavior.
-- Data models, validation logic, business calculations.
-- Environment and deployment configuration.
-
----
-
-## Non-Negotiable Execution Rules
-
-### Rule 1: COPY-FIRST MANDATE (literal clone behavior)
-
-For every purely visual file (no API calls, no auth, no DB, no server actions):
-
-- DEFAULT ACTION = COPY THE FILE FROM SOURCE TO TARGET
-- THEN = do a single-pass replacement of text strings, image paths, and route refs
-- FORBIDDEN = rewriting CSS values, rewriting GSAP configs, refactoring structure, "improving" animations, "optimizing" Tailwind classes, substituting equivalent utilities, or applying personal judgment to any visual property
-
-Refactoring is explicitly and permanently forbidden.
-Every refactor introduces visual drift. Drift = failure.
-
-### Rule 2: Visual diff zero tolerance per component
-
-Each migrated component must pass the visual-property diff gate before moving on.
-Allowed differences: text content, asset path, route path, business-logic hooks required by target.
-Any other difference is blocking failure.
-
-Run CHECK A (CSS diff) AND CHECK B (Tailwind class diff) for every component.
-
-### Rule 3: No fold-only QA
-
-Screenshot at scrollY=0 is not verification.
-Scroll-driven sites must be validated across the entire document.
-A section is not verified until entry, mid-scroll, and settled states are captured and matched.
-
-### Rule 4: Chrome DevTools MCP and offline fallback
-
-Use Chrome DevTools MCP for runtime checks when available.
-If MCP is unavailable, use the OFFLINE FALLBACK PROTOCOL defined in the ACTIVE SCROLL
-VERIFICATION PROTOCOL section. The migration is not complete until verification passes,
-whether via MCP or fallback. Fallback does NOT lower the pass/fail threshold.
-
-### Rule 5: Regression gates are mandatory
-
-After each newly ported component, rerun TIER 2 verification on previously verified components.
-If any regression appears, fix regression first. No forward progress while regression is open.
-
-### Rule 6: Atomic preflight checkpoint before component edits
-
-Before touching any component, `STACK_MANIFEST.md`, `ANIMATION_MANIFEST.md`, and `PORT_PLAN.md`
-must exist and be populated. Record proof via shell output (`git status --short` and file existence
-checks) in phase output. If preflight proof is missing, migration is blocked.
-
-### Rule 7: Evidence-first QA (no unverifiable claims)
-
-No QA check can be marked PASS without attached artifacts on disk.
-Every PASS must reference concrete files (screenshots/video/json diff reports).
-Verbal statements like "looks good" or "appears correct" are invalid.
-
-### Rule 8: Immediate FAIL conditions
-
-- Any missing screenshot pair for required scroll steps is FAIL.
-- Any missing source/target video recording pair is FAIL.
-- Any missing computed-style dump pair is FAIL.
-- Any missing GSAP/Lenis runtime dump pair is FAIL.
-- Any unresolved regression in `PORT_PLAN.md` is FAIL.
-- Any skipped phase output format is FAIL.
-- Any build error introduced by migration (not in baseline) is FAIL.
-
-### Rule 9: Zero legacy visual residue
-
-Final target must not contain active visual residue from the old target design system.
-"Active residue" means any old target-only visual tokens, classes, CSS variables, decorative
-assets, or motion definitions still referenced by rendered routes.
-Hybrid identity = FAIL with no exceptions.
-
-### Rule 10: Status cannot be self-declared
-
-A phase/component status can be marked PASS only when its required artifacts exist and are
-referenced in docs. Manual PASS without evidence is invalid and must be treated as FAIL.
-
-### Rule 11: INCREMENTAL BUILD VERIFICATION (most critical rule)
-
-After creating OR modifying ANY file in the target, immediately run:
-
-```bash
-npm run build  # or pnpm build / yarn build / bun build — per detected manager
-```
-
-If build fails:
-1. Read the FULL error output completely — do not skim.
-2. Fix ONLY the file that caused the failure.
-3. Run build again.
-4. If still failing after 3 attempts on the same error: STOP. Document the failure in
-   PORT_PLAN.md. Ask the user for guidance.
-5. Do NOT continue to the next file while a build error is unresolved.
-
-Record in PORT_PLAN.md per file:
-- ✅ [filename] — build passed after write
-- ❌ [filename] — build failed, error: [one-line summary], resolved: [yes/no]
-
-NEVER batch-write multiple files and fix build errors later.
-NEVER write file N+1 while file N has an unresolved build error.
-This rule has no exceptions.
-
-### Rule 12: IMPORT PATH INTEGRITY
-
-Every import statement written into target files must satisfy:
-
-- ALLOWED: import resolves to a file physically present in `target/src/`
-- ALLOWED: import resolves to a package in `target/node_modules/`
-- FORBIDDEN: any import path containing numeric chunk IDs (e.g. `./161.js`)
-- FORBIDDEN: any import path containing content hashes (e.g. `abc123ef.js`)
-- FORBIDDEN: any path under `.next/server/`, `.next/static/`, `dist/server/`
-- FORBIDDEN: any path that was valid in source's build output but does not exist as a source file (build artefacts are not source files)
-
-After writing every file with imports, verify:
-
-```bash
-node -e "require.resolve('THE_IMPORT_PATH')" 2>&1
-# OR: check that the imported path exists:
-ls -la "RESOLVED_PATH"
-```
-
-Any unresolvable import = BLOCKING FAILURE before writing the next file.
-
----
-
-## Required Deliverables (must exist in target)
-
-- `docs/port-design-system/target-build-baseline.txt` (Phase 0a Step 1)
-- `docs/port-design-system/target-baseline-fingerprint.txt` (Phase 0a Step 2)
-- `docs/port-design-system/original-target-strings.txt` (Phase 0a Step 2)
-- `docs/port-design-system/legacy-visual-fingerprint-source.md` (Phase 0a Step 2)
-- `docs/port-design-system/legacy-visual-fingerprint-target-baseline.md` (Phase 0a Step 2)
-- `docs/port-design-system/extraction-report.md` (Phase 0a Step 3)
-- `docs/port-design-system/protected-surface-map.md` (Phase 0a Step 4)
-- `docs/port-design-system/file-classification.md` (Phase 0a Step 5)
-- `docs/port-design-system/legacy-visual-purge.md` (Phase 0a Step 5 — initial inventory)
-- `docs/port-design-system/source-asset-inventory.md` (Phase 0a Step 6)
-- `STACK_MANIFEST.md` (Phase 0b)
-- `ANIMATION_MANIFEST.md` (Phase 0c)
-- `PORT_PLAN.md` (Phase 0d)
-- `docs/port-design-system/modified-files.md` (maintained Phase 1 through Final)
-- `docs/port-design-system/asset-manifest.md` (maintained Phase 3 through Final)
-- `docs/port-design-system/qa-evidence-index.md` (Phase 5 through Final)
-- `docs/port-design-system/zero-legacy-residue-report.md` (Phase Final)
-- `docs/port-design-system/assets-reemplazo-ia.md` (Phase 4)
-- `MIGRATION_COMPLETE.md` (Phase Final)
-
-`docs/port-design-system/assets-reemplazo-ia.md` must start with:
-
-```md
-# ASSETS REEMPLAZO IA
-```
-
----
-
-## Workflow (strict order, blocking)
-
-### Phase 0a: Setup and Deep Audit
-
-─── RULE REMINDER ───────────────────────────────────────────────────────────────
-SOURCE IS THE ONLY VISUAL TRUTH.
-Copy first. Swap content only. Never adapt. Never approximate.
-Build after every file. Fix before the next file.
-Every ANIMATION_MANIFEST entry must reach ✅ before completion.
-─────────────────────────────────────────────────────────────────────────────────
-
-**DOCS CREATED IN THIS PHASE (all must exist before Phase 0b):**
-- ✅ `docs/port-design-system/target-build-baseline.txt` (Step 1)
-- ✅ `docs/port-design-system/target-baseline-fingerprint.txt` (Step 2)
-- ✅ `docs/port-design-system/original-target-strings.txt` (Step 2)
-- ✅ `docs/port-design-system/legacy-visual-fingerprint-source.md` (Step 2)
-- ✅ `docs/port-design-system/legacy-visual-fingerprint-target-baseline.md` (Step 2)
-- ✅ `docs/port-design-system/extraction-report.md` (Step 3)
-- ✅ `docs/port-design-system/protected-surface-map.md` (Step 4)
-- ✅ `docs/port-design-system/file-classification.md` (Step 5)
-- ✅ `docs/port-design-system/legacy-visual-purge.md` (Step 5 — initial inventory)
-- ✅ `docs/port-design-system/source-asset-inventory.md` (Step 6)
-
-#### Step 1: TARGET BUILD BASELINE (first action, no exceptions)
-
-Run in target:
-
-```bash
-npm run build 2>&1 | tee docs/port-design-system/target-build-baseline.txt
-echo "Exit code: $?" >> docs/port-design-system/target-build-baseline.txt
-```
-
-This records the target's build state BEFORE migration. All errors in this file are
-PRE-EXISTING — the migration did not cause them.
-
-During migration, any NEW build error (not in baseline) must be fixed before proceeding.
-Pre-existing errors must be fixed in Phase 0 before migration content begins, and documented
-under "Pre-existing issues resolved" in `PORT_PLAN.md`.
-
-If the target cannot build at all before migration:
-- Fix ALL pre-existing errors first.
-- Re-record the clean baseline.
-- Only then begin Phase 0b.
-
-#### Step 2: Fingerprint and content capture (immutable after capture)
-
-```bash
-# Target visual fingerprint — IMMUTABLE after this step. Never edit after creation.
-grep -rhoE '\-\-[a-zA-Z][a-zA-Z0-9-]*' "$TARGET_PATH/src" | sort -u \
-  > docs/port-design-system/target-baseline-fingerprint.txt
-grep -rhoE '#[0-9a-fA-F]{3,8}\b' "$TARGET_PATH/src" | \
-  tr '[:upper:]' '[:lower:]' | sort -u \
-  >> docs/port-design-system/target-baseline-fingerprint.txt
-grep -rhoE 'font-family\s*:\s*[^;{]+' "$TARGET_PATH/src" | sort -u \
-  >> docs/port-design-system/target-baseline-fingerprint.txt
-
-# Copy target fingerprint as named baseline file
-cp docs/port-design-system/target-baseline-fingerprint.txt \
-   docs/port-design-system/legacy-visual-fingerprint-target-baseline.md
-
-# Source visual fingerprint
-grep -rhoE '\-\-[a-zA-Z][a-zA-Z0-9-]*' "$SOURCE_PATH/src" | sort -u \
-  > docs/port-design-system/legacy-visual-fingerprint-source.md
-grep -rhoE '#[0-9a-fA-F]{3,8}\b' "$SOURCE_PATH/src" | \
-  tr '[:upper:]' '[:lower:]' | sort -u \
-  >> docs/port-design-system/legacy-visual-fingerprint-source.md
-
-# Original target business copy — IMMUTABLE after capture
-grep -rhoE '"[A-Za-záéíóúÁÉÍÓÚñÑ][^"]{4,}"' "$TARGET_PATH/src" | \
-  sort -u > docs/port-design-system/original-target-strings.txt
-```
-
-Also handle git commit hash if provided:
-- Validate commit. Record `git status --short`.
-- If dirty, create stash (with untracked) and record stash reference.
-- Checkout commit.
-
-#### Step 3: Deep-read source and generate extraction report
-
-Inventory source routes/layouts/components/styles/animations/assets.
-Create `docs/port-design-system/extraction-report.md` using the MANDATORY DOC SCHEMAS.
-
-#### Step 4: Protected surface map
-
-Map all protected target backend surfaces.
-Create `docs/port-design-system/protected-surface-map.md` using the MANDATORY DOC SCHEMAS.
-
-#### Step 5: File classification table (blocking output)
-
-Scan ALL directories listed below. Generate `docs/port-design-system/file-classification.md`
-with this schema:
-
-| Source path | Target path | Category | Action | Reason |
-|---|---|---|---|---|
-| src/components/Hero.tsx | src/components/Hero.tsx | VISUAL | COPY+CONTENT_SWAP | Pure visual, no logic |
-| src/app/api/contact/route.ts | src/app/api/contact/route.ts | BACKEND | NO_TOUCH | API route |
-| src/components/ContactForm.tsx | src/components/ContactForm.tsx | MIXED | SURGICAL | Has form submit handler |
-
-**Categories:**
-
-- VISUAL = purely presentational, no data fetching, no auth, no side effects
-  → ACTION: COPY from source, then swap text/routes/images only
-- BACKEND = API routes, server actions, auth, middleware, DB, business logic
-  → ACTION: NO_TOUCH — never open this file
-- MIXED = has both visual presentation AND logic/data fetching
-  → ACTION: SURGICAL — preserve 100% of logic unchanged — touch zero logic lines, replace visual shell only
-
-**Rules:**
-- Every file in source/src must have a row.
-- Every file in target/src must have a row.
-- No file may be left unclassified. "TBD" is not a category.
-- Generate this table BEFORE Phase 1 begins.
-- This table is your migration contract — follow it without deviation.
-
-**Directories to classify (scan ALL of them, no exceptions):**
-`src/components/`, `src/sections/`, `src/features/`, `src/pages/`, `src/app/`,
-`src/hooks/`, `src/utils/`, `src/lib/`, `src/animations/`, `src/motion/`,
-`src/scroll/`, `src/effects/`, `src/context/`, `src/store/`,
-`src/styles/`, `src/css/`, `src/types/`, `src/constants/`, `src/config/`
-
-Also generate the initial `docs/port-design-system/legacy-visual-purge.md` inventory
-(see LEGACY PURGE PROCEDURE in Phase 3).
-
-#### Step 6: Source asset inventory
-
-Create `docs/port-design-system/source-asset-inventory.md` using the MANDATORY DOC SCHEMAS.
-
----
-
-**GATE: Phase 0a → Phase 0b (ALL must be ✅ before Phase 0b begins):**
-- ☐ `target-build-baseline.txt` exists and exit code is recorded
-- ☐ `target-baseline-fingerprint.txt` captured and immutable
-- ☐ `original-target-strings.txt` captured
-- ☐ `legacy-visual-fingerprint-source.md` created
-- ☐ `legacy-visual-fingerprint-target-baseline.md` created
-- ☐ `extraction-report.md` created with full content schema
-- ☐ `protected-surface-map.md` created
-- ☐ `file-classification.md` created with every source/target file classified
-- ☐ `legacy-visual-purge.md` initial inventory created
-- ☐ `source-asset-inventory.md` created
-
----
-
-### Phase 0b: STACK_MANIFEST Lock (blocking)
-
-**DOCS CREATED IN THIS PHASE:**
-- ✅ `STACK_MANIFEST.md` (in target root)
-
-Read `source/package.json`, then create `STACK_MANIFEST.md` with exact versions.
-
-```md
-# STACK MANIFEST
-
-## Frontend Dependencies (LOCKED)
-
-| Package | Source version | Installed in target | Status |
+| Target route | Source route | Razón | Estado |
 |---|---|---|---|
-| gsap | 3.11.4 | 3.11.4 | [x] |
-| lenis | 1.0.28 | 1.0.28 | [x] |
-```
+| / | / | Equivalente directo | ☐ |
 
-#### FRONTEND vs BACKEND PACKAGE CLASSIFICATION
+Sin PAGE_MAPPING.md completo = migración bloqueada.
 
-**FRONTEND (locked to source exact version — no deviations):**
-
-Any package imported in `*.tsx`, `*.ts` files under `/src/components/`, `/src/sections/`,
-`/src/hooks/`, `/src/animations/`, `/src/motion/`, `/src/styles/`
-
-- Animation: gsap, @gsap/react, framer-motion, motion, lenis, @studio-freight/lenis,
-  locomotive-scroll, animejs, three, @react-three/fiber, @react-three/drei, popmotion, aos, scrollmagic
-- Styling: tailwindcss, @tailwindcss/*, sass, styled-components, @emotion/react, @emotion/styled,
-  clsx, class-variance-authority, tailwind-merge, tw-merge
-- Fonts: @fontsource/*, next/font (config only)
-- UI primitives: @radix-ui/*, @headlessui/*, shadcn components
-- Any package whose sole purpose is visual rendering
-
-**BACKEND (preserve target's existing version — never change):**
-
-- Database: prisma, drizzle-orm, mongoose, pg, mysql2, @planetscale/*
-- Auth: next-auth, @auth/*, clerk, lucia, jose, bcrypt
-- API: axios (when used server-side), zod (when used for API validation)
-- Email: nodemailer, resend, @sendgrid/*
-- Storage: @aws-sdk/*, @vercel/blob, uploadthing
-- Any package imported only in `/src/app/api/`, `/src/server/`, `/src/lib/`
-
-**BORDERLINE PACKAGES (ask the user — never decide unilaterally):**
-
-next, react, react-dom, typescript, sharp, @vercel/analytics
-
-If a conflict exists between source and target version for these:
-STOP. Report the conflict. Ask the user which version to use. Never resolve silently.
-
-#### STACK_LOCK ADDITIONAL RULES
-
-**NO ADDITIONS:** Do not install any package that does not appear in `source/package.json`,
-except packages required by target backend that were already in `target/package.json`.
-If you believe a package is needed that is not in source: STOP. Report why. Ask the user.
-Never install without approval.
-
-**NO REMOVALS:** Do not remove any package from `target/package.json` unless it exclusively
-served the legacy visual system AND you have verified via grep that it has zero imports in
-any non-visual file.
-
-**LOCKFILE STRATEGY:** After installing source frontend packages, run the package manager's
-install command to regenerate the lockfile. Commit the new lockfile with the migration.
-Never manually edit the lockfile.
-
-**PEER DEPENDENCY CONFLICTS:** If npm/pnpm/yarn reports a peer dependency conflict:
-Do NOT use `--force` or `--legacy-peer-deps` without reporting it.
-STOP. Document the conflict in `PORT_PLAN.md`. Ask the user for resolution preference.
-Only proceed after explicit approval.
-
-#### POST-INSTALL STACK VERIFICATION (blocking — Phase 0b final gate)
+## Paso 3: Baseline
 
 ```bash
-while IFS='|' read pkg version; do
-  installed=$(npm ls "$pkg" --depth=0 2>/dev/null | grep -oE "$pkg@[^ ]+" | head -1)
-  expected="$pkg@$version"
-  if [ "$installed" != "$expected" ]; then
-    echo "VERSION MISMATCH: expected $expected, got $installed"
-  fi
-done < STACK_MANIFEST.md
+npm run build 2>&1 | tee docs/pds/build-baseline.txt
+grep -rhoE '"[A-Za-záéíóúÁÉÍÓÚñÑ][^"]{4,}"' "$TARGET/src" | \
+  sort -u > docs/pds/original-target-strings.txt
 ```
 
-Any output = BLOCKING FAILURE — reinstall at correct version before continuing.
+## Paso 4: ANIMATION_MANIFEST.md — BLOQUEANTE
 
----
+| ☐ | ID | Archivo | Tipo | Valor exacto | Trigger | Comportamiento |
 
-### Phase 0c: ANIMATION_MANIFEST Exhaustive Inventory (blocking)
+Tipos: CSS_KEYFRAME CSS_TRANSITION CSS_SCROLL_DRIVEN CSS_WILL_CHANGE
+CSS_CLIP_PATH GSAP_TWEEN GSAP_TIMELINE GSAP_SCROLLTRIGGER GSAP_SPLITTEXT
+LENIS_INIT LENIS_CB INTERSECTION_OBS RAF_LOOP SCROLL_LISTENER
+VIDEO_SCRUB CANVAS_SCROLL LOTTIE DATA_ATTR
 
-**DOCS CREATED IN THIS PHASE:**
-- ✅ `ANIMATION_MANIFEST.md` (in target root)
+MANIFEST_TOTAL = N. Completo cuando grep -c "✅" == N. Cero entradas omisibles.
 
-Generate `ANIMATION_MANIFEST.md`. Do not start Phase 1 until exhaustive.
+## Paso 5: STACK_MANIFEST.md — BLOQUEANTE
 
-```md
-# ANIMATION MANIFEST
-MANIFEST_TOTAL = [N]
+Leer source/package.json. Instalar cada dependencia frontend a versión exacta.
+Verificar con npm ls. Mismatch = reinstalar antes de continuar.
 
-| Status | ID | File | Category | Raw extracted value | Trigger condition | Expected runtime behavior |
-|---|---|---|---|---|---|---|
-| ☐ | A001 | Hero.tsx | GSAP_SCROLLTRIGGER | scrub: 1.5, start: "top top", end: "+=3000", pin: true, trigger: ".hero" | scroll | video.currentTime follows scroll |
-| ☐ | A002 | Nav.tsx | CSS_TRANSITION | opacity 0.3s ease, transform 0.3s ease | scroll past 100px | nav bg fades in |
-```
+## Paso 6: Bucle de trasplante
+COPY:   cp source/src/components/X.tsx target/src/components/X.tsx
+SWAP:   Reemplazar SOLO strings visibles, hrefs de negocio, srcs de contenido
+PROHIBIDO: clases, valores CSS, GSAP config, thresholds, estructura JSX
+BUILD:  npm run build → fix solo el error → 3 fallos = STOP
+MCP QA: Delta <= 1.5% MCP-REF vs MCP-TARGET → si no, fix el elemento específico
+LOG:    ✅ en PAGE_MAPPING.md + fila en docs/pds/modified-files.md
 
-**CATEGORY values (use exactly one per row):**
+## Paso 7: Orden de trasplante
 
-| Category | What it covers |
-|---|---|
-| CSS_KEYFRAME | @keyframes block |
-| CSS_TRANSITION | transition: property |
-| CSS_SCROLL_DRIVEN | scroll-timeline, animation-timeline, @scroll-timeline |
-| CSS_WILL_CHANGE | will-change: declaration (signals GPU layer) |
-| CSS_CLIP_PATH | clip-path inside keyframe or transition |
-| CSS_TRANSFORM_SEQ | transform sequence inside keyframes |
-| GSAP_TWEEN | gsap.to / gsap.from / gsap.fromTo |
-| GSAP_TIMELINE | gsap.timeline() with children |
-| GSAP_SCROLLTRIGGER | ScrollTrigger.create() or trigger: in vars |
-| GSAP_SPLITTEXT | SplitText, SplitType, or character/word/line animation |
-| GSAP_PLUGIN_OTHER | DrawSVG, MorphSVG, Flip, or other GSAP plugins |
-| LENIS_INIT | new Lenis() constructor with full config object |
-| LENIS_SCROLL_CB | lenis.on('scroll', ...) callback logic |
-| INTERSECTION_OBS | new IntersectionObserver() with threshold + rootMargin |
-| RAF_LOOP | requestAnimationFrame loop — what it updates per frame |
-| SCROLL_LISTENER | window/element scroll event — what it reads and sets |
-| VIDEO_SCRUB | video.currentTime driven by scrollY or progress |
-| CANVAS_SCROLL | canvas or WebGL updated per scroll frame |
-| DATA_ATTR_SCROLL | data-speed, data-lag, data-scroll, data-parallax attributes |
-| LOTTIE | Lottie animation file reference or lottie-player usage |
+1. globals.css + tokens  2. tailwind.config  3. Fuentes → public/fonts/
+4. Lenis + GSAP init    5. Navbar            6. Footer
+7. Páginas (orden PAGE_MAPPING.md, home primero)
+8. Componentes compartidos restantes
 
-**REQUIRED fields per row — `Raw extracted value` must be the EXACT lines from source, not a description:**
+Después de pasos 1-4: TIER 1 completo antes de componentes.
+Después de cada componente: TIER 2.
 
-- GSAP_SCROLLTRIGGER: `scrub: 1.5, start: "top top", end: "+=3000", pin: true, trigger: ".hero"`
-- INTERSECTION_OBS: `threshold: [0, 0.1, 0.25, 0.5], rootMargin: "-10% 0px -10% 0px"`
-- VIDEO_SCRUB: `video.currentTime = (scrollY / totalScrollHeight) * video.duration`
-- LENIS_INIT: `{ duration: 1.2, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), orientation: 'vertical', smoothTouch: false }`
-
-**Status values:**
-- ☐ = not started
-- 🔧 = in progress
-- ✅ = verified (code diff + screenshot diff + computed style all passed)
-- ❌ = failing
-
-ZERO entries may be marked N/A, deferred, or skipped.
-If an animation exists in source, it has a row. No exceptions.
-
-#### ANIMATION COMPLETENESS RULE
-
-After the inventory scan, count total rows. Record: `MANIFEST_TOTAL = N`.
-
-The migration is not complete until:
+## Paso 8: Purga legacy
 
 ```bash
-grep -c "✅" ANIMATION_MANIFEST.md
-```
-
-equals `MANIFEST_TOTAL`. Every unchecked row is a blocking failure. There is no partial credit.
-
----
-
-### Phase 0d: PORT_PLAN Creation and Lock (blocking)
-
-**DOCS CREATED IN THIS PHASE:**
-- ✅ `PORT_PLAN.md` (in target root)
-
-Create `PORT_PLAN.md` before touching any component.
-
-```md
-# PORT PLAN
-
-## ComponentName
-- [ ] visual-property diff clean (CHECK A + CHECK B)
-- [ ] scroll crawl screenshots match at 0..100 by 5% (TIER 2 minimum)
-- [ ] computed style diff within VISUAL PARITY THRESHOLDS
-- [ ] full scroll video (TIER 1)
-- [ ] regression check against previously verified components
-- Build: [ ] PASS / [ ] FAIL — error: ___
-- Tier used: [ ] TIER 1 / [ ] TIER 2
-- Status: [ ] IN PROGRESS / [ ] VERIFIED / [ ] FAILING
-- Timestamp verified: ___
-```
-
-Hard gate: if any item is unchecked, component is not verified.
-No next component while current one is failing.
-
----
-
-## PHASE TRANSITION GATES
-
-### BUILD PASS DEFINITION
-
-- ✅ PASS = exit code 0, zero errors, zero warnings from ported code
-  (pre-existing warnings documented in baseline are acceptable)
-- ❌ FAIL = any exit code other than 0
-- ❌ FAIL = any TypeScript error
-- ❌ FAIL = any "Cannot find module" error
-- ❌ FAIL = any "Module not found" error
-- ❌ FAIL = any warning introduced by the migration (not in baseline)
-
-### Gate: Phase 0 → Phase 1
-
-ALL must be ✅ before Phase 1 begins:
-
-- ☐ `target-build-baseline.txt` exists and exit code is recorded
-- ☐ `STACK_MANIFEST.md` exists and has ≥1 entry, all packages at exact source version
-- ☐ `ANIMATION_MANIFEST.md` exists, has ≥1 entry, `MANIFEST_TOTAL` recorded
-- ☐ `PORT_PLAN.md` exists with full page/section/animation checklist
-- ☐ `file-classification.md` exists with every source/target file classified
-- ☐ `original-target-strings.txt` captured
-- ☐ `legacy-visual-fingerprint-source.md` captured
-- ☐ `legacy-visual-fingerprint-target-baseline.md` captured
-- ☐ `extraction-report.md`, `protected-surface-map.md`, `source-asset-inventory.md` all created
-
-### Gate: Phase 1 → Phase 2
-
-ALL must be ✅ before Phase 2 begins:
-
-- ☐ `npm run build` passes per BUILD PASS DEFINITION
-- ☐ `globals.css` visual diff vs source passes (CHECK A + CHECK B)
-- ☐ Tailwind config diff vs source passes
-- ☐ Font files physically present in `target/public/fonts/`
-- ☐ Lenis/GSAP initialization confirmed running in browser (console.log check)
-- ☐ Navbar renders at all 4 viewports without errors (390, 768, 1024, 1440)
-- ☐ Footer renders at all 4 viewports without errors
-
-### Gate: Phase 2 → Phase 3
-
-ALL must be ✅ before Phase 3 begins:
-
-- ☐ `npm run build` passes
-- ☐ Homepage scroll verification complete (all 21 positions × 4 viewports)
-- ☐ All homepage `ANIMATION_MANIFEST.md` entries marked ✅
-- ☐ No visual regression in navbar/footer vs Phase 1 sign-off
-
-### Gate: Phase 3 → Final
-
-ALL must be ✅ before Final phase begins:
-
-- ☐ `npm run build` passes
-- ☐ All pages scroll-verified (all TIER 1 checks complete)
-- ☐ All `ANIMATION_MANIFEST.md` entries ✅
-- ☐ File coverage audit complete (zero missing files)
-- ☐ Legacy residue scan complete (zero residue found)
-- ☐ Text content preservation audit complete (zero missing strings)
-- ☐ `asset-manifest.md` complete
-
----
-
-## Phase 1: Global Foundation Replacement
-
-─── RULE REMINDER ───────────────────────────────────────────────────────────────
-SOURCE IS THE ONLY VISUAL TRUTH.
-Copy first. Swap content only. Never adapt. Never approximate.
-Build after every file. Fix before the next file.
-Every ANIMATION_MANIFEST entry must reach ✅ before completion.
-─────────────────────────────────────────────────────────────────────────────────
-
-**BLOCKING ENTRY CONDITION:** All Phase 0 → Phase 1 gates must be ✅.
-
-**BLOCKING EXIT CONDITION:** All Phase 1 → Phase 2 gates must be ✅ before any component
-code is written in Phase 2.
-
-**PORT INSTRUCTION FORMAT — mandatory structure for every file written in this phase:**
-
-```text
-WRITE:  [what to write]
-BUILD:  run npm run build — must pass per BUILD PASS DEFINITION
-DIFF:   run CHECK A (CSS diff) and CHECK B (Tailwind class diff)
-SCROLL: run TIER 2 regression check (5 scroll positions, desktop 1440px)
-VERIFY: computed styles match per VISUAL PARITY THRESHOLDS
-LOG:    mark ✅ in PORT_PLAN.md with timestamp and tier used
-→ Only then: proceed to next file
-```
-
-1. Port source globals / tokens / fonts / motion bootstrap.
-2. Port navbar shell.
-3. Port footer shell.
-4. Remove legacy target visual globals / theme / utilities.
-5. For MIXED files: preserve 100% of logic unchanged — touch zero logic lines.
-6. Remove/deactivate any target visual fallback path that can re-enable legacy appearance.
-
----
-
-## Phase 2: Full Route Port
-
-─── RULE REMINDER ───────────────────────────────────────────────────────────────
-SOURCE IS THE ONLY VISUAL TRUTH.
-Copy first. Swap content only. Never adapt. Never approximate.
-Build after every file. Fix before the next file.
-Every ANIMATION_MANIFEST entry must reach ✅ before completion.
-─────────────────────────────────────────────────────────────────────────────────
-
-**BLOCKING ENTRY CONDITION:** All Phase 1 → Phase 2 gates must be ✅. Specifically:
-`globals.css`, tailwind config, fonts, Lenis init, and GSAP plugin registration must all
-be visually verified in browser.
-
-**BLOCKING EXIT CONDITION:** All Phase 2 → Phase 3 gates must be ✅.
-
-**PORT INSTRUCTION FORMAT — mandatory structure for every component written in this phase:**
-
-```text
-WRITE:  [what to write]
-BUILD:  run npm run build — must pass per BUILD PASS DEFINITION
-DIFF:   run CHECK A (CSS diff) and CHECK B (Tailwind class diff)
-SCROLL: run TIER 2 regression check (5 scroll positions, desktop 1440px)
-VERIFY: computed styles match per VISUAL PARITY THRESHOLDS
-LOG:    mark ✅ in PORT_PLAN.md with timestamp and tier used
-→ Only then: proceed to next component
-```
-
-1. Port homepage end-to-end visually.
-2. Port all remaining routes (including auth/dashboard shells) with source visual language.
-3. For routes missing in source, reuse source shell patterns literally — not improvisation.
-4. Update `PORT_PLAN.md` continuously.
-5. Run TIER 2 regression checks after each merged component.
-6. For each route, verify section order and shell composition parity against source.
-
----
-
-## Phase 3: Assets and Purge
-
-─── RULE REMINDER ───────────────────────────────────────────────────────────────
-SOURCE IS THE ONLY VISUAL TRUTH.
-Copy first. Swap content only. Never adapt. Never approximate.
-Build after every file. Fix before the next file.
-Every ANIMATION_MANIFEST entry must reach ✅ before completion.
-─────────────────────────────────────────────────────────────────────────────────
-
-1. Copy full source visual asset tree (images/videos/svg/fonts/decorative media) as fidelity baseline.
-2. Wire references in target.
-3. Log every copied asset with absolute source path in `asset-manifest.md`.
-4. Remove old target visual assets/styles no longer used.
-5. Document purge in `legacy-visual-purge.md`.
-
-#### LEGACY PURGE PROCEDURE
-
-**Step 1 — Inventory every target visual file:**
-
-```bash
-find "$TARGET_PATH/src" -type f \( -name "*.css" -o -name "*.scss" \
-  -o -name "*.sass" -o -name "*.module.css" -o -name "*.module.scss" \) \
-  > /tmp/target_style_files.txt
-
-find "$TARGET_PATH/src" -type f \( -name "*.tsx" -o -name "*.ts" \) | \
-  xargs grep -l "animation\|transition\|gsap\|lenis\|parallax\|IntersectionObserver" \
-  >> /tmp/target_visual_ts_files.txt
-```
-
-**Step 2 — Assign action per file in `legacy-visual-purge.md`:**
-
-- DELETE = file serves only legacy visual system, has no logic to preserve
-- REPLACE = file will be completely overwritten by source equivalent
-- REWRITE = file has mixed concerns: preserve 100% of logic unchanged — touch zero logic lines, replace visual shell
-
-Each file must have an explicit action. "TBD" is not an action.
-
-**Step 3 — Execute deletions BEFORE writing any source component:**
-
-```bash
-rm -f [all files marked DELETE]
-# Record each deletion in legacy-visual-purge.md
-```
-
-**Step 4 — After full migration, run zero-legacy-residue scan (fully executable):**
-
-```bash
-# Step 4a: Scan for target-only CSS custom properties still surviving in target
 comm -23 \
-  <(grep -rhoE '\-\-[a-zA-Z][a-zA-Z0-9-]*' \
-    docs/port-design-system/legacy-visual-fingerprint-target-baseline.md | sort -u) \
-  <(grep -rhoE '\-\-[a-zA-Z][a-zA-Z0-9-]*' \
-    docs/port-design-system/legacy-visual-fingerprint-source.md | sort -u) \
-  > /tmp/target_only_vars.txt
-
-while read var; do
-  if grep -qr "$var" "$TARGET_PATH/src"; then
-    echo "LEGACY RESIDUE FOUND: $var"
-    grep -rn "$var" "$TARGET_PATH/src"
-  fi
-done < /tmp/target_only_vars.txt
-
-# Step 4b: Scan for target-only hex colors still surviving in target
-comm -23 \
-  <(grep -rhoE '#[0-9a-fA-F]{3,8}\b' \
-    docs/port-design-system/legacy-visual-fingerprint-target-baseline.md | \
-    tr '[:upper:]' '[:lower:]' | sort -u) \
-  <(grep -rhoE '#[0-9a-fA-F]{3,8}\b' \
-    docs/port-design-system/legacy-visual-fingerprint-source.md | \
-    tr '[:upper:]' '[:lower:]' | sort -u) \
-  > /tmp/target_only_colors.txt
-
-while read color; do
-  if grep -qri "$color" "$TARGET_PATH/src"; then
-    echo "LEGACY COLOR RESIDUE: $color"
-    grep -rin "$color" "$TARGET_PATH/src"
-  fi
-done < /tmp/target_only_colors.txt
-
-# Any output from either scan = BLOCKING FAILURE
-# Residue found = hybrid identity = migration is incomplete
+  <(grep -rhoE '\-\-[a-zA-Z][a-zA-Z0-9-]*' docs/pds/target-fingerprint.txt | sort -u) \
+  <(grep -rhoE '\-\-[a-zA-Z][a-zA-Z0-9-]*' "$SOURCE/src" | sort -u) \
+  > /tmp/legacy_vars.txt
+while read v; do grep -qr "$v" "$TARGET/src" && echo "LEGACY: $v"; done < /tmp/legacy_vars.txt
+# Cualquier output = FAIL
 ```
 
-Asset policy:
-- During fidelity phase, source assets are allowed as placeholders to reach exact visual match.
-- Before production readiness, replace restricted branding/media with equivalent target assets
-  in same visual slot/timing/composition.
-- Document every replacement path and rationale in `ASSETS REEMPLAZO IA`.
+## Paso 9: File coverage audit
 
----
-
-## Phase 4: ASSETS REEMPLAZO IA
-
-Create `docs/port-design-system/assets-reemplazo-ia.md` starting with `# ASSETS REEMPLAZO IA`.
-
-Generate one entry per asset. Minimum required categories:
-
-#### CATEGORY 1: HERO VIDEO / HERO BACKGROUND MEDIA
-
-Required fields per entry:
-- Exact source filename and absolute path
-- Target destination path
-- Role: what visual job this asset does at pixel level
-- Usage: which components reference it and how (CSS background? `<video>` src?)
-- Business adaptation: how to adapt for [target business name]
-- Generation prompt (see GENERATION PROMPT TEMPLATE below)
-- Recommended tool: Kling (cinematic video) / Runway (motion video) / Flux (still)
-- Implementation note: how to drop in the replacement without breaking layout
-
-#### CATEGORY 2: SECTION BACKGROUND IMAGES
-
-One entry per distinct section background. Same fields as Category 1.
-
-#### CATEGORY 3: LARGE FEATURE / CARD IMAGES
-
-Same fields. Note card dimensions and aspect ratio.
-
-#### CATEGORY 4: SVG ILLUSTRATIONS AND ICONS
-
-Same fields plus:
-- SVG structure notes (animated? inline? mask?)
-- Recommended tool: Illustrator / Figma / Midjourney with SVG export
-- If SVG is animated, describe the animation path and timing
-
-#### CATEGORY 5: TEXTURES AND OVERLAYS
-
-Same fields plus:
-- Opacity, blend mode, and tiling behavior
-
-#### CATEGORY 6: LOTTIE ANIMATIONS
-
-Same fields plus:
-- `.json` file path
-- Animation duration and loop behavior
-- What elements are animated within the Lottie
-- Recommended tool: LottieFiles / Adobe After Effects + Bodymovin
-- Whether the Lottie is scroll-triggered (note trigger config)
-
-#### CATEGORY 7: FONTS AND TYPEFACES
-
-Same fields plus:
-- Google Fonts URL or local `@font-face` src
-- Weights used, whether variable font axes are used
-- Recommended action: keep if Google Font, replace `@font-face` src if proprietary
-
-#### GENERATION PROMPT TEMPLATE (mandatory fields per asset)
-
-```text
-Subject: [what is in the frame — specific, not generic]
-Context/Setting: [location, environment, time of day]
-Lighting: [quality, direction, color temperature, hard/soft]
-Camera/Lens: [focal length feel, depth of field, movement if video]
-Color palette: [2-4 dominant hex values or color descriptors]
-Atmosphere/Mood: [emotional register — cinematic? intimate? industrial?]
-Motion (video only): [camera movement, subject movement, speed]
-Duration (video only): [seconds, loop point if looping]
-Aspect ratio: [exact ratio — 16:9, 21:9, etc.]
-Resolution: [1920x1080 minimum / 3840x2160 preferred]
-Exclusions: [what must NOT appear — competitors, wrong branding, etc.]
-Business context: [how this asset serves [target business] specifically]
+```bash
+find "$SOURCE/src" -type f ! -path "*/.next/*" | sort > /tmp/src.txt
+find "$TARGET/src" -type f ! -path "*/.next/*" | sort > /tmp/tgt.txt
+comm -23 /tmp/src.txt /tmp/tgt.txt
+grep -rhoE '#[0-9a-fA-F]{3,8}\b' "$SOURCE/src" | sort -u | \
+  while read c; do grep -qri "$c" "$TARGET/src" || echo "MISSING COLOR: $c"; done
+grep -rhoE '\-\-[a-zA-Z][a-zA-Z0-9-]*' "$SOURCE/src" | sort -u | \
+  while read v; do grep -qr "$v" "$TARGET/src" || echo "MISSING VAR: $v"; done
 ```
 
-**Example for Granja Mari Pepa:**
+## Paso 10: ASSETS REEMPLAZO IA
 
-```text
-Subject: "Fresh produce — crates of tomatoes, peppers, artichokes
-stacked in a cold-room warehouse at a Spanish food distributor"
-Context/Setting: "Industrial refrigerated warehouse, Murcia region, Spain,
-early morning before distribution runs"
-Lighting: "Cool blue-white fluorescent overhead, warm accent from open
-loading dock door, high contrast, cinematic grade"
-Camera/Lens: "35mm equivalent, f/2.0, shallow depth of field on foreground
-crates, rack focus to worker in background"
-Color palette: "#1a2f1a deep green, #e8f5e9 pale green, #f57c00 orange, #fafafa cool white"
-Atmosphere/Mood: "Quiet industrial precision — the calm of a place that feeds thousands before dawn"
-Motion: "Slow dolly forward 0.3m over 8 seconds, subject static"
-Duration: "8 seconds, seamless loop"
-Aspect ratio: "21:9"
-Resolution: "3840x1640"
-Exclusions: "No supermarkets, no retail setting, no consumer packaging,
-no people facing camera directly"
-Recommended tool: Kling (primary), Runway Gen-3 (alternative)
-```
+docs/pds/assets-reemplazo-ia.md con encabezado: # ASSETS REEMPLAZO IA
 
-Mari Pepa-adapted replacement guidance: preserve exact composition/timing/slot from source.
-Adapt subject matter and environment to Granja Mari Pepa's food distribution identity.
+Por cada asset copiado del source: ruta source, ruta target, rol visual,
+adaptación para Granja Mari Pepa (HORECA, Murcia), prompt de generación
+(sujeto, contexto, iluminación, cámara, paleta, atmósfera, movimiento,
+duración, aspect ratio, exclusiones), herramienta (Kling/Flux/Runway).
 
----
+## Verificación dual MCP
 
-## Phase 5: ACTIVE SCROLL VERIFICATION PROTOCOL (mandatory)
-
-─── RULE REMINDER ───────────────────────────────────────────────────────────────
-SOURCE IS THE ONLY VISUAL TRUTH.
-Copy first. Swap content only. Never adapt. Never approximate.
-Build after every file. Fix before the next file.
-Every ANIMATION_MANIFEST entry must reach ✅ before completion.
-─────────────────────────────────────────────────────────────────────────────────
-
-#### MCP AVAILABILITY PROTOCOL
-
-**IF Chrome DevTools MCP is available:**
-→ Use it for all scroll verification steps. This is the preferred path.
-
-**IF Chrome DevTools MCP is unavailable:**
-→ Use this OFFLINE FALLBACK PROTOCOL:
-
-**FALLBACK A — Puppeteer script (install puppeteer locally if needed):**
+Scroll crawler (inyectar en MCP-REF y MCP-TARGET):
 
 ```javascript
-const puppeteer = require('puppeteer');
-async function scrollAudit(url, outputDir) {
-  const browser = await puppeteer.launch();
-  const page = await browser.newPage();
-  await page.setViewport({ width: 1440, height: 900 });
-  await page.goto(url, { waitUntil: 'networkidle0' });
-  await page.waitForTimeout(2000);
-  const totalHeight = await page.evaluate(
-    () => document.body.scrollHeight - window.innerHeight
-  );
+(async function audit() {
+  const maxY = document.body.scrollHeight - window.innerHeight;
+  const snaps = [];
   for (let i = 0; i <= 20; i++) {
-    const scrollY = Math.round(totalHeight * (i / 20));
-    await page.evaluate(y => window.scrollTo(0, y), scrollY);
-    await page.waitForTimeout(800);
-    await page.screenshot({
-      path: `${outputDir}/scroll_${String(i * 5).padStart(3, '0')}pct.png`,
-      fullPage: false
-    });
+    window.scrollTo({ top: maxY * i / 20, behavior: 'instant' });
+    await new Promise(r => setTimeout(r, 700));
+    snaps.push({ pct: i*5, computed:
+      ['nav','video','.hero','section'].reduce((a,s) => {
+        const el = document.querySelector(s); if (!el) return a;
+        const cs = getComputedStyle(el);
+        a[s]={opacity:cs.opacity,transform:cs.transform,
+               clipPath:cs.clipPath,visibility:cs.visibility};
+        return a; }, {}) });
   }
-  await browser.close();
-}
-scrollAudit('http://localhost:3000', './docs/port-design-system/scroll-audit/source');
-scrollAudit('http://localhost:3001', './docs/port-design-system/scroll-audit/target');
-```
-
-**FALLBACK B — Computed style extraction via injected script:**
-Open target in any browser. Open DevTools console. Paste and run the scroll crawler script
-from Step 2. Copy the console output to `docs/port-design-system/computed-style-dump.txt`.
-Compare with same output from source.
-
-**FALLBACK C — Manual video recording:**
-Use OS screen recording (QuickTime / OBS / ShareX). Record full scroll in source, then in
-target. Compare recordings at 0%, 25%, 50%, 75%, 100% scroll positions.
-
-State which fallback was used in the final report. Fallback does NOT lower the pass/fail threshold.
-
-#### REGRESSION CHECK TIERS
-
-**TIER 1 — Full Verification:**
-Run at: Phase 1 completion, Phase 2 completion, Phase 3 completion, Final audit.
-- Full scroll crawler: 21 positions × 4 viewports = 84 screenshot pairs
-- Full video recording at all 4 viewports
-- Full computed style extraction for all animated elements
-- Full ScrollTrigger.getAll() comparison
-
-**TIER 2 — Component Regression Check:**
-Run after: each individual component port.
-- 5 scroll positions only: 0%, 25%, 50%, 75%, 100%
-- Desktop 1440px only
-- Computed style check for the ONE component just modified
-- ScrollTrigger check for animations in that component only
-- Build pass check
-
-Both tiers use the same VISUAL PARITY THRESHOLDS.
-Document which tier was used for each check in `PORT_PLAN.md`.
-
-#### PIXEL DELTA COMPUTATION
-
-**Method 1 (preferred — via MCP):**
-Use Chrome DevTools MCP screenshot comparison.
-Compute delta as: (number of pixels with RGBA diff > 10) / (total pixels). > 1.5% = FAIL.
-
-**Method 2 (fallback — ImageMagick):**
-
-```bash
-compare -metric AE source_scroll_50pct.png target_scroll_50pct.png \
-  -fuzz 5% diff.png 2>&1
-total_pixels=$(identify -format "%[fx:w*h]" source_scroll_50pct.png)
-different_pixels=$(compare -metric AE source_scroll_50pct.png \
-  target_scroll_50pct.png /dev/null 2>&1)
-delta=$(echo "scale=4; $different_pixels / $total_pixels" | bc)
-# delta > 0.015 = FAIL
-```
-
-**Method 3 (fallback — Node.js via pixelmatch):**
-`npm install pixelmatch pngjs --no-save`. Standard pixelmatch comparison with threshold 0.1
-per channel. Mismatch ratio > 0.015 = FAIL.
-
-Specify which method was used in `qa-evidence-index.md`.
-
----
-
-#### Step 1: Run both dev servers
-
-- Source URL and target URL must both be reachable. Record exact URLs used.
-- Validate these viewports: `390x844`, `768x1024`, `1024x768`, `1440x900`.
-- Every subsequent step runs at all four viewports.
-
-#### Step 2: Inject scroll crawler in both pages
-
-```javascript
-(async function crawlPage(label) {
-  const steps = 20; // 0,5,10...100
-  const maxY = Math.max(
-    0,
-    Math.max(document.body.scrollHeight, document.documentElement.scrollHeight) - window.innerHeight
-  );
-  const out = [];
-
-  window.scrollTo({ top: 0, behavior: 'instant' });
-  await new Promise((r) => setTimeout(r, 1000));
-
-  for (let i = 0; i <= steps; i++) {
-    const pct = Math.round((i / steps) * 100);
-    const y = (maxY * i) / steps;
-    window.scrollTo({ top: y, behavior: 'instant' });
-    await new Promise((r) => setTimeout(r, 800));
-
-    const selectors = [
-      'nav',
-      '.hero',
-      '.hero video',
-      'video',
-      '[data-section]',
-      '[class*="reveal"]',
-      '[class*="parallax"]',
-      '[class*="sticky"]'
-    ];
-
-    const styles = {};
-    for (const sel of selectors) {
-      const el = document.querySelector(sel);
-      if (!el) continue;
-      const cs = getComputedStyle(el);
-      styles[sel] = {
-        opacity: cs.opacity,
-        transform: cs.transform,
-        visibility: cs.visibility,
-        display: cs.display,
-        clipPath: cs.clipPath,
-        backgroundColor: cs.backgroundColor
-      };
-    }
-    out.push({ pct, y: Math.round(y), styles });
-  }
-
-  return { label, viewport: { w: window.innerWidth, h: window.innerHeight }, out };
-})('page-audit');
-```
-
-Save crawler JSON outputs:
-- `source_<page>_<viewport>_crawler.json`
-- `target_<page>_<viewport>_crawler.json`
-
-#### Step 3: Screenshot every 5%
-
-- Capture 0..100% in both source and target.
-- Store in `docs/port-design-system/scroll-audit/`.
-- Naming: `source_<page>_<viewport>_scroll_00pct.png` / `target_<page>_<viewport>_scroll_00pct.png`
-- Required count per page: `21 steps x 4 viewports x 2 sides = 168 screenshots`. If count is not exact, FAIL.
-
-#### Step 4: Per-step comparison gate
-
-At each step verify:
-- Same element visibility and composition.
-- Same reveal state.
-- Same parallax/sticky position.
-- Same scrubbed media frame behavior.
-- Same computed style state for tracked selectors within VISUAL PARITY THRESHOLDS.
-
-Any mismatch is blocking failure.
-
-Mandatory step-level logging:
-- Create `docs/port-design-system/scroll-audit/<page>-comparison.md`.
-- Log each step as PASS/FAIL with root cause and fix commit reference.
-
-Mandatory quantitative diff:
-- For each screenshot pair, compute visual delta using PIXEL DELTA COMPUTATION above.
-- Threshold: <= 1.5% pixel delta. Any pair exceeding 1.5% = BLOCKING FAILURE.
-- For scrubbed video regions, use frame-state parity + computed-style/runtime parity.
-- Store per-step delta in `<page>-comparison.md`.
-
-#### Step 5: Mandatory full-scroll video
-
-Record full scroll in source and target using identical script.
-
-```javascript
-(async function autoScrollForRecording() {
-  const total = Math.max(
-    0,
-    Math.max(document.body.scrollHeight, document.documentElement.scrollHeight) - window.innerHeight
-  );
-  const duration = 8000;
-  const start = performance.now();
-
-  function tick(now) {
-    const t = Math.min((now - start) / duration, 1);
-    const eased = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-    window.scrollTo(0, total * eased);
-    if (t < 1) requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
+  return snaps;
 })();
 ```
 
-Save as:
-- `source_<page>_<viewport>_scroll.webm`
-- `target_<page>_<viewport>_scroll.webm`
-- Required count per page: `4 viewports x 2 sides = 8 videos`.
-
-If timing or transitions differ per VISUAL PARITY THRESHOLDS, fail and fix.
-
-#### Step 6: Computed style diff gate
-
-For each key animated element in `ANIMATION_MANIFEST.md`, compare source vs target at active scroll positions.
+Auto-scroll para grabación (inyectar en ambos, grabar pantalla):
 
 ```javascript
-const el = document.querySelector('.hero-title');
-const cs = getComputedStyle(el);
-console.table({
-  opacity: cs.opacity,
-  transform: cs.transform,
-  clipPath: cs.clipPath,
-  filter: cs.filter,
-  backdropFilter: cs.backdropFilter,
-  fontFamily: cs.fontFamily,
-  fontSize: cs.fontSize,
-  lineHeight: cs.lineHeight,
-  letterSpacing: cs.letterSpacing,
-  color: cs.color,
-  backgroundColor: cs.backgroundColor,
-  borderRadius: cs.borderRadius,
-  boxShadow: cs.boxShadow,
-  animationPlayState: cs.animationPlayState,
-  willChange: cs.willChange
-});
+(function rec(){
+  const total=document.body.scrollHeight-window.innerHeight;
+  const dur=10000,t0=performance.now();
+  const f=t=>{const p=Math.min((t-t0)/dur,1),e=p<.5?2*p*p:-1+(4-2*p)*p;
+    window.scrollTo(0,total*e);if(p<1)requestAnimationFrame(f);};
+  requestAnimationFrame(f);})();
 ```
 
-All values must match within VISUAL PARITY THRESHOLDS. Typography and spacing metrics must
-match exactly unless font rendering differences are browser-level. If a value mismatch is
-explained as browser-level variance, record explicit justification and supporting evidence.
+GSAP dump: `ScrollTrigger.getAll().forEach(st=>console.log({trigger:st.trigger?.className,start:st.start,end:st.end,scrub:st.vars?.scrub,pin:st.vars?.pin}))`
 
-Save style dumps:
-- `source_<page>_<viewport>_computed.json`
-- `target_<page>_<viewport>_computed.json`
-- `diff_<page>_<viewport>_computed.md`
+TIER 1 (gates de fase): 21 posiciones × 4 viewports + video + computed styles + GSAP dump
+TIER 2 (por componente): 5 posiciones a 1440px + computed style + GSAP del componente
 
-#### Step 7: GSAP/Lenis runtime parity gate
+Umbrales: pixel delta <=1.5% | transform ±1 | opacity ±0.02 | px ±1 |
+timing ±16ms | video.currentTime ±0.1s | scrub exacto | threshold exacto |
+Lenis easing ±0.005
 
-```javascript
-ScrollTrigger.getAll().forEach((st) => {
-  console.log({
-    trigger: st.trigger?.className || st.trigger?.id || st.trigger?.tagName,
-    start: st.start,
-    end: st.end,
-    scrub: st.vars?.scrub,
-    pin: st.vars?.pin
-  });
-});
-```
+## Build rules
 
-Source and target ScrollTrigger values must match within VISUAL PARITY THRESHOLDS.
-Lenis options and scroll-event behavior must also match.
+BUILD-1: archivo escrito → build inmediato
+BUILD-2: build falla → fix ese archivo → no tocar ningún otro
+BUILD-3: 3 fallos en mismo archivo → STOP + reporte
+BUILD-4: cero imports de chunks/hashes/.next/server/
+BUILD-5: PASS = exit 0, cero errores TS, cero warnings nuevos
 
-Save runtime dumps:
-- `source_<page>_<viewport>_scrolltrigger.json`
-- `target_<page>_<viewport>_scrolltrigger.json`
-- `source_<page>_<viewport>_lenis.json`
-- `target_<page>_<viewport>_lenis.json`
-- `diff_<page>_<viewport>_runtime.md`
+## Stop conditions
 
-#### Step 8: Animation manifest status updates
+- Pre-flight delta > 10%
+- PAGE_MAPPING.md inexistente cuando se intenta código
+- Build sin resolver antes del siguiente archivo
+- Import no resuelve a src/ o node_modules/
+- Texto source en target después del SWAP
+- ✅ sin evidencia en docs/pds/qa-evidence/
 
-Mark an entry `✅` only when steps 3, 5, 6, and 7 all pass for that animation.
-Otherwise keep `☐`. Status cannot be self-declared.
+## Entregables
 
-#### Step 9: QA evidence index (blocking)
+Antes: PAGE_MAPPING.md · ANIMATION_MANIFEST.md · STACK_MANIFEST.md ·
+       docs/pds/build-baseline.txt · docs/pds/original-target-strings.txt
+Durante: docs/pds/modified-files.md · docs/pds/qa-evidence/
+Final: docs/pds/assets-reemplazo-ia.md · MIGRATION_COMPLETE.md
 
-Create `docs/port-design-system/qa-evidence-index.md`. For each page + viewport include:
-- Screenshot count
-- Video files
-- Crawler JSON files
-- Computed style dumps
-- Runtime dumps
-- SHA256 hash for each artifact
-- Pixel delta method used (MCP / ImageMagick / pixelmatch)
+## Criterios de completitud
 
-No completion report is valid without this index.
+PAGE_MAPPING todas ✅ · ANIMATION_MANIFEST grep==TOTAL · delta<=1.5% todo ·
+build exit 0 · cero residuos legacy · texto target preservado · assets-ia completo
 
-#### Step 10: Route-level completion gate
-
-A route is verified only when all viewports pass steps 3–9.
-If one viewport fails, route status is FAIL.
-No global completion while any route status is FAIL.
-
----
-
-## Phase Final: FILE COVERAGE AUDIT (blocking)
-
-─── RULE REMINDER ───────────────────────────────────────────────────────────────
-SOURCE IS THE ONLY VISUAL TRUTH.
-Copy first. Swap content only. Never adapt. Never approximate.
-Build after every file. Fix before the next file.
-Every ANIMATION_MANIFEST entry must reach ✅ before completion.
-─────────────────────────────────────────────────────────────────────────────────
-
-**DOCS COMPLETED IN THIS PHASE:**
-- ✅ `docs/port-design-system/zero-legacy-residue-report.md`
-- ✅ `docs/port-design-system/assets-reemplazo-ia.md`
-- ✅ `MIGRATION_COMPLETE.md` (in target root)
-
-Run source/target file inventory and map every source visual file to target equivalent in `modified-files.md`.
-
-Visual/frontend file scope:
-- `*.css`, `*.scss`, `*.sass`, `*.module.css`, `*.module.scss`
-- visual `*.tsx`/`*.ts` under components/layouts/sections/ui/animations/motion/scroll/effects/hooks/context/store
-- files that import/use gsap/lenis/framer-motion/IntersectionObserver/RAF/scroll listeners
-- `tailwind.config.*`, `postcss.config.*`, `next.config.*` visual-related parts
-- visual assets under public/images, public/videos, public/fonts
-
-### Step 1 — Generate file trees:
-
-```bash
-find "$SOURCE_PATH/src" -type f \
-  ! -path "*/node_modules/*" ! -path "*/.next/*" ! -path "*/dist/*" \
-  | sed "s|$SOURCE_PATH/||" | sort > /tmp/source_files.txt
-
-find "$TARGET_PATH/src" -type f \
-  ! -path "*/node_modules/*" ! -path "*/.next/*" ! -path "*/dist/*" \
-  | sed "s|$TARGET_PATH/||" | sort > /tmp/target_files.txt
-
-echo "=== FILES IN SOURCE ONLY (must be ported) ==="
-comm -23 /tmp/source_files.txt /tmp/target_files.txt
-
-echo "=== FILES IN TARGET ONLY (verify they are new backend files) ==="
-comm -13 /tmp/source_files.txt /tmp/target_files.txt
-```
-
-Every file in "SOURCE ONLY" output must have been ported. Cross-reference with `file-classification.md`.
-Any VISUAL or MIXED file in "SOURCE ONLY" = BLOCKING FAILURE.
-
-### Step 2 — Directory coverage check:
-
-```bash
-for dir in components sections features hooks utils lib animations motion \
-           scroll effects context store styles css ui layouts; do
-  if [ -d "$SOURCE_PATH/src/$dir" ]; then
-    if [ ! -d "$TARGET_PATH/src/$dir" ]; then
-      echo "MISSING DIRECTORY: src/$dir"
-    fi
-  fi
-done
-# Any output = BLOCKING FAILURE
-```
-
-### Step 3 — public/ asset coverage:
-
-```bash
-find "$SOURCE_PATH/public" -type f ! -name "*.gitkeep" \
-  | sed "s|$SOURCE_PATH/public/||" | sort > /tmp/source_public.txt
-find "$TARGET_PATH/public" -type f ! -name "*.gitkeep" \
-  | sed "s|$TARGET_PATH/public/||" | sort > /tmp/target_public.txt
-comm -23 /tmp/source_public.txt /tmp/target_public.txt
-# Any visual asset (not business content) in "SOURCE ONLY" = BLOCKING FAILURE
-```
-
-### Step 4 — CSS hex color parity:
-
-```bash
-grep -rhoE '#[0-9a-fA-F]{3,8}\b' "$SOURCE_PATH/src" | \
-  tr '[:upper:]' '[:lower:]' | sort -u > /tmp/source_colors.txt
-while read color; do
-  if ! grep -qri "$color" "$TARGET_PATH/src"; then
-    echo "MISSING HEX COLOR: $color"
-  fi
-done < /tmp/source_colors.txt
-# Any output = BLOCKING FAILURE
-```
-
-### Step 5 — CSS custom property parity:
-
-```bash
-grep -rhoE '\-\-[a-zA-Z][a-zA-Z0-9-]*' "$SOURCE_PATH/src" | \
-  sort -u > /tmp/source_vars.txt
-while read var; do
-  if ! grep -qr "$var" "$TARGET_PATH/src"; then
-    echo "MISSING CSS VARIABLE: $var"
-  fi
-done < /tmp/source_vars.txt
-# Any output = BLOCKING FAILURE
-```
-
-### Step 6 — Font-family parity:
-
-```bash
-grep -rhoE "font-family\s*:\s*[^;{]+" "$SOURCE_PATH/src" | \
-  sed 's/font-family\s*:\s*//' | sort -u > /tmp/source_fonts.txt
-grep -rhoE "fontFamily\s*:\s*['\"][^'\"]*['\"]" "$SOURCE_PATH/src" | \
-  sed "s/fontFamily\s*:\s*['\"]//;s/['\"].*//" | sort -u >> /tmp/source_fonts.txt
-while read font; do
-  if ! grep -qri "$font" "$TARGET_PATH/src"; then
-    echo "MISSING FONT: $font"
-  fi
-done < /tmp/source_fonts.txt
-# Any output = BLOCKING FAILURE
-```
-
-### Step 7 — Tailwind theme key parity (for JS/TS configs):
-
-```bash
-node -e "
-const c = require('$SOURCE_PATH/tailwind.config.js');
-const keys = Object.keys(c.theme?.extend || {});
-keys.forEach(k => console.log(k));
-" > /tmp/source_tw_keys.txt 2>/dev/null || true
-
-node -e "
-const c = require('$TARGET_PATH/tailwind.config.js');
-const keys = Object.keys(c.theme?.extend || {});
-keys.forEach(k => console.log(k));
-" > /tmp/target_tw_keys.txt 2>/dev/null || true
-
-comm -23 <(sort /tmp/source_tw_keys.txt) <(sort /tmp/target_tw_keys.txt)
-# Any missing theme key = BLOCKING FAILURE
-# Note: For Tailwind v4 (CSS-based config), use Step 5 (CSS custom property parity) instead.
-```
-
-### Step 8 — Text content preservation audit:
-
-```bash
-while read string; do
-  if ! grep -qrF "$string" "$TARGET_PATH/src"; then
-    echo "MISSING CONTENT: $string"
-  fi
-done < docs/port-design-system/original-target-strings.txt
-# Any output = FAIL — target business copy was overwritten
-```
-
-Required output: `docs/port-design-system/zero-legacy-residue-report.md`
-- Must list every scanned identifier and match result.
-- If any target-only legacy identifier remains active, report FAIL and do not close.
-
----
-
-## Per-Phase Output Format (mandatory)
-
-After every phase output exactly:
-
-```text
-1. Files modified
-- <path>: one-line change summary
-
-2. Assets used
-- <absolute source path>
-
-3. Phase checklist
-- [PASS|FAIL] <item>
-```
-
----
-
-## Final Completion Report Format (mandatory)
-
-Include all:
-- Source path
-- Target path
-- Baseline commit hash used
-- Stash reference created, if any
-- Package manager used
-- Dependency additions
-- Files modified with one-line reasons
-- Assets copied with absolute source paths
-- Legacy visual purge result
-- Page QA matrix
-- Animation QA matrix
-- Chrome DevTools MCP inspection result and verdict (or fallback method used and result)
-- Lint, typecheck, and build result
-- Deployment readiness confirmation
-- Known gaps, if any
-- Reproduced section titled exactly `ASSETS REEMPLAZO IA`
-
----
-
-## Completion Criteria
-
-Migration is complete only if ALL are true:
-
-- All automated checks A/B/C/D/E in WHAT "EXACT CLONE" MEANS OPERATIONALLY pass for all components and pages.
-- `STACK_MANIFEST.md` shows exact frontend dependency parity.
-- `ANIMATION_MANIFEST.md` has zero pending entries (`grep -c "✅"` equals `MANIFEST_TOTAL`).
-- `PORT_PLAN.md` has all components verified.
-- `legacy-visual-purge.md` confirms old target visual system removal.
-- `zero-legacy-residue-report.md` confirms no active target-only visual residue.
-- `modified-files.md` covers all source visual files in scope.
-- `qa-evidence-index.md` exists and includes full artifact inventory with hashes.
-- Chrome DevTools MCP verdict is faithful, or explicit fallback method reported with passing results.
-- Lint, typecheck, and build pass per BUILD PASS DEFINITION.
-- All PHASE TRANSITION GATES are satisfied (all ✅).
-
-If any criterion fails, final status must be failure, not success.
-
----
-
-## MANDATORY DOC SCHEMAS
-
-### docs/port-design-system/extraction-report.md
-
-```md
-# Source Visual System Extraction
-
-## CSS Custom Properties
-| Variable name | Value | Used in |
-|---|---|---|
-
-## Color Tokens
-| Hex value | Usage context |
-|---|---|
-
-## Typography Scale
-| Font family | Weights | Source (Google/local) | Variable name |
-|---|---|---|---|
-
-## Spacing Scale
-| Token name | Value |
-|---|---|
-
-## Animation Values
-| Effect | Raw value | File location |
-|---|---|---|
-
-## Breakpoints
-| Name | Value |
-|---|---|
-
-## Z-Index Scale
-| Layer | Value |
-|---|---|
-```
-
-### docs/port-design-system/protected-surface-map.md
-
-```md
-# Protected Surface Map
-
-## Backend Files (NEVER TOUCH)
-| File path | Purpose | Why protected |
-|---|---|---|
-
-## Mixed Files (SURGICAL ONLY — preserve 100% of logic unchanged)
-| File path | Logic to preserve | Visual shell to replace |
-|---|---|---|
-
-## Confirmed Safe to Ignore
-| File path | Reason |
-|---|---|
-```
-
-### docs/port-design-system/source-asset-inventory.md
-
-```md
-# Source Asset Inventory
-
-## Visual Assets Found in Source
-| Asset path | Type | Size | Used in component | Copied to target? |
-|---|---|---|---|---|
-```
-
-### docs/port-design-system/file-classification.md
-
-```md
-# File Classification Table
-
-| Source path | Target path | Category | Action | Reason |
-|---|---|---|---|---|
-```
-
-Categories: VISUAL (COPY+CONTENT_SWAP), BACKEND (NO_TOUCH), MIXED (SURGICAL).
-Every file in source/src and target/src must have a row. No unclassified files.
-
-### docs/port-design-system/legacy-visual-purge.md
-
-```md
-# Legacy Visual Purge
-
-## Target Visual Files — Pre-Migration Inventory
-| File path | Category | Action (DELETE/REPLACE/REWRITE) | Status |
-|---|---|---|---|
-
-## Deleted Files
-(populated after deletions execute)
-
-## Replaced Files
-(populated after replacements execute)
-
-## Rewritten Files
-(populated after rewrites execute)
-
-## Zero-Residue Scan Result
-| Scan timestamp | Variables checked | Colors checked | Residue found | Pass/Fail |
-|---|---|---|---|---|
-```
-
-### docs/port-design-system/asset-manifest.md
-
-```md
-# Asset Manifest
-
-## Copied Visual Assets
-| Source absolute path | Target path | Asset type | Components using it |
-|---|---|---|---|
-
-## Broken Reference Scan
-| Timestamp | References checked | Broken found | Pass/Fail |
-|---|---|---|---|
-```
-
-### docs/port-design-system/modified-files.md
-
-```md
-# Files Modified During Migration
-
-| File path | Change type | Reason | Build passed after? |
-|---|---|---|---|
-```
-
-### docs/port-design-system/qa-evidence-index.md
-
-```md
-# QA Evidence Index
-
-## Scroll Verification Evidence
-| Page | Viewport | Scroll position | Source screenshot | Target screenshot | Delta % | Pass/Fail | Pixel delta method | Timestamp |
-|---|---|---|---|---|---|---|---|---|
-
-## Video Recordings
-| Page | Viewport | Source recording | Target recording | Verdict |
-|---|---|---|---|---|
-
-## Computed Style Comparisons
-| Component | Element | Scroll position | Source value | Target value | Within threshold? |
-|---|---|---|---|---|---|
-
-## ScrollTrigger Comparisons
-| Component | trigger | start | end | scrub | pin | Match? |
-|---|---|---|---|---|---|---|
-```
-
-### docs/port-design-system/zero-legacy-residue-report.md
-
-```md
-# Zero Legacy Residue Report
-
-## Scan Configuration
-| Timestamp | Source fingerprint file | Target scanned path |
-|---|---|---|
-
-## CSS Variables Scan
-| Variable | Found in target? | File location if found |
-|---|---|---|
-
-## Hex Colors Scan
-| Color | Found in target? | File location if found |
-|---|---|---|
-
-## Final Result
-| Total items scanned | Residue items found | Verdict |
-|---|---|---|
-```
-
-### STACK_MANIFEST.md
-
-```md
-# STACK MANIFEST
-
-## Frontend Dependencies (LOCKED)
-| Package | Source version | Installed in target | Status |
-|---|---|---|---|
-
-## Backend Dependencies (PRESERVED — never change)
-| Package | Target version | Notes |
-|---|---|---|
-
-## Post-Install Verification
-| Timestamp | Packages checked | Mismatches found | Pass/Fail |
-|---|---|---|---|
-```
-
-### ANIMATION_MANIFEST.md
-
-```md
-# ANIMATION MANIFEST
-MANIFEST_TOTAL = [N]
-
-| Status | ID | File | Category | Raw extracted value | Trigger condition | Expected runtime behavior |
-|---|---|---|---|---|---|---|
-```
-
-Status values: ☐ / 🔧 / ✅ / ❌. No N/A. No skipped rows.
-
-### PORT_PLAN.md
-
-```md
-# PORT PLAN
-
-## [ComponentName]
-- [ ] visual-property diff clean (CHECK A + CHECK B)
-- [ ] scroll crawl screenshots match at 0..100 by 5% (TIER 2 minimum)
-- [ ] computed style diff within VISUAL PARITY THRESHOLDS
-- [ ] full scroll video (TIER 1)
-- [ ] regression check against previously verified components
-- Build: [ ] PASS / [ ] FAIL — error: ___
-- Tier used: [ ] TIER 1 / [ ] TIER 2
-- Status: [ ] IN PROGRESS / [ ] VERIFIED / [ ] FAILING
-- Timestamp verified: ___
-```
-
-### docs/port-design-system/assets-reemplazo-ia.md
-
-```md
-# ASSETS REEMPLAZO IA
-
-## CATEGORY 1: HERO VIDEO / HERO BACKGROUND MEDIA
-### [asset-filename]
-- Source path: [absolute path]
-- Target destination: [target path]
-- Role: [visual job at pixel level]
-- Usage: [which component, how referenced]
-- Business adaptation: [target business context]
-- Recommended tool: [Kling / Runway / Flux]
-- Implementation note: [how to drop in without breaking layout]
-- Generation prompt:
-  [full prompt using GENERATION PROMPT TEMPLATE]
-```
-
-Repeat for all 7 categories: HERO VIDEO, SECTION BACKGROUNDS, CARD IMAGES,
-SVG ILLUSTRATIONS, TEXTURES AND OVERLAYS, LOTTIE ANIMATIONS, FONTS AND TYPEFACES.
-
-### MIGRATION_COMPLETE.md
-
-```md
-# Migration Complete
-
-## Summary
-- Source: [path]
-- Target: [path]
-- Baseline commit: [hash or N/A]
-- Completed: [timestamp]
-
-## Phase Gate Results
-| Gate | Status |
-|---|---|
-| Phase 0 → 1 | ✅/❌ |
-| Phase 1 → 2 | ✅/❌ |
-| Phase 2 → 3 | ✅/❌ |
-| Phase 3 → Final | ✅/❌ |
-
-## Completion Criteria
-| Criterion | Status |
-|---|---|
-| All CHECK A/B/C/D/E pass | ✅/❌ |
-| STACK_MANIFEST exact parity | ✅/❌ |
-| ANIMATION_MANIFEST all ✅ | ✅/❌ |
-| PORT_PLAN all verified | ✅/❌ |
-| Zero legacy residue | ✅/❌ |
-| Build pass (exit 0, zero errors) | ✅/❌ |
-| Lint/typecheck pass | ✅/❌ |
-| Text content preservation audit | ✅/❌ |
-
-## Known Gaps
-(list or "None")
-```
+Output por componente:
+COMPONENTE: [x] | BUILD: PASS/FAIL | DELTA: X.X% PASS/FAIL |
+TEXTO: PASS/FAIL | ANIMACIONES: N/M | EVIDENCIA: [rutas] | ESTADO: ✅/❌

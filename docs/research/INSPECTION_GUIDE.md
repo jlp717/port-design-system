@@ -1,58 +1,55 @@
-# Local Clone Inspection Guide
+# Inspection Guide
 
-## Goal
-Extract the complete visual system from a local source clone so it can be ported to a separate target Next.js project with literal fidelity.
+## Dual MCP setup (primera acción, antes de cualquier archivo)
+MCP-REF:    <reference-url>        (web pública de referencia)
+MCP-TARGET: http://localhost:3001  (target en desarrollo)
 
-## Inputs
-- `<source-path>`: local clone with desired design language
-- `<target-path>`: production Next.js app receiving the visual port
-- `<commit-hash>`: baseline target commit
+Ambas abiertas hasta que MIGRATION_COMPLETE.md esté escrito.
+Source local (localhost:3000): solo para leer código, no para QA visual.
 
-## Phase 0 Extraction Checklist
+## Pre-flight validation
 
-### Design tokens
-- [ ] Every css custom property in `:root`, `.dark`, and scoped blocks
-- [ ] Full color system values
-- [ ] Typography system: font family, size, line-height, letter-spacing, weights
-- [ ] Spacing, radius, shadow, blur, z-index tokens
-- [ ] Responsive breakpoints and media queries
+Para cada página del source:
+  - Capturar screenshot en MCP-REF de la página equivalente
+  - Calcular pixel delta
+  - Delta > 10%: HARD STOP. Reportar al usuario página y porcentaje exacto.
+  - Delta <= 10%: continuar
 
-### Animation system
-- [ ] Lenis constructor options and raf wiring
-- [ ] GSAP global config and plugin registration
-- [ ] All timelines with exact values
-- [ ] ScrollTrigger trigger/start/end/scrub/pin settings
-- [ ] Parallax multipliers and transform maps
-- [ ] Hover/focus transitions and easing curves
-- [ ] 3D scene settings if present
+## Phase 0 extraction checklist
 
-### Component mapping
-- [ ] Navbar visual shell and states
-- [ ] Footer visual shell and states
-- [ ] Home page section ordering and behavior
-- [ ] Inner page section equivalents
-- [ ] Auth/client area visual wrappers only
+Design tokens:
+  [ ] Cada CSS custom property en :root, .dark, bloques con scope
+  [ ] Sistema de color completo (hex, oklch, hsl — todos los formatos)
+  [ ] Tipografía: font-family, size, line-height, letter-spacing, weights
+  [ ] Spacing, radius, shadow, blur, z-index
+  [ ] Breakpoints y container widths
 
-### Asset mapping
-- [ ] Fonts used by source
-- [ ] Images, videos, SVGs, models used by source UI
-- [ ] Absolute source paths recorded for every copied asset
+Animation system (con valores numéricos exactos):
+  [ ] Lenis: duration, easing function code, orientation, smoothTouch
+  [ ] GSAP: plugins registrados, config global
+  [ ] ScrollTrigger por instancia: trigger, start, end, scrub, pin
+  [ ] IntersectionObserver: threshold array exacto, rootMargin exacto, callback
+  [ ] RAF loops: qué leen y qué actualizan por frame
+  [ ] Scroll listeners: qué leen y qué setean
+  [ ] Fórmula video.currentTime (scroll-to-video scrub)
 
-### Protected target surface
-- [ ] API routes listed (read-only)
-- [ ] server actions listed (read-only)
-- [ ] auth/business logic files listed (read-only)
+Page mapping:
+  [ ] Listar todas las rutas del source
+  [ ] Listar todas las rutas del target
+  [ ] Crear PAGE_MAPPING.md con cada ruta target mapeada a una source
 
-## Recommended MCP Steps
-If Chrome DevTools MCP is available:
-1. Load source app route-by-route.
-2. Capture computed styles for body, headings, nav, buttons, cards, footer.
-3. Inspect runtime animation registrations (GSAP/ScrollTrigger) where accessible.
-4. Validate key breakpoints at 390, 768, 1024, 1440 widths.
+Asset inventory:
+  [ ] Hero videos (rutas absolutas)
+  [ ] Fondos de sección
+  [ ] SVGs (animados o estáticos)
+  [ ] Archivos de fuentes
+  [ ] Lottie JSONs
+  [ ] Texturas y overlays
 
-## Target Verification Checklist
-- [ ] `npm run build` passes after each phase
-- [ ] no broken asset references
-- [ ] no backend/auth/server-action edits
-- [ ] visual QA pass for each page and animation
-- [ ] final report includes PASS/FAIL per check item
+## Verification per component
+
+Después de cada copy+swap:
+  TIER 2: 5 posiciones de scroll a 1440px en MCP-TARGET vs MCP-REF
+  Delta <= 1.5%: pass
+  Delta > 1.5%: identificar elemento exacto, fix, reverificar
+  No marcar ✅ sin screenshot passing de ambos MCPs
