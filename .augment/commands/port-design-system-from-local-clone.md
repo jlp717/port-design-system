@@ -1,6 +1,6 @@
 ---
 description: "Literal visual transplant of a Next.js source clone into a target repo. DESIGN 100% from source (copied verbatim). TEXT 100% from target (all user strings preserved). Dual Chrome DevTools MCP (reference-url + target dev server) open from first command to last. Third arg is public reference URL for pre-flight source validation. PAGE_MAPPING.md required before any code. Every visual file is COPIED then text-swapped, never rewritten. Build after every file. Complete when pixel delta <= 1.5% at all scroll positions."
-argument-hint: "--url "<source-url>" "<target-path>" | "<source-path>" "<target-path>" "<reference-url>""
+argument-hint: '--url "<source-url>" "<target-path>" | "<source-path>" "<target-path>" "<reference-url>"'
 ---
 <!-- AUTO-GENERATED from .claude/skills/port-design-system-from-local-clone/SKILL.md - do not edit directly.
      Run `node scripts/sync-skills.mjs` to regenerate. -->

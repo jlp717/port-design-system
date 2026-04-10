@@ -92,7 +92,7 @@ write(
 );
 write(
   `.augment/commands/${SKILL_NAME}.md`,
-  `---\ndescription: "${SHORT_DESC}"\nargument-hint: "${ARGUMENT_HINT}"\n---\n${header}${body}`
+  `---\ndescription: "${SHORT_DESC}"\nargument-hint: '${ARGUMENT_HINT.replace(/'/g, "''")}'\n---\n${header}${body}`
 );
 write(
   `.continue/commands/${SKILL_NAME}.md`,
