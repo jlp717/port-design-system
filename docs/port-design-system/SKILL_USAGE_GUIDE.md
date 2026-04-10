@@ -1,35 +1,39 @@
 # /port-design-system-from-local-clone — Usage Guide
 
-## Comando
+## Comandos
 
-```txt
+FORMA A (source repo local con componentes React reales):
 /port-design-system-from-local-clone "<source-path>" "<target-path>" "<reference-url>"
-```
 
-## Ejemplo (Granja Mari Pepa)
+FORMA B (source es URL pública — sin repo local con componentes propios):
+/port-design-system-from-local-clone --url "<source-url>" "<target-path>"
 
-```txt
-/port-design-system-from-local-clone "C:\Users\Javier\Desktop\Repositorios\mari-pepa-redesign" "C:\Users\Javier\Desktop\Repositorios\granja_mari_pepa\frontend" "https://jobyaviation.com"
-```
+## Cuándo usar cada forma
 
-## Cómo funciona
+FORMA A: el repo source tiene componentes .tsx propios, globals.css real,
+         tailwind.config con customización real, assets en public/.
 
-1. Abre DOS instancias Chrome DevTools MCP (reference-url + target dev server)
-2. Valida que el source coincide con reference-url (delta <= 10% requerido)
-3. Crea PAGE_MAPPING.md mapeando cada página target a un diseño source
-4. Crea ANIMATION_MANIFEST.md con cada efecto de animación y valores exactos
-5. Copia cada archivo visual del source al target, hace swap solo del texto
-6. Verifica cada componente con scroll dual-MCP (0% a 100% de 5 en 5)
-7. Purga todos los residuos visuales legacy del target
-8. Genera ASSETS REEMPLAZO IA con prompts específicos para Granja Mari Pepa
+FORMA B: el repo source es un proxy inverso (middleware NextResponse.rewrite),
+         o directamente no existe un repo y se quiere replicar desde la web.
 
-## Qué se preserva del target
+## Ejemplo real — Granja Mari Pepa desde jobyaviation.com (FORMA B)
+/port-design-system-from-local-clone --url "https://jobyaviation.com" "C:\Users\Javier\Desktop\Repositorios\granja_mari_pepa\frontend"
 
-SOLO: texto de contenido visible al usuario y rutas href a páginas del negocio.
-NADA MÁS del target sobrevive. Cero diseño legacy.
+Contexto adicional al invocar:
+CONTEXT:
+
+Source URL: https://jobyaviation.com
+Target: granja_mari_pepa/frontend (distribuidora HORECA, Lorca, Murcia, España)
+Backend del target (auth, API, DB, next-intl): INTOCABLE
+Efectos obligatorios a replicar: scroll-driven video scrub, parallax
+cinematográfico, GSAP ScrollTrigger con pin, Lenis smooth scroll,
+IntersectionObserver reveals, logo/nav animado, partner tab switching,
+news card grid con hover, tipografía dark/light dramática
+
 
 ## Entregables en el target
 
-PAGE_MAPPING.md · ANIMATION_MANIFEST.md · STACK_MANIFEST.md ·
-docs/pds/build-baseline.txt · docs/pds/qa-evidence/ (168 screenshots mínimo/página) ·
-docs/pds/assets-reemplazo-ia.md · MIGRATION_COMPLETE.md
+PAGE_MAPPING.md · ANIMATION_MANIFEST.md ·
+docs/pds/source-design-tokens.json · docs/pds/source-animations.json ·
+docs/pds/source-structure.json · docs/pds/build-baseline.txt ·
+docs/pds/qa-evidence/ · docs/pds/assets-reemplazo-ia.md · MIGRATION_COMPLETE.md

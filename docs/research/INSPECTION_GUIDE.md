@@ -1,55 +1,71 @@
-# Inspection Guide
+# Inspection Guide — FORMA B (source URL pública)
 
-## Dual MCP setup (primera acción, antes de cualquier archivo)
-MCP-REF:    <reference-url>        (web pública de referencia)
+## Setup inicial
+
+MCP-REF:    <source-url>           (fuente visual absoluta)
 MCP-TARGET: http://localhost:3001  (target en desarrollo)
+Ambas abiertas hasta MIGRATION_COMPLETE.md.
 
-Ambas abiertas hasta que MIGRATION_COMPLETE.md esté escrito.
-Source local (localhost:3000): solo para leer código, no para QA visual.
+## Protocolo de captura — siempre aplicar antes de screenshot
 
-## Pre-flight validation
+```javascript
+// 1. Esperar carga completa
+await new Promise(r => setTimeout(r, 2500));
+// 2. Forzar lazy images
+document.querySelectorAll('img[loading="lazy"]').forEach(img => {
+  img.loading = 'eager';
+  if (img.dataset.src) img.src = img.dataset.src;
+});
+// 3. Estabilizar layout
+await new Promise(r => requestAnimationFrame(() => setTimeout(r, 500)));
+```
 
-Para cada página del source:
-  - Capturar screenshot en MCP-REF de la página equivalente
-  - Calcular pixel delta
-  - Delta > 10%: HARD STOP. Reportar al usuario página y porcentaje exacto.
-  - Delta <= 10%: continuar
+## Detección de vídeo antes de pixel delta
 
-## Phase 0 extraction checklist
+```javascript
+const hasFullscreenVideo = (() => {
+  const v = document.querySelector('video');
+  return v ? v.offsetWidth >= window.innerWidth * 0.8 : false;
+})();
+// Si true: usar computed style comparison, no pixel delta en hero/0%
+// Pixel delta solo desde scroll 25% en adelante
+```
 
-Design tokens:
-  [ ] Cada CSS custom property en :root, .dark, bloques con scope
-  [ ] Sistema de color completo (hex, oklch, hsl — todos los formatos)
-  [ ] Tipografía: font-family, size, line-height, letter-spacing, weights
-  [ ] Spacing, radius, shadow, blur, z-index
-  [ ] Breakpoints y container widths
+## Posiciones de captura obligatorias
 
-Animation system (con valores numéricos exactos):
-  [ ] Lenis: duration, easing function code, orientation, smoothTouch
-  [ ] GSAP: plugins registrados, config global
-  [ ] ScrollTrigger por instancia: trigger, start, end, scrub, pin
-  [ ] IntersectionObserver: threshold array exacto, rootMargin exacto, callback
-  [ ] RAF loops: qué leen y qué actualizan por frame
-  [ ] Scroll listeners: qué leen y qué setean
-  [ ] Fórmula video.currentTime (scroll-to-video scrub)
+0%, 25%, 50%, 75%, 100% — nunca solo 0%.
+
+## Checklist de extracción por página
+
+Design tokens (ejecutar extractDesignTokens() en MCP-REF):
+  [ ] CSS custom properties en :root y html
+  [ ] Sistema de color completo
+  [ ] Tipografía: fontFamily, fontSize, fontWeight, lineHeight, letterSpacing
+  [ ] Spacing, radius, shadow, z-index
+  [ ] Breakpoints
+
+Animation system (ejecutar extractAnimations() en MCP-REF):
+  [ ] Lenis: duration, easing, smoothTouch, orientation, lerp
+  [ ] GSAP plugins registrados
+  [ ] ScrollTrigger: trigger, start, end, scrub, pin por instancia
+  [ ] VIDEO_SCRUB: src, fórmula progress → currentTime
+  [ ] IntersectionObserver: clases que lo usan, comportamiento
+  [ ] RAF loops activos
+
+Estructura DOM (ejecutar extractStructure() en MCP-REF):
+  [ ] Secciones ordenadas con index, clases, height, background
+  [ ] Secciones con vídeo identificadas
+  [ ] Secciones con canvas identificadas
 
 Page mapping:
-  [ ] Listar todas las rutas del source
-  [ ] Listar todas las rutas del target
-  [ ] Crear PAGE_MAPPING.md con cada ruta target mapeada a una source
+  [ ] Rutas de <source-url> listadas
+  [ ] Rutas del target listadas
+  [ ] PAGE_MAPPING.md creado con mapeo completo
 
-Asset inventory:
-  [ ] Hero videos (rutas absolutas)
-  [ ] Fondos de sección
-  [ ] SVGs (animados o estáticos)
-  [ ] Archivos de fuentes
-  [ ] Lottie JSONs
-  [ ] Texturas y overlays
+## Verificación por sección
 
-## Verification per component
-
-Después de cada copy+swap:
-  TIER 2: 5 posiciones de scroll a 1440px en MCP-TARGET vs MCP-REF
-  Delta <= 1.5%: pass
-  Delta > 1.5%: identificar elemento exacto, fix, reverificar
-  No marcar ✅ sin screenshot passing de ambos MCPs
+Después de cada reconstrucción:
+  TIER 2: 5 posiciones a 1440px, MCP-TARGET vs MCP-REF
+  Vídeo detectado: computed style comparison
+  Sin vídeo: pixel delta <= 1.5%
+  No marcar ✅ sin evidencia en ambos MCPs

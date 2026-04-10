@@ -3,479 +3,428 @@
 
 # Port Design System From Local Clone
 
-## Regla absoluta (leer antes de cada acción)
+## Regla absoluta
 
 El source es la unica fuente de verdad visual.
 El target debe convertirse visualmente en una copia exacta del source.
 Lo unico que se conserva del target es el texto visible al usuario.
 
-## Comando
+## Modos de invocación
 
-```txt
+FORMA A — source es un repo local con componentes React reales:
 /port-design-system-from-local-clone "<source-path>" "<target-path>" "<reference-url>"
+
+FORMA B — source es una URL pública (no existe repo con componentes propios):
+/port-design-system-from-local-clone --url "<source-url>" "<target-path>"
+
+Usar FORMA B cuando:
+- El repo "source" es un proxy inverso (middleware que reescribe a otra URL)
+- No existen componentes React propios en el source repo
+- Se quiere replicar el diseño directamente desde una web pública
+
+En FORMA B: MCP-REF apunta a <source-url>. No hay pre-flight source vs
+referencia porque source-url ya ES la referencia.
+
+## DISEÑO vs TEXTO — inmutable
+
+DISEÑO = 100% del source/referencia. Sin adaptar. Sin reescribir.
+TEXTO  = 100% del target. Cada string visible. Cero texto source sobrevive.
+
+Texto SÍ: strings visibles en UI, hrefs del negocio target, nombres del negocio.
+Texto NO: clases CSS, valores de animación, estructura JSX, configs GSAP/Lenis,
+          atributos data-*, assets decorativos.
+
+Cuando target tiene páginas sin equivalente en source:
+  - Usar diseño de la página source estructuralmente más similar
+  - Preservar todo el texto del target
+  - Nunca inventar diseño nuevo
+
+## Flujo FORMA B (para el caso jobyaviation → granja_mari_pepa)
+
+### Paso 0: Dual MCP — primera acción, nunca cerrar hasta terminar
+MCP-REF:    <source-url>           (jobyaviation.com — fuente visual absoluta)
+MCP-TARGET: http://localhost:3001  (granja_mari_pepa en desarrollo)
+
+### Paso 1: Extracción completa desde MCP-REF
+
+No existe source repo que leer. Todo se extrae de <source-url> via MCP.
+Ejecutar estos scripts en MCP-REF para cada página:
+
+TOKENS CSS:
+```javascript
+(function extractDesignTokens() {
+  const vars = {};
+  for (const sheet of document.styleSheets) {
+    try {
+      for (const rule of sheet.cssRules) {
+        const text = rule.cssText || '';
+        if (rule.selectorText === ':root' || rule.selectorText === 'html') {
+          const matches = text.matchAll(/--([^:]+):\s*([^;]+)/g);
+          for (const m of matches) vars[`--${m[1].trim()}`] = m[2].trim();
+        }
+      }
+    } catch(e) {}
+  }
+  const typography = {};
+  ['h1','h2','h3','p','nav a','button','a'].forEach(sel => {
+    const el = document.querySelector(sel);
+    if (!el) return;
+    const s = getComputedStyle(el);
+    typography[sel] = {
+      fontFamily: s.fontFamily, fontSize: s.fontSize,
+      fontWeight: s.fontWeight, lineHeight: s.lineHeight,
+      letterSpacing: s.letterSpacing, color: s.color,
+      textTransform: s.textTransform
+    };
+  });
+  const colors = new Set();
+  document.querySelectorAll('*').forEach(el => {
+    const s = getComputedStyle(el);
+    if (s.backgroundColor !== 'rgba(0, 0, 0, 0)') colors.add(s.backgroundColor);
+    colors.add(s.color);
+  });
+  return { vars, typography, colors: [...colors].slice(0, 60) };
+})();
 ```
 
-- source-path: repo local clonado con el diseño a trasplantar
-- target-path: repo de producción que recibirá el diseño
-- reference-url: URL pública del sitio original de referencia
-  (ej: "https://jobyaviation.com")
-  Reemplaza al commit-hash de versiones anteriores.
-  Se usa para validación pre-flight y QA dual-MCP durante toda la migración.
+ANIMACIONES GSAP Y LENIS:
+```javascript
+(function extractAnimations() {
+  const result = { lenis: null, scrollTriggers: [], observers: [] };
+  if (window.__lenis || window.lenis) {
+    const l = window.__lenis || window.lenis;
+    result.lenis = {
+      duration: l.options?.duration,
+      easing: l.options?.easing?.toString(),
+      smoothTouch: l.options?.smoothTouch,
+      orientation: l.options?.orientation,
+      lerp: l.options?.lerp
+    };
+  }
+  if (window.ScrollTrigger) {
+    result.scrollTriggers = ScrollTrigger.getAll().map(st => ({
+      id: st.vars?.id,
+      trigger: st.trigger?.className || st.trigger?.id || st.trigger?.tagName,
+      start: st.start, end: st.end,
+      scrub: st.vars?.scrub, pin: st.vars?.pin,
+      markers: st.vars?.markers,
+      animation: st.animation?._targets?.[0]?.className
+    }));
+  }
+  document.querySelectorAll('[class*="reveal"],[class*="fade"],[class*="animate"],[data-scroll]').forEach(el => {
+    result.observers.push({ element: el.className.slice(0,80), tag: el.tagName });
+  });
+  const videoScrub = document.querySelector('video');
+  if (videoScrub) {
+    result.videoScrub = {
+      src: videoScrub.src || videoScrub.currentSrc,
+      width: videoScrub.offsetWidth,
+      height: videoScrub.offsetHeight,
+      coversViewport: videoScrub.offsetWidth >= window.innerWidth * 0.8
+    };
+  }
+  return result;
+})();
+```
 
-## Qué hace esta skill
+ESTRUCTURA DOM:
+```javascript
+(function extractStructure() {
+  const sections = [];
+  document.querySelectorAll(
+    'section, [class*="section"], [class*="hero"], [class*="feature"], main > div, [class*="block"]'
+  ).forEach((el, i) => {
+    const cs = getComputedStyle(el);
+    sections.push({
+      index: i, tag: el.tagName,
+      classes: el.className.slice(0, 120),
+      height: el.offsetHeight,
+      background: cs.background.slice(0,80),
+      backgroundColor: cs.backgroundColor,
+      position: cs.position,
+      hasVideo: !!el.querySelector('video'),
+      hasCanvas: !!el.querySelector('canvas'),
+      childTags: [...el.children].map(c => c.tagName).join(','),
+      textSnippet: el.textContent?.trim().slice(0, 80)
+    });
+  });
+  return sections;
+})();
+```
 
-Realiza un TRASPLANTE VISUAL LITERAL. No un port. No una adaptación.
-Cada archivo puramente visual se COPIA del source al target.
-Después, y solo después, se hace swap de strings de texto.
-No se reescribe. No se refactoriza. No se aplica juicio personal.
+Guardar en:
+  docs/pds/source-design-tokens.json
+  docs/pds/source-animations.json
+  docs/pds/source-structure.json
 
-## DISEÑO vs TEXTO — regla inmutable
+Si ScrollTrigger.getAll() devuelve array vacío pero la web tiene animaciones
+visibles al hacer scroll: hacer scroll manual a 50% y re-ejecutar el script.
 
-DISEÑO = 100% del source. Copiado verbatim. Cero adaptación.
-TEXTO  = 100% del target. Cada string visible. Cero texto del source sobrevive.
+### Paso 2: PAGE_MAPPING.md — BLOQUEANTE
 
-"Texto" significa exactamente:
-  ✅ Strings literales visibles al usuario (h1, p, span, button, label, alt)
-  ✅ Rutas de href que apuntan a páginas del negocio target
-  ✅ Nombres de productos, servicios, personas, lugares del negocio target
+Crear en raíz del target ANTES de cualquier componente.
+Mapear cada ruta del target a la página de <source-url> más similar.
 
-"Texto" NO significa:
-  ❌ Clases CSS o Tailwind (son diseño)
-  ❌ Valores de animación (son diseño)
-  ❌ Estructura HTML/JSX (es diseño)
-  ❌ Atributos data-* de animación (son diseño)
-  ❌ Rutas de assets decorativos del source como videos y texturas (son diseño)
-
-Cuando una página del source no tiene equivalente en el target:
-  - Usar el DISEÑO completo de la página source más similar en estructura
-  - Usar el TEXTO completo de esa página del target
-  - Nunca mezclar diseño del target con diseño del source
-  - Nunca inventar un diseño nuevo
-
-## Qué se reemplaza (todo lo visual)
-
-- globals.css, design tokens, Tailwind config, CSS custom properties
-- Cada componente shell (nav, hero, secciones, footer, cards, forms, dialogs)
-- Todos los estados (hover, focus, sticky, scrolled, open, loading)
-- GSAP, ScrollTrigger, Lenis, IntersectionObserver, RAF loops, scroll listeners
-- Parallax, video scrub, reveal animations, comportamiento responsive
-- Todos los assets visuales del source (videos, imágenes, SVGs, fuentes, texturas)
-
-## Qué nunca se toca
-
-- Texto de contenido visible al usuario
-- Rutas href que apuntan a páginas del negocio target
-- API routes, server actions, auth, middleware, database, business logic
-- Configuración de entorno y deployment
-
-## Flujo obligatorio (orden estricto, cada paso bloquea al siguiente)
-
-### Paso 0: Abrir DUAL MCP antes de tocar cualquier archivo
-
-Abrir DOS instancias de Chrome DevTools MCP simultáneamente:
-  MCP-REF:    <reference-url>           (sitio público de referencia)
-  MCP-TARGET: http://localhost:3001     (target en desarrollo)
-
-Ambas permanecen abiertas hasta que MIGRATION_COMPLETE.md esté escrito.
-El source local (localhost:3000) se usa solo para leer código, no para QA visual.
-
-### Paso 1: Validación pre-flight source vs referencia
-
-Para cada página del source, capturar screenshot en MCP-REF de la página equivalente.
-Calcular pixel delta.
-
-Si delta > 10% en cualquier página: STOPPER OBLIGATORIO.
-  Reportar al usuario qué páginas difieren y en qué porcentaje exacto.
-  No continuar hasta confirmación explícita del usuario.
-
-Si delta <= 10% en todas: continuar al Paso 2.
-
-### Paso 2: PAGE_MAPPING.md — BLOQUEANTE ABSOLUTO
-
-Crear PAGE_MAPPING.md en la raíz del target ANTES de escribir ningún código.
-
-Protocolo:
-  1. Listar todas las rutas del source
-  2. Listar todas las rutas del target
-  3. Asignar a cada ruta del target exactamente una ruta del source
-
-Regla: si no existe equivalente directo, usar la página source con estructura
-de secciones más similar (mismo número y tipo aproximado de secciones).
-Nunca dejar una ruta sin asignar. Nunca inventar diseño.
-
-Formato:
-
-| Target route | Source route asignada | Razón | Estado |
+| Target route | Source route | Razón | Estado |
 |---|---|---|---|
-| / | / | Equivalente directo | ☐ |
-| /productos | /technology | Estructura de features similar | ☐ |
+| / | / | Home equivalente | ☐ |
+| /es/productos | /technology | Estructura de features similar | ☐ |
 
-Estado: ☐ → 🔧 → ✅ (solo cuando ambos MCPs verifican paridad)
+Sin PAGE_MAPPING.md completo: migración bloqueada.
 
-GATE: cero archivos de código antes de que PAGE_MAPPING.md exista y tenga
-una fila por cada ruta del target.
+### Paso 3: ANIMATION_MANIFEST.md — BLOQUEANTE
 
-### Paso 3: Baseline pre-migración
+Poblar desde source-animations.json + inspección adicional vía MCP-REF.
+Una fila por efecto detectado. MANIFEST_TOTAL = N.
+
+| ☐ | ID | Página | Tipo | Valor exacto extraído | Trigger | Comportamiento |
+|---|---|---|---|---|---|---|
+
+Tipos: CSS_KEYFRAME CSS_TRANSITION GSAP_TWEEN GSAP_SCROLLTRIGGER
+GSAP_TIMELINE GSAP_SPLITTEXT LENIS_INIT LENIS_CB INTERSECTION_OBS
+RAF_LOOP SCROLL_LISTENER VIDEO_SCRUB CANVAS_SCROLL LOTTIE DATA_ATTR
+
+Completitud: grep -c "✅" ANIMATION_MANIFEST.md debe igualar MANIFEST_TOTAL.
+
+### Paso 4: Baseline del target
 
 ```bash
 npm run build 2>&1 | tee docs/pds/build-baseline.txt
-echo "Exit: $?" >> docs/pds/build-baseline.txt
-
 grep -rhoE '"[A-Za-záéíóúÁÉÍÓÚñÑ][^"]{4,}"' "$TARGET/src" | \
   sort -u > docs/pds/original-target-strings.txt
 ```
 
-original-target-strings.txt es inmutable después de esta captura.
+### Paso 5: Reconstrucción por secciones (protocolo específico FORMA B)
 
-### Paso 4: ANIMATION_MANIFEST.md — BLOQUEANTE
+En FORMA B no hay archivos que copiar. Para cada sección de <source-url>:
 
-Escanear source exhaustivamente. Una fila por cada efecto de animación encontrado.
+INSPECT en MCP-REF:
+  - Ejecutar extractStyles() en la sección
+  - Capturar className exacto de cada elemento clave
+  - Extraer valores GSAP del source-animations.json para esa sección
+  - Screenshot en 0%, 50%, 100% de scroll de esa sección
 
-| ☐ | ID | Archivo | Tipo | Valor exacto del source | Trigger | Comportamiento |
-|---|---|---|---|---|---|---|
-
-Tipos: CSS_KEYFRAME, CSS_TRANSITION, CSS_SCROLL_DRIVEN, CSS_WILL_CHANGE,
-CSS_CLIP_PATH, GSAP_TWEEN, GSAP_TIMELINE, GSAP_SCROLLTRIGGER, GSAP_SPLITTEXT,
-LENIS_INIT, LENIS_CB, INTERSECTION_OBS, RAF_LOOP, SCROLL_LISTENER,
-VIDEO_SCRUB, CANVAS_SCROLL, LOTTIE, DATA_ATTR
-
-Registrar MANIFEST_TOTAL = N.
-La migración termina solo cuando grep -c "✅" ANIMATION_MANIFEST.md == N.
-Cero entradas pueden omitirse o marcarse N/A.
-
-### Paso 5: STACK_MANIFEST.md — BLOQUEANTE
-
-Leer source/package.json. Instalar cada dependencia frontend a la versión exacta
-del source. Verificar con npm ls. Mismatch = reinstalar antes de continuar.
-
-### Paso 6: Bucle de trasplante por archivo
-
-Para cada archivo visual, secuencia exacta:
-ACCIÓN 1 — COPY:
-cp source/src/components/X.tsx target/src/components/X.tsx
-(copia literal, sin modificar nada)
-ACCIÓN 2 — SWAP (solo texto):
-Buscar y reemplazar ÚNICAMENTE:
-- Strings de texto visible al usuario
-- Rutas href a páginas del negocio target
-- Rutas src de imágenes de contenido (no decorativas)
-PROHIBIDO en SWAP:
-- Modificar cualquier clase Tailwind
-- Modificar cualquier valor CSS
-- Modificar cualquier config GSAP/ScrollTrigger/Lenis
-- Modificar cualquier threshold de IntersectionObserver
-- Modificar cualquier duration, easing o delay
-- Refactorizar estructura JSX aunque parezca equivalente
-ACCIÓN 3 — BUILD:
-npm run build
-Si falla: corregir solo el error de build, no reescribir el componente.
-Tres fallos consecutivos en el mismo archivo: STOP + reporte al usuario.
-ACCIÓN 4 — VERIFICACIÓN DUAL MCP:
-En MCP-REF: navegar a la sección de referencia.
-En MCP-TARGET: navegar a la misma sección en target.
-Capturar screenshots simultáneamente.
-Calcular pixel delta.
-Si delta > 1.5%: identificar elemento específico que difiere.
-Corregir solo ese elemento. Repetir desde ACCIÓN 2.
-Si delta <= 1.5%: continuar.
-ACCIÓN 5 — LOG:
-Marcar ✅ en PAGE_MAPPING.md con timestamp.
-Añadir fila a docs/pds/modified-files.md.
-
-### Paso 7: Orden de trasplante (estricto)
-
-1. globals.css + CSS tokens
-2. tailwind.config
-3. Archivos de fuentes → target/public/fonts/
-4. Inicialización Lenis + GSAP (layout o _app)
-5. Navbar → verificación MCP-REF vs MCP-TARGET antes de continuar
-6. Footer → verificación MCP-REF vs MCP-TARGET antes de continuar
-7. Cada página en el orden de PAGE_MAPPING.md (home primero)
-8. Componentes compartidos restantes
-
-Después de pasos 1-4 (globals): verificación TIER 1 completa antes de tocar componentes.
-Después de cada componente: verificación TIER 2.
-
-### Paso 8: Purga de residuos legacy
-
-```bash
-# CSS custom properties del target que sobreviven
-comm -23 \
-  <(grep -rhoE '\-\-[a-zA-Z][a-zA-Z0-9-]*' docs/pds/target-fingerprint.txt | sort -u) \
-  <(grep -rhoE '\-\-[a-zA-Z][a-zA-Z0-9-]*' "$SOURCE/src" | sort -u) \
-  > /tmp/legacy_vars.txt
-while read v; do
-  grep -qr "$v" "$TARGET/src" && echo "LEGACY RESIDUE: $v"
-done < /tmp/legacy_vars.txt
-
-# Colores hex del target que sobreviven
-comm -23 \
-  <(grep -rhoE '#[0-9a-fA-F]{3,8}\b' docs/pds/target-fingerprint.txt | \
-    tr '[:upper:]' '[:lower:]' | sort -u) \
-  <(grep -rhoE '#[0-9a-fA-F]{3,8}\b' "$SOURCE/src" | \
-    tr '[:upper:]' '[:lower:]' | sort -u) \
-  > /tmp/legacy_colors.txt
-while read c; do
-  grep -qri "$c" "$TARGET/src" && echo "LEGACY COLOR: $c"
-done < /tmp/legacy_colors.txt
-
-# Cualquier output = BLOCKING FAILURE
-```
-
-### Paso 9: File coverage audit
-
-```bash
-find "$SOURCE/src" -type f ! -path "*/.next/*" | sort > /tmp/src_files.txt
-find "$TARGET/src" -type f ! -path "*/.next/*" | sort > /tmp/tgt_files.txt
-comm -23 /tmp/src_files.txt /tmp/tgt_files.txt
-# Cualquier archivo VISUAL en "source only" = BLOCKING FAILURE
-
-grep -rhoE '#[0-9a-fA-F]{3,8}\b' "$SOURCE/src" | sort -u | while read c; do
-  grep -qri "$c" "$TARGET/src" || echo "MISSING COLOR: $c"
-done
-
-grep -rhoE '\-\-[a-zA-Z][a-zA-Z0-9-]*' "$SOURCE/src" | sort -u | while read v; do
-  grep -qr "$v" "$TARGET/src" || echo "MISSING VAR: $v"
-done
-```
-
-### Paso 10: ASSETS REEMPLAZO IA
-
-Generar docs/pds/assets-reemplazo-ia.md con encabezado exacto: # ASSETS REEMPLAZO IA
-
-Para cada asset visual copiado del source (hero video, fondos de sección, SVGs,
-texturas, Lottie, fuentes), incluir:
-  - Ruta absoluta en source
-  - Ruta de destino en target
-  - Rol visual en la página
-  - Adaptación para Granja Mari Pepa (distribuidora HORECA, Murcia, España)
-  - Prompt de generación con: sujeto, contexto, iluminación, cámara, paleta de
-    color, atmósfera, movimiento (si video), duración, aspect ratio, exclusiones
-  - Herramienta: Kling (video), Flux (imagen), Runway (motion)
-
-## Protocolo dual MCP de verificación
-
-### Scripts de verificación
-
-Scroll crawler (inyectar en MCP-REF Y MCP-TARGET por separado):
-
+BUILD en target:
+  - Crear componente React .tsx con estructura que reproduce lo inspeccionado
+  - Aplicar Tailwind classes equivalentes a los computed styles extraídos
+  - Implementar GSAP/Lenis con los valores exactos del source-animations.json
+  - Para VIDEO_SCRUB: implementar con este patrón base (ajustar a valores reales):
 ```javascript
-(async function audit() {
-  const maxY = document.body.scrollHeight - window.innerHeight;
-  const snaps = [];
-  for (let i = 0; i <= 20; i++) {
-    window.scrollTo({ top: maxY * i / 20, behavior: 'instant' });
-    await new Promise(r => setTimeout(r, 700));
-    // Screenshot via MCP aquí — nombre: <ref|target>_<page>_<viewport>_<pct>pct.png
-    snaps.push({
-      pct: i * 5,
-      computed: ['nav','video','.hero','section'].reduce((a,s) => {
-        const el = document.querySelector(s);
-        if (!el) return a;
-        const cs = getComputedStyle(el);
-        a[s] = { opacity: cs.opacity, transform: cs.transform,
-                  clipPath: cs.clipPath, visibility: cs.visibility };
-        return a;
-      }, {})
-    });
-  }
-  return snaps;
+    useEffect(() => {
+      const video = videoRef.current;
+      const onScroll = () => {
+        const section = sectionRef.current;
+        const rect = section.getBoundingClientRect();
+        const progress = Math.max(0, Math.min(1,
+          -rect.top / (rect.height - window.innerHeight)
+        ));
+        if (video.duration) video.currentTime = progress * video.duration;
+      };
+      window.addEventListener('scroll', onScroll, { passive: true });
+      return () => window.removeEventListener('scroll', onScroll);
+    }, []);
+```
+  - Para LENIS: instanciar con valores exactos de source-animations.json
+  - Para GSAP ScrollTrigger: usar trigger/start/end/scrub del manifest
+
+SWAP solo texto:
+  - Reemplazar texto visible de jobyaviation con texto del target
+  - No tocar ninguna clase, valor CSS, o config de animación
+
+BUILD: npm run build → fix si falla → no avanzar hasta PASS
+
+### Paso 6: Verificación dual MCP por sección
+
+PROTOCOLO DE ESPERA antes de cada captura:
+```javascript
+await new Promise(r => setTimeout(r, 2500));
+document.querySelectorAll('img[loading="lazy"]').forEach(img => {
+  img.loading = 'eager';
+  if (img.dataset.src) img.src = img.dataset.src;
+});
+await new Promise(r => requestAnimationFrame(() => setTimeout(r, 500)));
+```
+
+DETECCIÓN DE VÍDEO antes de pixel delta:
+```javascript
+const hasFullscreenVideo = (() => {
+  const v = document.querySelector('video');
+  return v ? v.offsetWidth >= window.innerWidth * 0.8 : false;
 })();
 ```
 
-Auto-scroll para grabación de video (inyectar en ambos MCPs, grabar pantalla):
+Si hasFullscreenVideo === true:
+  → Usar computed style comparison para esa sección (no pixel delta)
+  → Pixel delta solo desde scroll 25% en adelante
 
+Posiciones de captura: 0%, 25%, 50%, 75%, 100% (nunca solo 0%).
+Delta threshold: <= 1.5% donde aplica pixel delta.
+
+COMPUTED STYLE COMPARISON para secciones con vídeo:
 ```javascript
-(function rec() {
-  const total = document.body.scrollHeight - window.innerHeight;
-  const dur = 10000, t0 = performance.now();
-  const f = t => {
-    const p = Math.min((t-t0)/dur, 1), e = p<.5?2*p*p:-1+(4-2*p)*p;
-    window.scrollTo(0, total*e); if(p<1) requestAnimationFrame(f);
-  };
-  requestAnimationFrame(f);
+(function extractStyles() {
+  const selectors = [
+    'nav','header','footer','h1','h2','h3',
+    '[class*="hero"]','[class*="section"]',
+    'button','a[class]','[class*="card"]'
+  ];
+  const result = {};
+  selectors.forEach(sel => {
+    const el = document.querySelector(sel);
+    if (!el) return;
+    const cs = getComputedStyle(el);
+    result[sel] = {
+      fontFamily: cs.fontFamily, fontSize: cs.fontSize,
+      fontWeight: cs.fontWeight, letterSpacing: cs.letterSpacing,
+      color: cs.color, backgroundColor: cs.backgroundColor,
+      padding: cs.padding, borderRadius: cs.borderRadius
+    };
+  });
+  return JSON.stringify(result, null, 2);
 })();
 ```
 
-GSAP runtime dump (en consola de ambos MCPs):
+PASS computed style: fontFamily igual, fontSize ±2px, color igual,
+backgroundColor igual, borderRadius ±2px, fontWeight igual.
 
-```javascript
-ScrollTrigger.getAll().forEach(st => console.log({
-  trigger: st.trigger?.className || st.trigger?.tagName,
-  start: st.start, end: st.end,
-  scrub: st.vars?.scrub, pin: st.vars?.pin
-}));
-```
+### Paso 7: QA final — criterios con contenido diferente
 
-### TIER 1 — Verificación completa de página
+Target tiene páginas sin equivalente en <source-url>
+(área de cliente, productos HORECA, etc.).
+Para esas páginas, pasar QA si:
+  ✅ fontFamily idéntico al sistema de referencia
+  ✅ Color tokens idénticos (background, text, accent)
+  ✅ Mismo sistema de animación (GSAP/Lenis con valores en rango equivalente)
+  ✅ Spacing dentro de ±4px de la sección más similar en referencia
+NO comparar texto de contenido — será diferente y es correcto.
 
-Ejecutar en: después de globals, en cada gate de fase, en auditoría final.
-  - 21 posiciones de scroll (0% a 100% de 5 en 5) × 4 viewports (390, 768, 1024, 1440)
-  - Grabación de video completo en los 4 viewports
-  - Computed style extraction en todos los elementos animados
-  - GSAP runtime dump comparado source vs target
+### Paso 8: ASSETS REEMPLAZO IA
 
-### TIER 2 — Regresión por componente
+docs/pds/assets-reemplazo-ia.md con encabezado: # ASSETS REEMPLAZO IA
 
-Ejecutar después de cada componente individual:
-  - 5 posiciones (0%, 25%, 50%, 75%, 100%) a 1440px
-  - Computed style del componente recién modificado
-  - GSAP dump solo para animaciones de ese componente
-  - Build pass
-
-Ambos tiers usan los mismos umbrales de paridad.
-
-### Umbrales de paridad visual (no negociables)
-
-| Métrica | Umbral |
-|---|---|
-| Pixel delta por screenshot | <= 1.5% |
-| Transform matrix element | ±1 unit |
-| opacity | ±0.02 |
-| Valores px | ±1px |
-| Timing (duration/delay) | ±16ms |
-| video.currentTime | ±0.1s |
-| ScrollTrigger scrub | coincidencia exacta |
-| Lenis easing output | ±0.005 en t=0.25/0.5/0.75 |
-| IntersectionObserver threshold array | coincidencia exacta |
+Para cada asset visual usado en la reconstrucción (hero video, fondos,
+SVGs, texturas, fuentes), incluir prompt de generación para Granja Mari Pepa:
+  - Sujeto, contexto/setting, iluminación, cámara, paleta (#hex), atmósfera
+  - Movimiento y duración (si vídeo), aspect ratio, exclusiones
+  - Herramienta: Kling (vídeo cinématico), Flux (imagen), Runway (motion)
 
 ## Reglas de build
 
-BUILD-1: Después de cada archivo creado o modificado → build inmediato
-BUILD-2: Build fallido = corregir ese archivo ANTES de tocar cualquier otro
-BUILD-3: Tres fallos consecutivos en el mismo archivo = STOP + reporte al usuario
-BUILD-4: Cero imports de chunks (.next/server/, dist/server/, ./161.js, hashes)
-BUILD-5: BUILD PASS = exit 0, cero errores TypeScript, cero warnings nuevos
+BUILD-1: archivo modificado → build inmediato
+BUILD-2: build falla → corregir antes de tocar otro
+BUILD-3: 3 fallos en mismo archivo → STOP + reporte
+BUILD-4: cero imports de chunks/hashes/.next/server/
+BUILD-5: PASS = exit 0, cero errores TS, cero warnings nuevos
 
-## Condiciones de parada inmediata
+## Stop conditions
 
-- Pixel delta > 10% en validación source vs referencia pre-flight
-- PAGE_MAPPING.md no existe cuando se intenta escribir código
-- Build fallido sin resolver antes del siguiente archivo
-- Import no resuelve a src/ o node_modules/
-- String de texto del source encontrado en target después del SWAP
-- Evidencia MCP ausente para componente marcado ✅
+- PAGE_MAPPING.md inexistente cuando se intenta código
+- Build sin resolver antes del siguiente archivo
+- source-design-tokens.json vacío → re-extraer
+- ScrollTrigger.getAll() vacío con animaciones visibles → scroll + re-extraer
+- Evidencia MCP ausente para ítem marcado ✅
+- Texto de jobyaviation.com encontrado en target después de SWAP
 
-## Entregables requeridos en el target
+## Entregables
 
-Antes de escribir componentes:
-  PAGE_MAPPING.md              ← PRIMERO, bloqueante
-  ANIMATION_MANIFEST.md        ← bloqueante
-  STACK_MANIFEST.md            ← bloqueante
-  docs/pds/build-baseline.txt
-  docs/pds/original-target-strings.txt
-  docs/pds/target-fingerprint.txt
+Antes: PAGE_MAPPING.md · ANIMATION_MANIFEST.md ·
+       docs/pds/build-baseline.txt · docs/pds/original-target-strings.txt ·
+       docs/pds/source-design-tokens.json · docs/pds/source-animations.json ·
+       docs/pds/source-structure.json
 
-Durante la migración (actualizar continuamente):
-  docs/pds/modified-files.md
-  docs/pds/qa-evidence/        ← screenshots, JSONs, videos
+Durante: docs/pds/modified-files.md · docs/pds/qa-evidence/
 
-Al final:
-  docs/pds/assets-reemplazo-ia.md
-  MIGRATION_COMPLETE.md        ← solo cuando todo está ✅
+Final: docs/pds/assets-reemplazo-ia.md · MIGRATION_COMPLETE.md
 
 ## Criterios de completitud
 
-Completo SOLO cuando todo es verdad simultáneamente:
-  - PAGE_MAPPING.md: todas las filas ✅
-  - ANIMATION_MANIFEST.md: grep -c "✅" == MANIFEST_TOTAL
-  - Pixel delta <= 1.5% en todos los pares de screenshots de todas las páginas
-  - Build: exit 0, cero errores, cero warnings nuevos
-  - Cero residuos visuales legacy en target
-  - Texto original del target 100% preservado
-  - ASSETS REEMPLAZO IA completo
+PAGE_MAPPING todas ✅ · ANIMATION_MANIFEST grep==TOTAL ·
+delta <=1.5% donde aplica · computed style PASS donde hay vídeo ·
+build exit 0 · texto target preservado · assets-ia completo
 
-No existe éxito parcial. O todo pasa o el estado es FAIL.
-
-## Lo que nunca ocurre
-
-- Abrir solo un MCP cuando se necesitan dos
-- Escribir código antes de que PAGE_MAPPING.md exista
-- Reescribir un componente en lugar de copiarlo
-- Modificar cualquier valor visual durante el swap de texto
-- Declarar verificado sin screenshots de ambos MCPs
-- Continuar si pre-flight delta > 10%
-- Marcar ✅ sin evidencia física en docs/pds/qa-evidence/
-
-## Formato de output por componente
-COMPONENTE: [nombre]
-BUILD: [PASS|FAIL] — [error si aplica]
-DELTA MCP-REF vs MCP-TARGET: [X.X%] — [PASS|FAIL]
+## Output por sección
+SECCIÓN: [nombre]
+BUILD: [PASS|FAIL]
+MÉTODO QA: [pixel-delta | computed-style]
+DELTA/MATCH: [X.X% | PASS/FAIL]
 TEXTO PRESERVADO: [PASS|FAIL]
-ANIMACIONES: [N de M del manifest]
-EVIDENCIA: [rutas de screenshots y JSONs]
-ESTADO: [✅ VERIFIED | ❌ FAILING]
+ANIMACIONES: [N/M manifest]
+EVIDENCIA: [rutas]
+ESTADO: [✅ | ❌]
 
-## Notas de mantenimiento
+## Mantenimiento
 
 Fuente de verdad: .claude/skills/port-design-system-from-local-clone/SKILL.md
+Sync: node scripts/sync-skills.mjs && bash scripts/sync-agent-rules.sh
 
-Archivos generados (ejecutar node scripts/sync-skills.mjs para regenerar):
-  .codex/skills/port-design-system-from-local-clone/SKILL.md
-  .github/skills/port-design-system-from-local-clone/SKILL.md
-  .cursor/commands/port-design-system-from-local-clone.md
-  .windsurf/workflows/port-design-system-from-local-clone.md
-  .gemini/commands/port-design-system-from-local-clone.toml
-  .opencode/commands/port-design-system-from-local-clone.md
-  .augment/commands/port-design-system-from-local-clone.md
-  .continue/commands/port-design-system-from-local-clone.md
-  .amazonq/cli-agents/port-design-system-from-local-clone.json
+# Inspection Guide — FORMA B (source URL pública)
 
-Después de editar AGENTS.md: bash scripts/sync-agent-rules.sh
-Después de editar SKILL.md:  node scripts/sync-skills.mjs
+## Setup inicial
 
-# Inspection Guide
-
-## Dual MCP setup (primera acción, antes de cualquier archivo)
-MCP-REF:    <reference-url>        (web pública de referencia)
+MCP-REF:    <source-url>           (fuente visual absoluta)
 MCP-TARGET: http://localhost:3001  (target en desarrollo)
+Ambas abiertas hasta MIGRATION_COMPLETE.md.
 
-Ambas abiertas hasta que MIGRATION_COMPLETE.md esté escrito.
-Source local (localhost:3000): solo para leer código, no para QA visual.
+## Protocolo de captura — siempre aplicar antes de screenshot
 
-## Pre-flight validation
+```javascript
+// 1. Esperar carga completa
+await new Promise(r => setTimeout(r, 2500));
+// 2. Forzar lazy images
+document.querySelectorAll('img[loading="lazy"]').forEach(img => {
+  img.loading = 'eager';
+  if (img.dataset.src) img.src = img.dataset.src;
+});
+// 3. Estabilizar layout
+await new Promise(r => requestAnimationFrame(() => setTimeout(r, 500)));
+```
 
-Para cada página del source:
-  - Capturar screenshot en MCP-REF de la página equivalente
-  - Calcular pixel delta
-  - Delta > 10%: HARD STOP. Reportar al usuario página y porcentaje exacto.
-  - Delta <= 10%: continuar
+## Detección de vídeo antes de pixel delta
 
-## Phase 0 extraction checklist
+```javascript
+const hasFullscreenVideo = (() => {
+  const v = document.querySelector('video');
+  return v ? v.offsetWidth >= window.innerWidth * 0.8 : false;
+})();
+// Si true: usar computed style comparison, no pixel delta en hero/0%
+// Pixel delta solo desde scroll 25% en adelante
+```
 
-Design tokens:
-  [ ] Cada CSS custom property en :root, .dark, bloques con scope
-  [ ] Sistema de color completo (hex, oklch, hsl — todos los formatos)
-  [ ] Tipografía: font-family, size, line-height, letter-spacing, weights
-  [ ] Spacing, radius, shadow, blur, z-index
-  [ ] Breakpoints y container widths
+## Posiciones de captura obligatorias
 
-Animation system (con valores numéricos exactos):
-  [ ] Lenis: duration, easing function code, orientation, smoothTouch
-  [ ] GSAP: plugins registrados, config global
-  [ ] ScrollTrigger por instancia: trigger, start, end, scrub, pin
-  [ ] IntersectionObserver: threshold array exacto, rootMargin exacto, callback
-  [ ] RAF loops: qué leen y qué actualizan por frame
-  [ ] Scroll listeners: qué leen y qué setean
-  [ ] Fórmula video.currentTime (scroll-to-video scrub)
+0%, 25%, 50%, 75%, 100% — nunca solo 0%.
+
+## Checklist de extracción por página
+
+Design tokens (ejecutar extractDesignTokens() en MCP-REF):
+  [ ] CSS custom properties en :root y html
+  [ ] Sistema de color completo
+  [ ] Tipografía: fontFamily, fontSize, fontWeight, lineHeight, letterSpacing
+  [ ] Spacing, radius, shadow, z-index
+  [ ] Breakpoints
+
+Animation system (ejecutar extractAnimations() en MCP-REF):
+  [ ] Lenis: duration, easing, smoothTouch, orientation, lerp
+  [ ] GSAP plugins registrados
+  [ ] ScrollTrigger: trigger, start, end, scrub, pin por instancia
+  [ ] VIDEO_SCRUB: src, fórmula progress → currentTime
+  [ ] IntersectionObserver: clases que lo usan, comportamiento
+  [ ] RAF loops activos
+
+Estructura DOM (ejecutar extractStructure() en MCP-REF):
+  [ ] Secciones ordenadas con index, clases, height, background
+  [ ] Secciones con vídeo identificadas
+  [ ] Secciones con canvas identificadas
 
 Page mapping:
-  [ ] Listar todas las rutas del source
-  [ ] Listar todas las rutas del target
-  [ ] Crear PAGE_MAPPING.md con cada ruta target mapeada a una source
+  [ ] Rutas de <source-url> listadas
+  [ ] Rutas del target listadas
+  [ ] PAGE_MAPPING.md creado con mapeo completo
 
-Asset inventory:
-  [ ] Hero videos (rutas absolutas)
-  [ ] Fondos de sección
-  [ ] SVGs (animados o estáticos)
-  [ ] Archivos de fuentes
-  [ ] Lottie JSONs
-  [ ] Texturas y overlays
+## Verificación por sección
 
-## Verification per component
-
-Después de cada copy+swap:
-  TIER 2: 5 posiciones de scroll a 1440px en MCP-TARGET vs MCP-REF
-  Delta <= 1.5%: pass
-  Delta > 1.5%: identificar elemento exacto, fix, reverificar
-  No marcar ✅ sin screenshot passing de ambos MCPs
+Después de cada reconstrucción:
+  TIER 2: 5 posiciones a 1440px, MCP-TARGET vs MCP-REF
+  Vídeo detectado: computed style comparison
+  Sin vídeo: pixel delta <= 1.5%
+  No marcar ✅ sin evidencia en ambos MCPs
