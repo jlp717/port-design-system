@@ -1,78 +1,73 @@
-# Port Design System From Local Clone
+# Port Design System From Local Clone v3.0
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Single-skill repository for one command:
+Autonomous visual porting skill for AI coding agents. One command clones the complete design system from any public URL into a Next.js target — tokens, animations, 3D scenes, interactions, dark mode, responsive behavior, and assets.
 
-- `/port-design-system-from-local-clone`
+## The Command
 
-This repo exists to define and distribute one high-reliability skill for FULL VISUAL REPLACEMENT of a Next.js target from a local source clone.
+```txt
+/port-design-system-from-local-clone "<target-path>" "<source-url>"
+```
 
-The operating rule is strict:
+Example:
 
-"El source es la unica fuente de verdad visual. El target debe convertirse visualmente en una copia exacta del source. Lo unico que se conserva del target es el texto, el contenido, las rutas y la logica de negocio."
+```txt
+/port-design-system-from-local-clone "/Users/user/projects/my-site" "https://jobyaviation.com"
+```
 
-## What This Skill Guarantees
+- `<target-path>`: local path to the Next.js project to modify
+- `<source-url>`: public URL of the website whose design to clone
 
-The skill is designed to:
-- make the target visually identical to the source
-- remove the target's old visual system entirely
-- preserve target text, content data, routes, and business logic
-- copy source visual assets into the target
-- generate an `ASSETS REEMPLAZO IA` appendix with cinematic prompts for adapted asset generation
-- inspect the local target with Chrome DevTools MCP when available and report whether it looks spectacular and faithful to the source
+## What It Does
+
+The skill instructs the AI to:
+
+1. **Discover** all pages of the source website automatically (nav links + sitemap)
+2. **Extract** the complete design system via 7 MCP browser scripts:
+   - Design tokens (CSS vars, typography, colors, spacing, shadows, gradients, z-index, breakpoints, @font-face)
+   - Animation system (GSAP, Lenis, Framer Motion, CSS keyframes/transitions, IntersectionObserver, RAF, video scrub)
+   - DOM structure (sections, grid/flexbox layout, component hierarchy, responsive hints)
+   - Interactive states (hover, focus, active, nav behavior, mobile menu)
+   - Asset inventory (images, videos, SVGs, fonts, background-images, icons)
+   - Three.js/WebGL scenes (camera, lights, meshes, materials, animations)
+   - Dark mode (mechanism detection, light/dark token pairs)
+3. **Generate** a textual scroll narrative (pseudo-video) for each page
+4. **Reconstruct** the design section-by-section in the target
+5. **Verify** pixel-perfect fidelity at 3 viewports (375px, 768px, 1440px)
+6. **Deliver** complete documentation and AI asset replacement prompts
+
+## Operating Rule
+
+> The source URL is the ONLY visual truth.
+> The target must become a visual EXACT COPY of the source.
+> Only the target's visible text and business logic are preserved.
 
 ## What Gets Replaced
 
-The full visual layer is in scope:
-- globals, tokens, Tailwind config, CSS Modules, Sass, styled-components, and presentational wrappers
-- font system, type scale, spacing, grids, breakpoints, shadows, gradients, radii, and surfaces
-- navbar, footer, hero, sections, cards, buttons, forms, dialogs, tables, tabs, drawers, and shells
-- hover, focus, active, sticky, open, and loading states
-- GSAP, ScrollTrigger, Lenis, parallax, scrub, cinematic motion, and 3D presentation
-- source-owned visual assets including videos, images, SVGs, fonts, models, textures, and decorative media
+The full visual layer:
+- Globals, tokens, Tailwind config, CSS, fonts, type scale, spacing, grids, breakpoints, shadows, gradients
+- Navbar, footer, hero, sections, cards, buttons, forms, dialogs
+- Hover, focus, active, sticky, open, loading states
+- GSAP, ScrollTrigger, Lenis, parallax, video scrub, 3D scenes
+- Visual assets (videos, images, SVGs, fonts, textures)
+- Dark mode implementation
 
 ## What Stays Untouched
 
 The target keeps:
-- text content and copy
-- content data, CMS data, and user data assets
-- routes, redirects, rewrites, and dynamic params
-- API routes, server actions, auth, middleware, analytics, integrations, and business logic
-- form handlers, validation logic, data fetching, and mutation flows
+- Text content and copy
+- Routes, redirects, rewrites, dynamic params
+- API routes, server actions, auth, middleware, analytics
+- Business logic, form handlers, data fetching, mutations
 
-## Legacy Visual Purge
+## Supported Stack
 
-This skill is not a merge strategy.
-It explicitly requires removal of the target's legacy visual system:
-- old target tokens must be removed or replaced
-- old target visual classes and wrappers must be removed or rewritten
-- old target decorative assets must be removed when the source equivalents are installed
-- the final target cannot remain a visual hybrid
-
-## ASSETS REEMPLAZO IA
-
-After migration the skill must generate:
-- `docs/port-design-system/assets-reemplazo-ia.md`
-
-That doc must contain `# ASSETS REEMPLAZO IA` and list the copied source assets, including for each key asset:
-- exact filename
-- recommended target path
-- usage in the UI
-- production-ready prompt for Flux, Kling, Runway, or similar tools
-- business adaptation guidance
-
-If the target business is Granja Mari Pepa, the prompts must explicitly adapt the visuals to Granja Mari Pepa.
-
-## Supported Stack Variants
-
-The skill is intended to be general-purpose across:
 - Next.js App Router and Pages Router
 - Tailwind v3 and v4
-- CSS Modules, Sass, styled-components, emotion, vanilla CSS, or mixed styling
-- next/font local and google
-- GSAP, ScrollTrigger, Lenis, Framer Motion, Three.js, React Three Fiber, and mixed motion stacks
-- shadcn/ui, Radix, custom component systems, dashboards, auth pages, client areas, and admin panels
+- CSS Modules, Sass, styled-components, emotion, vanilla CSS
+- GSAP, ScrollTrigger, Lenis, Framer Motion, Three.js, React Three Fiber
+- shadcn/ui, Radix, custom component systems
 
 ## Installation
 
@@ -82,69 +77,36 @@ cd port-design-system
 npm install
 ```
 
-## Usage In Codex Or Cursor
+## Deliverables Written Into Target
 
-Use exactly:
+Before reconstruction:
+- `PAGE_MAPPING.md` — auto-generated route mapping
+- `ANIMATION_MANIFEST.md` — every animation effect cataloged
+- `docs/pds/extraction/` — 7 JSON extraction files + scroll narratives
 
-```txt
-/port-design-system-from-local-clone "<source-path>" "<target-path>"
-/port-design-system-from-local-clone "<source-path>" "<target-path>" "<commit-hash>"
-```
+During migration:
+- `docs/pds/modified-files.md`
+- `docs/pds/qa-evidence/`
 
-Example:
-
-```txt
-/port-design-system-from-local-clone "C:\Users\Javier\Desktop\Repositorios\mari-pepa-redesign" "C:\Users\Javier\Desktop\Repositorios\granja_mari_pepa"
-```
-
-With commit:
-
-```txt
-/port-design-system-from-local-clone "C:\Users\Javier\Desktop\Repositorios\mari-pepa-redesign" "C:\Users\Javier\Desktop\Repositorios\granja_mari_pepa" "dc376a2cd4a33b9485f550fc8ae7a287f0041c96"
-```
-
-## Workflow Summary
-
-1. Setup, optional checkout, deep audit, source extraction, protected-surface map, legacy visual purge plan
-2. Global visual replacement, font port, motion bootstrapping, navbar and footer replacement
-3. Home page and remaining pages full visual port
-4. Full source asset copy and reference verification
-5. Legacy visual purge verification
-6. `ASSETS REEMPLAZO IA` generation
-7. Final Chrome DevTools MCP local inspection and validation
-
-## Docs Written Into The Target
-
-The target must receive docs under `docs/port-design-system/`, including:
-- `extraction-report.md`
-- `protected-surface-map.md`
-- `source-asset-inventory.md`
-- `legacy-visual-purge.md`
-- `asset-manifest.md`
-- `modified-files.md`
-- `assets-reemplazo-ia.md`
+Final:
+- `docs/pds/assets-reemplazo-ia.md` — AI prompts for asset generation
+- `MIGRATION_COMPLETE.md`
 
 ## Generated Platform Files
 
 Source of truth:
 - `.claude/skills/port-design-system-from-local-clone/SKILL.md`
 
-Generated outputs:
-- `.codex/skills/port-design-system-from-local-clone/SKILL.md`
-- `.github/skills/port-design-system-from-local-clone/SKILL.md`
-- `.cursor/commands/port-design-system-from-local-clone.md`
-- `.windsurf/workflows/port-design-system-from-local-clone.md`
-- `.gemini/commands/port-design-system-from-local-clone.toml`
-- `.opencode/commands/port-design-system-from-local-clone.md`
-- `.augment/commands/port-design-system-from-local-clone.md`
-- `.continue/commands/port-design-system-from-local-clone.md`
-- `.amazonq/cli-agents/port-design-system-from-local-clone.json`
+Generated to 9 platforms via `node scripts/sync-skills.mjs`:
+- `.codex/`, `.github/skills/`, `.cursor/commands/`, `.windsurf/workflows/`,
+  `.gemini/commands/`, `.opencode/commands/`, `.augment/commands/`,
+  `.continue/commands/`, `.amazonq/cli-agents/`
 
 ## Maintenance Commands
 
 ```bash
-node scripts/sync-skills.mjs
-bash scripts/sync-agent-rules.sh
+node scripts/sync-skills.mjs        # Sync SKILL.md to all platforms
+bash scripts/sync-agent-rules.sh    # Sync AGENTS.md to all platforms
 npm run lint
 npm run typecheck
 npm run build
@@ -153,13 +115,16 @@ npm run check
 
 ## Completion Standard
 
-The job is only complete when all of the following are true:
-- the target is visually a source twin on desktop and mobile
-- the target's old visual system is gone
-- copied assets are fully wired
-- `ASSETS REEMPLAZO IA` exists and is useful
-- Chrome DevTools MCP local inspection was performed when available and reported honestly
-- lint, typecheck, and build status are reported explicitly
+Complete only when ALL of:
+- PAGE_MAPPING: all routes verified
+- ANIMATION_MANIFEST: full coverage
+- Pixel delta <= 1.5% where applicable
+- Computed style PASS where video present
+- Build PASS (exit 0)
+- Zero legacy visual residues
+- Target text preserved
+- AI asset prompts documented
+- Multi-viewport (375/768/1440) PASS
 
 ## License
 

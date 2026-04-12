@@ -15,10 +15,10 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SKILL_NAME = 'port-design-system-from-local-clone';
 const STALE_NAMES = ['port-design'];
 const SHORT_DESC =
-  'Literal visual transplant of a Next.js source clone into a target repo. DESIGN 100% from source (copied verbatim). TEXT 100% from target (all user strings preserved). Dual Chrome DevTools MCP (reference-url + target dev server) open from first command to last. Third arg is public reference URL for pre-flight source validation. PAGE_MAPPING.md required before any code. Every visual file is COPIED then text-swapped, never rewritten. Build after every file. Complete when pixel delta <= 1.5% at all scroll positions.';
-const ARGUMENT_HINT = '--url "<source-url>" "<target-path>" | "<source-path>" "<target-path>" "<reference-url>"';
+  'Autonomous visual porting skill v3.0. Clones the complete design system from any public URL into a Next.js target. Extracts tokens, animations, 3D scenes, assets, interactions, dark mode, and responsive behavior via MCP browser. 7 extraction scripts, multi-viewport QA (375/768/1440px), scroll narrative generation, checkpoint system. Single command, zero manual input. Complete when pixel delta <= 1.5% at all scroll positions across all viewports.';
+const ARGUMENT_HINT = '"<target-path>" "<source-url>"';
 const NO_ARGS_TEXT =
-  'the source path, target path, and reference URL provided by the user';
+  'the target path and source URL provided by the user';
 
 function write(relPath, content) {
   const full = join(ROOT, relPath);

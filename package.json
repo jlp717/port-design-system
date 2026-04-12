@@ -1,8 +1,8 @@
 {
   "name": "port-design-system",
-  "version": "0.4.0",
+  "version": "1.0.0",
   "private": true,
-  "description": "Senior-grade skill repository for full visual replacement of a Next.js target from a local source clone, including legacy-style purge, source asset transfer, AI asset replacement briefs, and Chrome DevTools MCP QA",
+  "description": "Autonomous visual porting skill v3.0. Clones the complete design system from any public URL into a Next.js target via MCP browser extraction, multi-viewport QA, and AI asset replacement.",
   "author": "jlp717",
   "license": "MIT",
   "repository": {
