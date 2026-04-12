@@ -2,7 +2,7 @@
   "name": "port-design-system",
   "version": "1.0.0",
   "private": true,
-  "description": "Autonomous visual porting skill v3.0. Clones the complete design system from any public URL into a Next.js target via MCP browser extraction, multi-viewport QA, and AI asset replacement.",
+  "description": "Autonomous visual porting skill v3.0. Clones the complete design system from any public URL into a Next.js target. 13 extraction scripts, 15+ reconstruction patterns, zero-tolerance QA at 21 scroll positions across 3 viewports.",
   "author": "jlp717",
   "license": "MIT",
   "repository": {

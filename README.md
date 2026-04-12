@@ -24,18 +24,25 @@ Example:
 The skill instructs the AI to:
 
 1. **Discover** all pages of the source website automatically (nav links + sitemap)
-2. **Extract** the complete design system via 7 MCP browser scripts:
+2. **Extract** the complete design system via 13 MCP browser scripts:
    - Design tokens (CSS vars, typography, colors, spacing, shadows, gradients, z-index, breakpoints, @font-face)
    - Animation system (GSAP, Lenis, Framer Motion, CSS keyframes/transitions, IntersectionObserver, RAF, video scrub)
+   - Scroll scrub trace (video/canvas currentTime tracking across scroll positions)
    - DOM structure (sections, grid/flexbox layout, component hierarchy, responsive hints)
    - Interactive states (hover, focus, active, nav behavior, mobile menu)
    - Asset inventory (images, videos, SVGs, fonts, background-images, icons)
    - Three.js/WebGL scenes (camera, lights, meshes, materials, animations)
    - Dark mode (mechanism detection, light/dark token pairs)
-3. **Generate** a textual scroll narrative (pseudo-video) for each page
-4. **Reconstruct** the design section-by-section in the target
-5. **Verify** pixel-perfect fidelity at 3 viewports (375px, 768px, 1440px)
-6. **Deliver** complete documentation and AI asset replacement prompts
+   - Deep visual fingerprint (50+ CSS properties per visible element)
+   - Advanced patterns (marquee, tabs, accordions, carousels, counters, text split, custom cursors, preloader, scroll snap, parallax, stagger)
+   - Full CSS rules (all :hover, :focus, :active, @media rules from stylesheets)
+   - Scroll snapshots (automated data at each 5% scroll position)
+3. **Generate** a textual scroll narrative (pseudo-video) at 5% increments for each page
+4. **Reconstruct** the design section-by-section using 15+ ready-made patterns (VIDEO_SCRUB, MARQUEE, TABS, ACCORDION, CAROUSEL, COUNTER, TEXT_SPLIT, MAGNETIC_HOVER, CUSTOM_CURSOR, PRELOADER, SCROLL_SNAP, PARALLAX, STAGGER, PAGE_TRANSITION, CLIP_PATH_ANIM, BACKDROP_BLUR)
+5. **Verify** pixel-perfect fidelity at 3 viewports (375px, 768px, 1440px) with ZERO tolerance
+6. **Final walkthrough** — mandatory side-by-side comparison at 21 scroll positions per page per viewport
+7. **Validate** console JS (zero errors), asset loading (all fonts/images/videos), performance (LCP, CLS)
+8. **Deliver** complete documentation and AI asset replacement prompts
 
 ## Operating Rule
 
@@ -81,14 +88,15 @@ npm install
 
 Before reconstruction:
 - `PAGE_MAPPING.md` — auto-generated route mapping
-- `ANIMATION_MANIFEST.md` — every animation effect cataloged
-- `docs/pds/extraction/` — 7 JSON extraction files + scroll narratives
+- `ANIMATION_MANIFEST.md` — every animation effect cataloged (35+ types)
+- `docs/pds/extraction/` — 13 extraction files per page (JSON + scroll narratives)
 
 During migration:
 - `docs/pds/modified-files.md`
 - `docs/pds/qa-evidence/`
 
 Final:
+- `docs/pds/qa-evidence/recorrido-final/` — visual walkthrough evidence
 - `docs/pds/assets-reemplazo-ia.md` — AI prompts for asset generation
 - `MIGRATION_COMPLETE.md`
 
@@ -116,15 +124,16 @@ npm run check
 ## Completion Standard
 
 Complete only when ALL of:
-- PAGE_MAPPING: all routes verified
-- ANIMATION_MANIFEST: full coverage
-- Pixel delta <= 1.5% where applicable
-- Computed style PASS where video present
-- Build PASS (exit 0)
-- Zero legacy visual residues
-- Target text preserved
+- VISUAL WALKTHROUGH (FASE 5) completed with ZERO differences
+- All pages verified at 3 viewports (1440, 768, 375) x 21 scroll positions (5%)
+- Computed styles IDENTICAL (zero tolerance, not approximate)
+- ANIMATION_MANIFEST: 100% verified
+- VIDEO_SCRUB: currentTime tied to scroll, NOT autoplay
+- Console JS: zero errors
+- Assets: all fonts, images, videos load correctly
+- Build PASS (exit 0, zero TS errors)
+- Target text preserved, backend untouched
 - AI asset prompts documented
-- Multi-viewport (375/768/1440) PASS
 
 ## License
 

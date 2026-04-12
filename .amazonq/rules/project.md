@@ -1,7 +1,7 @@
 <!-- AUTO-GENERATED from AGENTS.md - do not edit directly.
      Run `bash scripts/sync-agent-rules.sh` to regenerate. -->
 
-# Port Design System From Local Clone v3.0
+# Port Design System From Local Clone v3.1
 
 ## Regla absoluta
 
@@ -32,6 +32,9 @@ Texto SI: strings visibles en UI, hrefs del negocio target, nombres del negocio.
 Texto NO: clases CSS, valores de animacion, estructura JSX, configs GSAP/Lenis,
           atributos data-*, assets decorativos.
 
+Regla anti-hardcoding: CERO valores de diseno inventados o copiados de ejemplos.
+TODOS los colores, fuentes, spacing, animaciones vienen de la extraccion (FASE 1).
+
 Cuando target tiene paginas sin equivalente en source:
   - Usar diseno de la pagina source estructuralmente mas similar
   - Preservar todo el texto del target
@@ -41,51 +44,107 @@ Cuando target tiene paginas sin equivalente en source:
 
 ### FASE 0: Setup y descubrimiento automatico
 - Dual MCP: MCP-REF en source-url, MCP-TARGET en localhost:3001
+- Anti-bot protocol: user-agent override, cookie accept, Cloudflare wait
+- MCP crash recovery via _checkpoint.json (resume from last completed step)
+- preExpandContent() obligatorio antes de TODA extraccion (lazy load, SPA, accordions, tabs, infinite scroll)
 - Descubrimiento automatico de paginas via crawling de links y sitemap.xml
 - PAGE_MAPPING.md generado automaticamente — BLOQUEANTE
 
-### FASE 1: Extraccion profunda (7 scripts via MCP-REF)
-1. extractFullDesignSystem() — tokens, tipografia, colores, spacing, sombras, gradientes, z-index, breakpoints, @font-face
-2. extractAnimationSystem() — GSAP, Lenis, Framer Motion, CSS keyframes, CSS transitions, IntersectionObserver, RAF, video scrub, canvas/WebGL
-3. extractDOMStructure() — secciones, layout grid/flexbox, jerarquia, nav behavior, responsive
-4. extractInteractions() — hover, focus, active, nav behavior, mobile menu
-5. extractAssets() — imagenes, videos, SVGs, fonts, background-images, iconos, preloads
-6. extractThreeJSScene() — condicional, solo si Three.js/R3F/WebGL detectado
-7. extractDarkMode() — temas, color-scheme tokens, toggle mechanism
+### FASE 1: Extraccion profunda (17 scripts via MCP-REF)
+1. extractFullDesignSystem() — tokens, tipografia, colores, spacing, sombras, gradientes, z-index, breakpoints, @font-face, @container, @layer, media queries extendidas (hover, pointer, prefers-*), CSS-in-JS, Shadow DOM, pseudo-elements (::before/::after/::selection/::placeholder), @property, @supports, Adobe Fonts, custom scrollbar, CSS Motion Path, scroll-margin, content-visibility, color-scheme, container-type/container-name, env(safe-area-inset-*)
+2. fetchCrossOriginCSS() — fetch manual de hojas de estilo cross-origin bloqueadas por CORS
+3. extractShadowStyles() — traversal de Shadow DOM roots para estilos encapsulados
+4. extractAnimationSystem() — GSAP (22 plugins), Lenis, Framer Motion, CSS keyframes, CSS transitions, IntersectionObserver, RAF, video scrub, canvas/WebGL, CSS scroll-driven animations (scroll-timeline, view-timeline), View Transitions API, Web Animations API, Lottie, Rive, Spline
+5. captureIntersectionObserverConfigs() — monkey-patch IO para capturar threshold/rootMargin reales
+6. extractLottieRiveSpline() — extraccion completa de animaciones Lottie/dotLottie, Rive, Spline
+7. extractScrollScrubTrace() — video/canvas scrub trace a 0/10/25/50/75/100% scroll (BLOQUEANTE si hay media fullscreen)
+8. extractDOMStructure() — secciones, layout grid/flexbox, jerarquia, nav behavior, responsive
+9. extractInteractions() — hover, focus, active, nav behavior, mobile menu
+10. extractAssets() — imagenes, videos, SVGs (incluido sprites symbol/use), fonts, background-images, iconos, preloads, iframes/embeds (YouTube, Vimeo, Maps) + protocolo de descarga
+11. extractThreeJSScene() — condicional, solo si Three.js/R3F/WebGL detectado
+12. extractDarkMode() — temas, color-scheme tokens, toggle mechanism
+13. extractDeepVisualFingerprint() — 60+ CSS properties de TODOS los elementos visibles (incluye touch-action, user-select, writing-mode, image-rendering, text-wrap, fontVariationSettings, grid-auto-flow, container-type/name, contain-intrinsic-size)
+14. extractAdvancedPatterns() — preloader, marquee, tabs, accordions, carousels, counters, text split, custom cursors, scroll snap, parallax, stagger, native dialog, Popover API, grid subgrid/masonry, anchor scroll, cookie banners, stacking contexts, form controls, details/summary
+15. extractFullCSSRules() — TODAS las CSS rules: hover, focus, active, media queries, transforms, animations, CSS nesting, scroll-timeline, view-transition-name, @container, @layer, @supports, @property, pseudo-elements, scrollbar, motion path, scroll-margin
+16. extractScrollSnapshot() — datos automatizados en cada 5% de scroll (21 posiciones)
+17. extractAccessibility() — ARIA roles/labels, landmarks, skip links, tabindex, focus traps, prefers-reduced-motion
+18. Scroll narrative textual (pseudo-video) a 5% increments por pagina
 
-Adicional: narrativa textual de scroll (pseudo-video) por pagina.
+TODOS los JSONs de extraccion DEBEN incluir campo _metadata (version, url, timestamp, viewport, userAgent).
+
 ANIMATION_MANIFEST.md — BLOQUEANTE.
 
 Tipos de animacion: CSS_KEYFRAME, CSS_TRANSITION, GSAP_TWEEN, GSAP_SCROLLTRIGGER,
 GSAP_TIMELINE, GSAP_SPLITTEXT, LENIS_INIT, LENIS_CB, INTERSECTION_OBS,
 RAF_LOOP, SCROLL_LISTENER, VIDEO_SCRUB, CANVAS_SCROLL, LOTTIE, DATA_ATTR,
-FRAMER_MOTION, THREE_ANIMATION, WEB_ANIMATION_API
+FRAMER_MOTION, THREE_ANIMATION, WEB_ANIMATION_API,
+MARQUEE, TAB_SWITCH, ACCORDION, CAROUSEL, COUNTER_ANIM, TEXT_SPLIT,
+MAGNETIC_HOVER, CUSTOM_CURSOR, SCROLL_SNAP, PARALLAX_LAYER,
+STAGGER_GROUP, PRELOADER, PAGE_TRANSITION, SCROLL_INDICATOR,
+STICKY_ELEMENT, CLIP_PATH_ANIM, BACKDROP_BLUR,
+CSS_SCROLL_TIMELINE, CSS_VIEW_TIMELINE, VIEW_TRANSITION,
+LOTTIE_DOTLOTTIE, RIVE_ANIMATION, SPLINE_SCENE,
+NATIVE_DIALOG, POPOVER_API, SCROLL_DRIVEN_ANIMATION,
+ANCHOR_POSITIONING, GRID_SUBGRID, CONTAINER_QUERY_ANIM,
+CSS_MOTION_PATH, DETAILS_SUMMARY, CUSTOM_SCROLLBAR,
+CSS_PROPERTY_ANIM, PSEUDO_ELEMENT_ANIM
 
 ### FASE 2: Analisis del target
 - Build baseline
 - Extraccion de strings de texto
-- Deteccion e instalacion de dependencias del source
+- Deteccion e instalacion de dependencias del source (incluye Lottie, Rive, Spline, Flickity, Splide)
 
 ### FASE 3: Reconstruccion por secciones
-Orden: tokens → tailwind → fonts → Lenis/GSAP → navbar → footer → paginas → compartidos
+Orden: tokens → tailwind (v4 @theme) → fonts (next/font) → Lenis/GSAP → navbar → footer → paginas → compartidos
+
+Reglas Next.js App Router:
+- 'use client' obligatorio si: useState/useEffect/useRef, event handlers, GSAP/Lenis/Framer Motion, browser APIs
+- Dynamic imports para GSAP/Lenis/Three.js (ssr: false)
+- next/font para TODAS las fuentes (Google + local + variable)
+- next/image para imagenes con sizes y priority
+- useIsClient() hook para prevenir hydration mismatch
+- Tailwind v4: @theme directive en globals.css (no tailwind.config.js)
 
 Por seccion: INSPECT → BUILD → SWAP texto → BUILD verify → VERIFY dual MCP
 
 Patrones incluidos en SKILL.md: VIDEO_SCRUB, LENIS_INIT, GSAP_SCROLLTRIGGER,
-THREE.JS_SCENE, computed-style-to-Tailwind mapping table.
+THREE.JS_SCENE, computed-style-to-Tailwind mapping table,
+MARQUEE, TABS, ACCORDION, CAROUSEL, COUNTER, TEXT_SPLIT, MAGNETIC_HOVER,
+CUSTOM_CURSOR, PRELOADER, SCROLL_SNAP, PARALLAX_LAYERS, STAGGER_GROUPS,
+PAGE_TRANSITION, CLIP_PATH_ANIM, BACKDROP_BLUR,
+LOTTIE/DOTLOTTIE, RIVE, SPLINE 3D, SCROLL-TIMELINE CSS,
+VIEW TRANSITIONS API, NATIVE DIALOG/MODAL, PREFERS-REDUCED-MOTION.
 
 ### FASE 4: Verificacion QA
 - Multi-viewport: 375px, 768px, 1440px
-- Computed style comparison con criterios PASS/FAIL definidos
-- Pixel delta <= 1.5% donde aplica
+- Computed style comparison con criterios IDENTICO (tolerancia cero)
 - Video fullscreen: computed style en 0%, pixel delta desde 25%
-- Verificacion de animaciones e interacciones
+- Verificacion EXHAUSTIVA de animaciones e interacciones
+- Verificacion responsive en 3 viewports
+- Consola JS: CERO errores en target
+- Red/assets: TODAS las fuentes, imagenes y videos cargan correctamente
+- Performance basica: LCP, CLS (informativo)
 - Sistema de checkpoints por seccion
+- compareScrollSnapshots() automatizado: diff source vs target en 21 posiciones
+- Verificacion de stacking contexts (z-index, opacity, transform, filter)
+- Verificacion de accesibilidad (landmarks, ARIA, focus order)
 
-### FASE 5: Entregables finales
+### FASE 5: RECORRIDO VISUAL FINAL — OBLIGATORIO
+- Scroll completo 0-100% en tramos de 5% (21 posiciones por pagina)
+- En 3 viewports (1440, 768, 375)
+- Comparacion visual lado a lado en CADA posicion
+- Bucle de correccion inmediata si se detecta diferencia
+- CERO diferencias pendientes para aprobacion
+
+### FASE 6: Entregables finales
 PAGE_MAPPING.md · ANIMATION_MANIFEST.md · docs/pds/extraction/*.json ·
-docs/pds/extraction/scroll-narrative-*.md · docs/pds/modified-files.md ·
-docs/pds/qa-evidence/ · docs/pds/assets-reemplazo-ia.md · MIGRATION_COMPLETE.md
+docs/pds/extraction/scroll-narrative-*.md · docs/pds/extraction/visual-fingerprint-*.json ·
+docs/pds/extraction/scroll-snapshots-*.json · docs/pds/extraction/advanced-patterns.json ·
+docs/pds/extraction/css-rules.json · docs/pds/extraction/cross-origin-css.json ·
+docs/pds/extraction/shadow-styles.json · docs/pds/extraction/lottie-rive-spline.json ·
+docs/pds/extraction/accessibility.json · docs/pds/extraction/scroll-diff-*.json ·
+docs/pds/modified-files.md · docs/pds/qa-evidence/ · docs/pds/qa-evidence/recorrido-final/ ·
+docs/pds/assets-reemplazo-ia.md · docs/pds/assets-manual-download.md · MIGRATION_COMPLETE.md
 
 ## Reglas de build
 
@@ -101,168 +160,65 @@ BUILD-5: PASS = exit 0, cero errores TS, cero warnings nuevos
 - Build sin resolver antes del siguiente archivo
 - design-tokens.json vacio → re-extraer
 - ScrollTrigger.getAll() vacio con animaciones visibles → scroll + re-extraer
+- VIDEO_SCRUB detectado en source y target usa autoplay/loop sin currentTime → STOP + rehacer
+- scroll-scrub-trace ausente para paginas con video/canvas fullscreen → STOP
 - Evidencia MCP ausente para item marcado ✅
 - Texto de source encontrado en target despues de SWAP
 - 3 builds fallidos consecutivos en mismo archivo
+- Diferencia visual durante recorrido final → STOP + corregir antes de avanzar
+- Se intenta MIGRATION_COMPLETE sin FASE 5 → STOP
+- Se modifica archivo de backend (API, auth, middleware, server actions) → STOP INMEDIATO
+- preExpandContent() no ejecutado antes de extraccion → STOP + ejecutar primero
+- JSON de extraccion sin campo _metadata → STOP + re-extraer con metadata
+- Cross-origin stylesheets detectadas y no extraidas via fetchCrossOriginCSS() → STOP
+- Shadow DOM detectado y no extraido via extractShadowStyles() → STOP
+- Lottie/Rive/Spline detectado en source y no incluido en extraction → STOP
+- CSS scroll-timeline/view-timeline en source y target usa JS scroll listener → STOP + usar CSS nativo
+- Hydration mismatch en consola target → STOP + aplicar useIsClient o suppressHydrationWarning
+- Componente con hooks/event handlers sin 'use client' → STOP + agregar directiva
+- compareScrollSnapshots() muestra >5% diferencia en cualquier posicion → STOP + corregir
+- container-type en source y no replicado en target → STOP + @container queries no funcionaran
+- env(safe-area-inset-*) usado en source y no replicado → STOP + mobile notch roto
+- Iframes/embeds (YouTube, Vimeo, Maps) en source y ausentes en target → STOP + replicar
 
 ## Criterios de completitud
 
-PAGE_MAPPING todas ✅ · ANIMATION_MANIFEST grep==TOTAL ·
-delta <=1.5% donde aplica · computed style PASS donde hay video ·
-build exit 0 · texto target preservado · assets-ia completo ·
-multi-viewport (375/768/1440) PASS
+### Visual (tolerancia cero)
+- RECORRIDO VISUAL FINAL completado (FASE 5) con CERO diferencias
+- TODAS las paginas en 3 viewports (1440, 768, 375)
+- 21 posiciones de scroll verificadas por pagina
+- Computed styles IDENTICOS (exactos, no aproximados)
+
+### Efectos y animaciones
+- ANIMATION_MANIFEST: 100% verificados (grep -c "✅" == TOTAL)
+- VIDEO_SCRUB: currentTime ligado a scroll, NO autoplay
+- Hover/focus/active states IDENTICOS al source
+- Stacking contexts verificados (z-index, opacity, transform, filter)
+- Lottie/Rive/Spline: reproduccion identica al source
+- CSS scroll-timeline/view-timeline: si source usa CSS nativo, target tambien
+- IntersectionObserver configs: threshold y rootMargin identicos
+- View Transitions: si source usa, target implementa con fallback
+- prefers-reduced-motion: respetado en CSS y GSAP
+
+### Tecnico
+- Build PASS (exit 0, cero errores TS)
+- Consola JS: cero errores (incluye cero hydration mismatch)
+- Assets: todas las fuentes, imagenes y videos cargan
+- Texto target preservado, backend INTOCABLE
+- Dynamic imports para libs pesadas (GSAP, Lenis, Three.js)
+- 'use client' en todo componente con hooks/event handlers
+- next/font para todas las fuentes
+- Asset download protocol completado
+- Accesibilidad: landmarks, ARIA roles, focus order preservados
+- container-type/container-name replicados si source usa @container
+- env(safe-area-inset-*) replicado si source lo usa
+- color-scheme replicado si source lo define
+- Iframes/embeds replicados con mismos src y dimensiones
+- touch-action, user-select, writing-mode replicados donde aplique
 
 ## Mantenimiento
 
 Fuente de verdad: .claude/skills/port-design-system-from-local-clone/SKILL.md
 Sync: node scripts/sync-skills.mjs && bash scripts/sync-agent-rules.sh
 
-# Inspection Guide v3.0
-
-## Setup inicial
-
-MCP-REF:    <source-url>           (fuente visual absoluta)
-MCP-TARGET: http://localhost:3001  (target en desarrollo)
-Ambas abiertas hasta MIGRATION_COMPLETE.md.
-
-## Scripts de extraccion (ejecutar en MCP-REF por pagina)
-
-7 scripts definidos en SKILL.md:
-1. extractFullDesignSystem() → design-tokens.json
-2. extractAnimationSystem() → animations.json
-3. extractDOMStructure() → structure.json
-4. extractInteractions() → interactions.json
-5. extractAssets() → assets.json
-6. extractThreeJSScene() → three-scene.json (condicional)
-7. extractDarkMode() → dark-mode.json
-
-Guardar outputs en: docs/pds/extraction/
-
-## Protocolo de captura — siempre aplicar antes de screenshot
-
-```javascript
-// 1. Esperar carga completa
-await new Promise(r => setTimeout(r, 2500));
-// 2. Forzar lazy images
-document.querySelectorAll('img[loading="lazy"]').forEach(img => {
-  img.loading = 'eager';
-  if (img.dataset.src) img.src = img.dataset.src;
-});
-// 3. Forzar videos
-document.querySelectorAll('video').forEach(v => {
-  if (v.paused && v.readyState >= 2) v.play().catch(() => {});
-});
-// 4. Estabilizar layout
-await new Promise(r => requestAnimationFrame(() => setTimeout(r, 500)));
-```
-
-## Deteccion de video antes de pixel delta
-
-```javascript
-const hasFullscreenVideo = (() => {
-  const v = document.querySelector('video');
-  return v ? v.offsetWidth >= window.innerWidth * 0.8 : false;
-})();
-// Si true: usar computed style comparison, no pixel delta en hero/0%
-// Pixel delta solo desde scroll 25% en adelante
-```
-
-## Multi-viewport obligatorio
-
-Verificar en TRES viewports:
-- Mobile: 375px
-- Tablet: 768px
-- Desktop: 1440px
-
-## Posiciones de captura obligatorias
-
-0%, 25%, 50%, 75%, 100% — nunca solo 0%.
-
-## Computed style comparison
-
-Ejecutar en ambos MCPs y comparar:
-
-```javascript
-(function extractComputedStyles() {
-  const selectors = [
-    'nav','header','footer','h1','h2','h3','h4','p',
-    '[class*="hero"]','[class*="section"]',
-    'button','a[class]','[class*="card"]','[class*="feature"]',
-    '[class*="btn"]','[class*="cta"]','input','textarea',
-    '[class*="grid"]','[class*="container"]'
-  ];
-  const result = {};
-  selectors.forEach(sel => {
-    const el = document.querySelector(sel);
-    if (!el) return;
-    const cs = getComputedStyle(el);
-    result[sel] = {
-      fontFamily: cs.fontFamily, fontSize: cs.fontSize,
-      fontWeight: cs.fontWeight, letterSpacing: cs.letterSpacing,
-      lineHeight: cs.lineHeight, color: cs.color,
-      backgroundColor: cs.backgroundColor, padding: cs.padding,
-      margin: cs.margin, borderRadius: cs.borderRadius,
-      transform: cs.transform, opacity: cs.opacity,
-      display: cs.display, position: cs.position, zIndex: cs.zIndex,
-      gap: cs.gap, maxWidth: cs.maxWidth, boxShadow: cs.boxShadow
-    };
-  });
-  return JSON.stringify(result, null, 2);
-})();
-```
-
-Criterios PASS:
-- fontFamily: IGUAL
-- fontSize: +-2px
-- fontWeight: IGUAL
-- color: IGUAL
-- backgroundColor: IGUAL
-- borderRadius: +-2px
-- letterSpacing: +-0.5px
-- padding: +-4px
-
-## Checklist de extraccion por pagina
-
-Design tokens:
-  [ ] CSS custom properties en :root y html
-  [ ] Sistema de color completo (100+ colores)
-  [ ] Tipografia: 30+ selectores con fontFamily, fontSize, fontWeight, lineHeight, letterSpacing
-  [ ] Spacing, radius, shadow, z-index, gradientes, filtros
-  [ ] @font-face declarations y Google Fonts URLs
-  [ ] Breakpoints de media queries
-
-Animation system:
-  [ ] Lenis: duration, easing, smoothTouch, orientation, lerp, wheelMultiplier
-  [ ] GSAP version y plugins registrados
-  [ ] ScrollTrigger: trigger, start, end, scrub, pin, snap, toggleActions por instancia
-  [ ] CSS @keyframes: nombre, frames con estilos
-  [ ] CSS transitions: selectores con transition property
-  [ ] VIDEO_SCRUB: src, dimensions, coversViewport, parentSection
-  [ ] Canvas/WebGL: dimensions, contextType, coversViewport
-  [ ] IntersectionObserver: clases y datasets
-  [ ] Framer Motion: data-framer-appear-id
-
-Structure:
-  [ ] Secciones con index, clases, dimensions, styles completos
-  [ ] Grid/flexbox configurations por seccion
-  [ ] Nav behavior: position, backgroundColor, backdropFilter, isTransparent, isFixed
-
-Interactions:
-  [ ] Hover effects: cambios en color, backgroundColor, transform, opacity, boxShadow
-  [ ] CSS :hover/:focus/:active rules de stylesheets
-  [ ] Mobile menu: selector, aria attributes
-
-Assets:
-  [ ] Imagenes: src, srcset, alt, dimensions, loading
-  [ ] Videos: src, sources, poster, dimensions, autoplay/muted/loop
-  [ ] SVGs inline: viewBox, pathCount, role
-  [ ] Background images: URLs y selectores
-  [ ] Preloads: fonts, images, videos
-
-Dark mode:
-  [ ] Mecanismo: class, data-attribute, media-query, o none
-  [ ] Tokens dark vs light
-
-Scroll narrative:
-  [ ] Descripcion textual a 0%, 10%, 20% ... 100% scroll
-  [ ] Cambios en nav, visibilidad, animaciones activas
+@docs/research/INSPECTION_GUIDE.md
