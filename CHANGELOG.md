@@ -97,6 +97,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - INSPECTION_GUIDE.md updated with v3.1 checklists and new script references
 - SKILL.md version bumped from v3.0 to v3.1
 
+## [1.2.0] - 2025-07-19
+
+### Added
+- **v3.2 upgrade** — empirical browser comparison (source vs target) revealed 6 major gaps
+- **§3.0.10 Paridad estructural 1:1** — section inventory extraction script, 5 parity rules (count, unique type, layout, bg color, height ratio), STOP condition for generic component reuse
+- **§3.0.11 Subpaginas sin equivalente source** — NEVER create placeholder/coming-soon pages when source has full design
+- **§3.0.12 Deteccion de texto en media assets** — extraction script for SVG text swap, video brand text flags, source brand detection in HTML/SVG
+- **§4.4.3 Inventario de secciones — BLOQUEANTE** — `compareSectionInventory()` function comparing section count, bg colors, layout types, height ratios
+- **§4.4.4 Validacion de footer complejo** — checklist for complex footer replication (illustrations, art, multi-layer)
+- **§4.4.5 Validacion de texto en media — source brand leak** — brand text detection script with extraction and elimination protocol
+- **8 new stop conditions** — section inventory mismatch, bg color mismatch, generic component reuse, footer complexity mismatch, placeholder pages, source brand text in target, layout type mismatch, font naming from source
+- **9 new completion criteria** — section inventory parity, bg color per section, footer structure parity, zero generic component reuse, zero placeholder pages, source brand text elimination, layout type per section, height proportionality, font renaming
+
+### Changed
+- AGENTS.md updated to v3.2 with structural parity rules, media text detection, and expanded stop conditions
+- INSPECTION_GUIDE.md updated to v3.2 with paridad estructural and brand leak checklists
+- SKILL.md version bumped from v3.1 to v3.2
+- All agent rule files synced (copilot-instructions, clinerules, continue, amazonq)
+- All 9 skill platform files synced via sync-skills.mjs
+
+## [1.3.0] - 2025-07-20
+
+### Added
+- **v3.3 fundamental overhaul** — programmatic verification replaces screenshot-based comparison
+- **§1.15 recordScrollBehavior()** — programmatic scroll 0-100% capturing state of 200+ elements at 21 positions (transforms, opacity, rect, videoCurrentTime, visibility, pinned state). BLOQUEANTE for verification.
+- **§1.16 detectAnimationImplementation()** — auto-detects WHAT animation system the source uses (GSAP vs native RAF vs CSS-only vs Framer Motion). Returns `targetShouldUse` object that DICTATES dependency installation. BLOQUEANTE for FASE 3.
+- **§1.17 extractElementStyleMap()** — per-element computed styles + hover CSS rules from stylesheets + ::before/::after pseudo-elements (300 elements max)
+- **§2.4 Target architecture detection** — auto-detects monorepo layout, i18n library, Tailwind version (v3/v4), UI library. All FASE 3 paths adapt to detected structure.
+- **§2.5 Font name brand detection** — grep for source brand font names in target code, STOP if found, rename to neutral names
+- **§3.2.1 Native reconstruction patterns** — 5 new patterns for when source uses NO external libs:
+  - VIDEO_SCRUB_NATIVE: RAF + scroll listener (replaces GSAP ScrollTrigger)
+  - CSS_IO_REVEAL: IntersectionObserver + CSS class toggle
+  - CSS_MODULE_ANIMATION: CSS Modules with per-component keyframes
+  - NATIVE_SMOOTH_SCROLL: CSS scroll-behavior or no smooth scroll
+  - NATIVE_RAF_PARALLAX: RAF parallax without GSAP
+- **§3.3 Tailwind v3 adaptation** — conditional path: if target uses Tailwind v3, use tailwind.config.ts extend; if v4, use @theme
+- **§4.4.2 compareScrollBehavior()** — automated dual-site comparison function. Runs recordScrollBehavior() on BOTH sites, compares element states numerically at 21 scroll positions. PASS only if all data matches within thresholds.
+- **Regla de verificacion PROGRAMATICA** — screenshots are supplementary only; all dynamic verification must be programmatic (data capture + numeric comparison)
+- **Regla de dependencias** — NEVER assume GSAP/Lenis/ScrollTrigger. Execute detectAnimationImplementation() first. If source uses native RAF/IO/CSS, target MUST use native.
+- **Updated ANIMATION_MANIFEST types** — categorized into Library, Native JS, CSS-only, and Pattern groups. New types: NATIVE_RAF_VIDEO_SCRUB, NATIVE_RAF_PARALLAX, CSS_MODULE_ANIMATION, CSS_IO_REVEAL
+- **13 new stop conditions** — detectAnimationImplementation not executed, recordScrollBehavior not executed, compareScrollBehavior fails, target installs GSAP when source doesn't use it, target installs Lenis when source doesn't, architecture not detected, Tailwind version mismatch, font brand names, extractElementStyleMap not executed
+- **Verificacion programatica criteria** — recordScrollBehavior/compareScrollBehavior/detectAnimationImplementation all mandatory, target-architecture.json generated, font brand names eliminated
+
+### Changed
+- AGENTS.md updated to v3.3 with programmatic verification rules, native pattern detection, architecture adaptation, 20 extraction scripts
+- INSPECTION_GUIDE.md updated to v3.3 with 15 new programmatic verification checklist items, 21 scripts
+- SKILL.md version bumped from v3.2 to v3.3
+- FASE 1 expanded from 17 to 20 extraction scripts
+- FASE 2 now includes architecture detection, brand font detection, dependency-only-if-source-uses rule
+- FASE 3 reconstruction order updated: "scroll/animation libs (solo si source las usa)" instead of "Lenis/GSAP"
+- FASE 4 now leads with compareScrollBehavior() — programmatic, not visual
+- Animation type naming clarified: types must reflect HOW source implements (not how target reimplements)
+
 ## [Unreleased]
 
 ## [0.3.1] - 2026-03-29

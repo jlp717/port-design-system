@@ -1,4 +1,4 @@
-# Port Design System From Local Clone v3.1
+# Port Design System From Local Clone v3.3
 
 ## Regla absoluta
 
@@ -26,8 +26,19 @@ DISENO = 100% del source. Sin adaptar. Sin reescribir.
 TEXTO  = 100% del target. Cada string visible. Cero texto source sobrevive.
 
 Texto SI: strings visibles en UI, hrefs del negocio target, nombres del negocio.
-Texto NO: clases CSS, valores de animacion, estructura JSX, configs GSAP/Lenis,
+Texto NO: clases CSS, valores de animacion, estructura JSX, configs de animacion,
           atributos data-*, assets decorativos.
+
+Regla de verificacion — PROGRAMATICA, NO VISUAL:
+Screenshots son complemento, NUNCA la verificacion principal de animaciones.
+Toda verificacion dinamica usa datos programaticos:
+- recordScrollBehavior(): captura estado (transforms, opacity, videoCurrentTime) en 21 posiciones
+- compareScrollBehavior(): compara source vs target numericamente
+- Solo PASS si los datos numericos coinciden
+
+Regla de dependencias — SOLO LO QUE USA EL SOURCE:
+NO asumir GSAP, Lenis, ScrollTrigger. Ejecutar detectAnimationImplementation()
+primero. Si source usa native RAF/IO/CSS, target DEBE usar lo mismo.
 
 Regla anti-hardcoding: CERO valores de diseno inventados o copiados de ejemplos.
 TODOS los colores, fuentes, spacing, animaciones vienen de la extraccion (FASE 1).
@@ -36,6 +47,26 @@ Cuando target tiene paginas sin equivalente en source:
   - Usar diseno de la pagina source estructuralmente mas similar
   - Preservar todo el texto del target
   - Nunca inventar diseno nuevo
+  - NUNCA crear paginas placeholder/coming-soon si source tiene diseno completo
+
+## Paridad estructural 1:1 — CRITICA
+
+Cada seccion del source DEBE mapearse a un componente UNICO en el target.
+NUNCA crear componentes genericos que se reutilizan para secciones source
+que tienen estructura visual DIFERENTE.
+
+- Conteo de secciones source == conteo de secciones target
+- Background color por seccion: IDENTICO
+- Layout type (grid/flex/block): IDENTICO por seccion
+- Altura proporcional de cada seccion: ratio dentro del 20%
+- Footer: si source tiene arte/ilustracion, target tambien
+
+## Deteccion de texto en media
+
+- Texto source en video/imagen → documentar en assets-reemplazo-ia.md
+- SVGs con <text> elements → swap textual aplica
+- Source brand en HTML/SVG del target → STOP + eliminar
+- Videos → flagear para review manual de brand text en frames
 
 ## Flujo completo (5 fases)
 
@@ -46,8 +77,9 @@ Cuando target tiene paginas sin equivalente en source:
 - preExpandContent() obligatorio antes de TODA extraccion (lazy load, SPA, accordions, tabs, infinite scroll)
 - Descubrimiento automatico de paginas via crawling de links y sitemap.xml
 - PAGE_MAPPING.md generado automaticamente — BLOQUEANTE
+- Section inventory extraction (§3.0.10) — BLOQUEANTE
 
-### FASE 1: Extraccion profunda (17 scripts via MCP-REF)
+### FASE 1: Extraccion profunda (20 scripts via MCP-REF)
 1. extractFullDesignSystem() — tokens, tipografia, colores, spacing, sombras, gradientes, z-index, breakpoints, @font-face, @container, @layer, media queries extendidas (hover, pointer, prefers-*), CSS-in-JS, Shadow DOM, pseudo-elements (::before/::after/::selection/::placeholder), @property, @supports, Adobe Fonts, custom scrollbar, CSS Motion Path, scroll-margin, content-visibility, color-scheme, container-type/container-name, env(safe-area-inset-*)
 2. fetchCrossOriginCSS() — fetch manual de hojas de estilo cross-origin bloqueadas por CORS
 3. extractShadowStyles() — traversal de Shadow DOM roots para estilos encapsulados
@@ -66,53 +98,64 @@ Cuando target tiene paginas sin equivalente en source:
 16. extractScrollSnapshot() — datos automatizados en cada 5% de scroll (21 posiciones)
 17. extractAccessibility() — ARIA roles/labels, landmarks, skip links, tabindex, focus traps, prefers-reduced-motion
 18. Scroll narrative textual (pseudo-video) a 5% increments por pagina
+19. recordScrollBehavior() — scroll programatico 0-100% capturando estado de 200+ elementos en 21 posiciones (transforms, opacity, rect, videoCurrentTime, visibility, pinned state). BLOQUEANTE para verificacion.
+20. detectAnimationImplementation() — detecta QUE usa el source (GSAP vs native RAF vs CSS). BLOQUEANTE para FASE 3.
+21. extractElementStyleMap() — per-element computed styles + hover CSS rules + pseudo-elements
 
 TODOS los JSONs de extraccion DEBEN incluir campo _metadata (version, url, timestamp, viewport, userAgent).
 
 ANIMATION_MANIFEST.md — BLOQUEANTE.
 
-Tipos de animacion: CSS_KEYFRAME, CSS_TRANSITION, GSAP_TWEEN, GSAP_SCROLLTRIGGER,
-GSAP_TIMELINE, GSAP_SPLITTEXT, LENIS_INIT, LENIS_CB, INTERSECTION_OBS,
-RAF_LOOP, SCROLL_LISTENER, VIDEO_SCRUB, CANVAS_SCROLL, LOTTIE, DATA_ATTR,
-FRAMER_MOTION, THREE_ANIMATION, WEB_ANIMATION_API,
-MARQUEE, TAB_SWITCH, ACCORDION, CAROUSEL, COUNTER_ANIM, TEXT_SPLIT,
-MAGNETIC_HOVER, CUSTOM_CURSOR, SCROLL_SNAP, PARALLAX_LAYER,
-STAGGER_GROUP, PRELOADER, PAGE_TRANSITION, SCROLL_INDICATOR,
-STICKY_ELEMENT, CLIP_PATH_ANIM, BACKDROP_BLUR,
-CSS_SCROLL_TIMELINE, CSS_VIEW_TIMELINE, VIEW_TRANSITION,
-LOTTIE_DOTLOTTIE, RIVE_ANIMATION, SPLINE_SCENE,
-NATIVE_DIALOG, POPOVER_API, SCROLL_DRIVEN_ANIMATION,
-ANCHOR_POSITIONING, GRID_SUBGRID, CONTAINER_QUERY_ANIM,
-CSS_MOTION_PATH, DETAILS_SUMMARY, CUSTOM_SCROLLBAR,
-CSS_PROPERTY_ANIM, PSEUDO_ELEMENT_ANIM
+Tipos de animacion (usar el que refleja COMO el source lo implementa):
+Library: GSAP_TWEEN, GSAP_SCROLLTRIGGER, GSAP_TIMELINE, GSAP_SPLITTEXT,
+  LENIS_INIT, LENIS_CB, FRAMER_MOTION, THREE_ANIMATION, LOTTIE, LOTTIE_DOTLOTTIE,
+  RIVE_ANIMATION, SPLINE_SCENE
+Native JS: NATIVE_RAF_VIDEO_SCRUB, NATIVE_RAF_PARALLAX, INTERSECTION_OBS,
+  RAF_LOOP, SCROLL_LISTENER, WEB_ANIMATION_API
+CSS-only: CSS_KEYFRAME, CSS_TRANSITION, CSS_MODULE_ANIMATION, CSS_IO_REVEAL,
+  CSS_SCROLL_TIMELINE, CSS_VIEW_TIMELINE, CSS_MOTION_PATH, CSS_PROPERTY_ANIM,
+  PSEUDO_ELEMENT_ANIM, SCROLL_DRIVEN_ANIMATION
+Pattern: VIDEO_SCRUB, CANVAS_SCROLL, MARQUEE, TAB_SWITCH, ACCORDION, CAROUSEL,
+  COUNTER_ANIM, TEXT_SPLIT, MAGNETIC_HOVER, CUSTOM_CURSOR, SCROLL_SNAP,
+  PARALLAX_LAYER, STAGGER_GROUP, PRELOADER, PAGE_TRANSITION, SCROLL_INDICATOR,
+  STICKY_ELEMENT, CLIP_PATH_ANIM, BACKDROP_BLUR, VIEW_TRANSITION,
+  NATIVE_DIALOG, POPOVER_API, ANCHOR_POSITIONING, GRID_SUBGRID,
+  CONTAINER_QUERY_ANIM, DETAILS_SUMMARY, CUSTOM_SCROLLBAR, DATA_ATTR
 
 ### FASE 2: Analisis del target
 - Build baseline
 - Extraccion de strings de texto
-- Deteccion e instalacion de dependencias del source (incluye Lottie, Rive, Spline, Flickity, Splide)
+- Deteccion de arquitectura target (monorepo, i18n, Tailwind version, UI library)
+- Solo instalar dependencias que el source REALMENTE usa (detectado en §1.16)
+- Deteccion y renombramiento de font names del source brand
 
 ### FASE 3: Reconstruccion por secciones
-Orden: tokens → tailwind (v4 @theme) → fonts (next/font) → Lenis/GSAP → navbar → footer → paginas → compartidos
+Orden: tokens → tailwind (v3 config o v4 @theme segun target) → fonts (next/font) → scroll/animation libs (solo si source las usa) → navbar → footer → paginas → compartidos
 
 Reglas Next.js App Router:
-- 'use client' obligatorio si: useState/useEffect/useRef, event handlers, GSAP/Lenis/Framer Motion, browser APIs
-- Dynamic imports para GSAP/Lenis/Three.js (ssr: false)
+- 'use client' obligatorio si: useState/useEffect/useRef, event handlers, animation libs, browser APIs
+- Dynamic imports para libs pesadas (ssr: false)
 - next/font para TODAS las fuentes (Google + local + variable)
 - next/image para imagenes con sizes y priority
 - useIsClient() hook para prevenir hydration mismatch
-- Tailwind v4: @theme directive en globals.css (no tailwind.config.js)
+- Si target usa Tailwind v3 → tailwind.config.ts extend (NO @theme)
+- Si target usa Tailwind v4 → @theme directive en globals.css
+- Adaptar a estructura del target (monorepo paths, i18n routing)
 
 Por seccion: INSPECT → BUILD → SWAP texto → BUILD verify → VERIFY dual MCP
 
-Patrones incluidos en SKILL.md: VIDEO_SCRUB, LENIS_INIT, GSAP_SCROLLTRIGGER,
-THREE.JS_SCENE, computed-style-to-Tailwind mapping table,
-MARQUEE, TABS, ACCORDION, CAROUSEL, COUNTER, TEXT_SPLIT, MAGNETIC_HOVER,
-CUSTOM_CURSOR, PRELOADER, SCROLL_SNAP, PARALLAX_LAYERS, STAGGER_GROUPS,
-PAGE_TRANSITION, CLIP_PATH_ANIM, BACKDROP_BLUR,
-LOTTIE/DOTLOTTIE, RIVE, SPLINE 3D, SCROLL-TIMELINE CSS,
-VIEW TRANSITIONS API, NATIVE DIALOG/MODAL, PREFERS-REDUCED-MOTION.
+Patrones incluidos en SKILL.md:
+Library: VIDEO_SCRUB, LENIS_INIT, GSAP_SCROLLTRIGGER, THREE.JS_SCENE
+Nativos (v3.3): VIDEO_SCRUB_NATIVE, CSS_IO_REVEAL, CSS_MODULE_ANIMATION,
+  NATIVE_SMOOTH_SCROLL, NATIVE_RAF_PARALLAX
+UI: MARQUEE, TABS, ACCORDION, CAROUSEL, COUNTER, TEXT_SPLIT, MAGNETIC_HOVER,
+  CUSTOM_CURSOR, PRELOADER, SCROLL_SNAP, PARALLAX_LAYERS, STAGGER_GROUPS,
+  PAGE_TRANSITION, CLIP_PATH_ANIM, BACKDROP_BLUR
+Extras: LOTTIE/DOTLOTTIE, RIVE, SPLINE 3D, SCROLL-TIMELINE CSS,
+  VIEW TRANSITIONS API, NATIVE DIALOG/MODAL, PREFERS-REDUCED-MOTION.
 
 ### FASE 4: Verificacion QA
+- PROGRAMATICA: compareScrollBehavior() en CADA pagina — datos numericos, no screenshots
 - Multi-viewport: 375px, 768px, 1440px
 - Computed style comparison con criterios IDENTICO (tolerancia cero)
 - Video fullscreen: computed style en 0%, pixel delta desde 25%
@@ -123,6 +166,7 @@ VIEW TRANSITIONS API, NATIVE DIALOG/MODAL, PREFERS-REDUCED-MOTION.
 - Performance basica: LCP, CLS (informativo)
 - Sistema de checkpoints por seccion
 - compareScrollSnapshots() automatizado: diff source vs target en 21 posiciones
+- compareScrollBehavior() automatizado: element state diff en 21 posiciones
 - Verificacion de stacking contexts (z-index, opacity, transform, filter)
 - Verificacion de accesibilidad (landmarks, ARIA, focus order)
 
@@ -177,6 +221,20 @@ BUILD-5: PASS = exit 0, cero errores TS, cero warnings nuevos
 - container-type en source y no replicado en target → STOP + @container queries no funcionaran
 - env(safe-area-inset-*) usado en source y no replicado → STOP + mobile notch roto
 - Iframes/embeds (YouTube, Vimeo, Maps) en source y ausentes en target → STOP + replicar
+- Section inventory mismatch: source N secciones ≠ target M secciones → STOP + paridad
+- Background color de seccion target difiere de source → STOP + corregir
+- Componente generico reutilizado para 2+ secciones source diferentes → STOP + descomponer
+- Footer target solo texto cuando source footer tiene ilustracion → STOP + replicar
+- Pagina target usa placeholder/coming-soon cuando source tiene diseno completo → STOP
+- Texto source brand en HTML/SVG target → STOP + eliminar
+- Layout type mismatch (grid vs flex) en seccion → STOP + corregir
+- detectAnimationImplementation() NO ejecutado antes de FASE 3 → STOP
+- recordScrollBehavior() NO ejecutado para una pagina → STOP
+- compareScrollBehavior() retorna pass:false → STOP + corregir
+- Target instala GSAP pero source NO usa GSAP → STOP + desinstalar + usar nativos
+- Target instala Lenis pero source NO usa smooth scroll lib → STOP
+- Target architecture NO detectada antes de FASE 3 → STOP
+- Font name de source brand en codigo target → STOP + renombrar
 
 ## Criterios de completitud
 
@@ -195,7 +253,15 @@ BUILD-5: PASS = exit 0, cero errores TS, cero warnings nuevos
 - CSS scroll-timeline/view-timeline: si source usa CSS nativo, target tambien
 - IntersectionObserver configs: threshold y rootMargin identicos
 - View Transitions: si source usa, target implementa con fallback
-- prefers-reduced-motion: respetado en CSS y GSAP
+- prefers-reduced-motion: respetado en CSS y animaciones
+
+### Verificacion programatica (v3.3)
+- recordScrollBehavior() ejecutado en source Y target para CADA pagina
+- compareScrollBehavior() retorna pass:true para TODAS las paginas
+- detectAnimationImplementation() ejecutado Y respetado en FASE 3
+- Target NO instala dependencias que source no usa
+- target-architecture.json generado y respetado
+- Font names del source brand NO en codigo target
 
 ### Tecnico
 - Build PASS (exit 0, cero errores TS)
@@ -212,6 +278,14 @@ BUILD-5: PASS = exit 0, cero errores TS, cero warnings nuevos
 - color-scheme replicado si source lo define
 - Iframes/embeds replicados con mismos src y dimensiones
 - touch-action, user-select, writing-mode replicados donde aplique
+- Section inventory: conteo secciones source == target
+- Background color por seccion: IDENTICO al source
+- Footer structure parity: si source tiene ilustracion, target tambien
+- Cero componentes genericos reutilizados para secciones source distintas
+- Cero paginas placeholder/coming-soon cuando source tiene diseno completo
+- Source brand text: cero en HTML/SVG target (video flagged para manual)
+- Layout type por seccion (grid/flex/block): IDENTICO
+- Altura proporcional de cada seccion: ratio dentro del 20%
 
 ## Mantenimiento
 

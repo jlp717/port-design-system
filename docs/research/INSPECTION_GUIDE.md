@@ -1,4 +1,4 @@
-# Inspection Guide v3.1
+# Inspection Guide v3.3
 
 ## Setup inicial
 
@@ -10,7 +10,7 @@ Ambas abiertas hasta MIGRATION_COMPLETE.md.
 
 IMPORTANTE: Ejecutar preExpandContent() ANTES de cualquier script de extraccion.
 
-17 scripts definidos en SKILL.md:
+20 scripts definidos en SKILL.md:
 1. extractFullDesignSystem() → design-tokens.json
 2. fetchCrossOriginCSS() → cross-origin-css.json
 3. extractShadowStyles() → shadow-styles.json
@@ -29,6 +29,9 @@ IMPORTANTE: Ejecutar preExpandContent() ANTES de cualquier script de extraccion.
 16. extractScrollSnapshot() → scroll-snapshots-[pagina].json
 17. extractAccessibility() → accessibility.json
 18. Scroll narrative textual → scroll-narrative-[pagina].md
+19. recordScrollBehavior() → scroll-behavior-[pagina].json (BLOQUEANTE para verificacion)
+20. detectAnimationImplementation() → animation-implementation.json (BLOQUEANTE para FASE 3)
+21. extractElementStyleMap() → element-style-map-[pagina].json
 
 TODOS los JSONs DEBEN incluir campo _metadata (version, url, timestamp, viewport, userAgent).
 
@@ -67,6 +70,19 @@ Verificar en TRES viewports:
 - Mobile: 375px
 - Tablet: 768px
 - Desktop: 1440px
+
+## Umbral minimo obligatorio
+
+Ninguna pagina puede aprobar con menos de 90% de similitud:
+
+- `avgSimilarity >= 0.90` por pagina y viewport.
+- `worstSimilarity >= 0.90` por pagina, viewport y scroll.
+- Si hay video/canvas, ejecutar traza down y up; no basta screenshot.
+- Todo FAIL debe guardar side-by-side y lista de diferencias accionables.
+
+El texto visible puede diferir porque lo conserva el target, pero el layout,
+media, colores, tipografia, motion, wrapping, jerarquia y responsive deben seguir
+al source.
 
 ## Posiciones de captura obligatorias
 
@@ -183,6 +199,9 @@ Assets:
   [ ] Preloads: fonts, images, videos
   [ ] Iframes/embeds: YouTube, Vimeo, Google Maps, Calendly (src, dimensions)
   [ ] Asset download protocol ejecutado
+  [ ] Cero assets visuales del target usados como diseno
+  [ ] Todos los assets visuales usados vienen del source o estan marcados FAIL
+  [ ] `assets-reemplazo-ia.md` incluye prompt IA por cada asset visual
 
 Dark mode:
   [ ] Mecanismo: class, data-attribute, media-query, o none
@@ -276,3 +295,35 @@ Verificacion QA adicional:
   [ ] color-scheme replicado si source lo define
   [ ] Iframes/embeds replicados con mismos src y dimensiones
   [ ] touch-action, user-select, writing-mode replicados
+
+Verificacion programatica (v3.3):
+  [ ] detectAnimationImplementation() ejecutado ANTES de FASE 3
+  [ ] recordScrollBehavior() ejecutado en source para CADA pagina
+  [ ] recordScrollBehavior() ejecutado en target para CADA pagina
+  [ ] compareScrollBehavior() retorna pass:true para TODAS las paginas
+  [ ] compareScrollBehavior().passRate >= 95% para TODAS las paginas
+  [ ] Target NO instala dependencias que source no usa (GSAP, Lenis, etc.)
+  [ ] Target usa MISMO patron de animacion que source (native vs library)
+  [ ] extractElementStyleMap() ejecutado — hover/pseudo styles replicados
+  [ ] target-architecture.json generado (monorepo, i18n, Tailwind version)
+  [ ] Font names del source brand NO en codigo target
+  [ ] scroll-behavior-diff-[page].json generado para todas las paginas
+  [ ] Si source usa CSS Modules, target replica con CSS Modules o equivalente
+  [ ] Si source usa IntersectionObserver nativo, target usa IO nativo (no GSAP)
+  [ ] Si source usa RAF para video scrub, target usa RAF (no GSAP ScrollTrigger)
+
+Paridad estructural (v3.2):
+  [ ] Section inventory: conteo secciones source == target
+  [ ] Background color por seccion: IDENTICO al source
+  [ ] Layout type por seccion (grid/flex/block): IDENTICO
+  [ ] Altura proporcional de cada seccion: ratio dentro del 20%
+  [ ] Cero componentes genericos reutilizados para secciones source distintas
+  [ ] Footer: si source tiene ilustracion/arte, target tambien
+  [ ] Cero paginas placeholder/coming-soon cuando source tiene diseno completo
+
+Texto en media / brand leaks (v3.2):
+  [ ] Texto source en video/imagen documentado en assets-reemplazo-ia.md
+  [ ] SVGs con <text> elements → swap textual aplicado
+  [ ] Source brand en HTML/SVG target → eliminado
+  [ ] Videos → flagged para review manual de brand text en frames
+  [ ] Fonts renombradas (no usar nombres de fuente del source)
