@@ -150,6 +150,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FASE 4 now leads with compareScrollBehavior() — programmatic, not visual
 - Animation type naming clarified: types must reflect HOW source implements (not how target reimplements)
 
+## [1.4.0] - 2026-04-13
+
+### Added
+- **v3.4 upgrade** — network profiling, section inventory extraction, modern CSS detection, GSAP advanced patterns
+- **§0.1 MCP tool detection** — identifies available MCP (Playwright/Puppeteer/Browser-tools), supports degraded mode (user pastes scripts in DevTools Console)
+- **§0.2 Page discovery cycle detection** — MAX_PAGES=50, MAX_DEPTH=3, visited set, pagination/query param normalization
+- **§1.1 Modern CSS detection** — dvh/svh/lvh viewport units, color-mix(), @starting-style, -webkit-text-stroke, oklch() in raw CSS
+- **§1.2 GSAP enhanced detection** — gsap.matchMedia() usage and breakpoints, ScrollSmoother instance config
+- **§1.18 extractNetworkProfile()** — performance.getEntriesByType resource analysis, CDN library detection (gsap, lenis, three, lottie, rive, spline, swiper, etc.), network summary with total transfer size
+- **§1.19 extractSectionInventory()** — section count, bg colors, layout types (grid/flex/block), height ratios, media presence. BLOQUEANTE for structural parity
+- **§3.5 Modern CSS patterns** — DVH/SVH/LVH handling, @starting-style entry animations, -webkit-text-stroke with @supports fallback, GSAP ScrollSmoother implementation, GSAP Flip layout animations, gsap.matchMedia responsive animations
+- **9 new stop conditions** — extractNetworkProfile not executed, extractSectionInventory not executed, 100dvh→100vh mismatch, @starting-style→JS substitution, -webkit-text-stroke missing, color-mix() not replicated, ScrollSmoother+Lenis conflict
+- **6 new completion criteria** — dvh/svh/lvh replication, @starting-style replication, -webkit-text-stroke replication, color-mix() replication, ScrollSmoother/Lenis exclusivity, gsap.matchMedia breakpoints
+
+### Changed
+- AGENTS.md updated to v3.4 with 23 extraction scripts, modern CSS patterns, network profile, section inventory
+- INSPECTION_GUIDE.md updated to v3.4 with 23 scripts and 8 new programmatic verification items
+- SKILL.md version bumped from v3.3 to v3.4
+- FASE 0 references §1.19 instead of §3.0.10 (which never existed in SKILL.md — fixed phantom reference)
+- FASE 1 expanded from 20 to 23 extraction scripts
+- _metadata skillVersion updated from 3.1 to 3.4
+- All agent rule files synced via sync workflow
+
 ## [Unreleased]
 
 ## [0.3.1] - 2026-03-29

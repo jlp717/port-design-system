@@ -1,4 +1,4 @@
-# Inspection Guide v3.3
+# Inspection Guide v3.4
 
 ## Setup inicial
 
@@ -10,11 +10,11 @@ Ambas abiertas hasta MIGRATION_COMPLETE.md.
 
 IMPORTANTE: Ejecutar preExpandContent() ANTES de cualquier script de extraccion.
 
-20 scripts definidos en SKILL.md:
-1. extractFullDesignSystem() → design-tokens.json
+23 scripts definidos en SKILL.md:
+1. extractFullDesignSystem() → design-tokens.json (incluye dvh/svh/lvh, color-mix, @starting-style, -webkit-text-stroke, oklch)
 2. fetchCrossOriginCSS() → cross-origin-css.json
 3. extractShadowStyles() → shadow-styles.json
-4. extractAnimationSystem() → animations.json
+4. extractAnimationSystem() → animations.json (incluye gsap.matchMedia, ScrollSmoother)
 5. captureIntersectionObserverConfigs() → (incluido en animations.json)
 6. extractLottieRiveSpline() → lottie-rive-spline.json
 7. extractScrollScrubTrace() → scroll-scrub-trace-[pagina].json (BLOQUEANTE si media fullscreen)
@@ -32,6 +32,8 @@ IMPORTANTE: Ejecutar preExpandContent() ANTES de cualquier script de extraccion.
 19. recordScrollBehavior() → scroll-behavior-[pagina].json (BLOQUEANTE para verificacion)
 20. detectAnimationImplementation() → animation-implementation.json (BLOQUEANTE para FASE 3)
 21. extractElementStyleMap() → element-style-map-[pagina].json
+22. extractNetworkProfile() → network-profile.json (CDN library detection)
+23. extractSectionInventory() → section-inventory-[pagina].json (BLOQUEANTE para paridad)
 
 TODOS los JSONs DEBEN incluir campo _metadata (version, url, timestamp, viewport, userAgent).
 
@@ -296,7 +298,7 @@ Verificacion QA adicional:
   [ ] Iframes/embeds replicados con mismos src y dimensiones
   [ ] touch-action, user-select, writing-mode replicados
 
-Verificacion programatica (v3.3):
+Verificacion programatica (v3.4):
   [ ] detectAnimationImplementation() ejecutado ANTES de FASE 3
   [ ] recordScrollBehavior() ejecutado en source para CADA pagina
   [ ] recordScrollBehavior() ejecutado en target para CADA pagina
@@ -311,6 +313,14 @@ Verificacion programatica (v3.3):
   [ ] Si source usa CSS Modules, target replica con CSS Modules o equivalente
   [ ] Si source usa IntersectionObserver nativo, target usa IO nativo (no GSAP)
   [ ] Si source usa RAF para video scrub, target usa RAF (no GSAP ScrollTrigger)
+  [ ] extractNetworkProfile() ejecutado — librerias CDN detectadas
+  [ ] extractSectionInventory() ejecutado — paridad estructural verificable
+  [ ] gsap.matchMedia breakpoints respetados si source los usa
+  [ ] dvh/svh/lvh units replicados si source los usa
+  [ ] @starting-style replicado si source lo usa (no JS)
+  [ ] -webkit-text-stroke replicado si source lo usa
+  [ ] color-mix() replicado o valor computado exacto usado
+  [ ] ScrollSmoother y Lenis NO instalados simultaneamente
 
 Paridad estructural (v3.2):
   [ ] Section inventory: conteo secciones source == target

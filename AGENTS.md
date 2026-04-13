@@ -1,4 +1,4 @@
-# Port Design System From Local Clone v3.3
+# Port Design System From Local Clone v3.4
 
 ## Regla absoluta
 
@@ -71,19 +71,22 @@ que tienen estructura visual DIFERENTE.
 ## Flujo completo (5 fases)
 
 ### FASE 0: Setup y descubrimiento automatico
+- MCP tool detection: identificar Playwright/Puppeteer/Browser-tools MCP disponible
+- Modo degradado sin MCP: usuario pega scripts en DevTools Console
 - Dual MCP: MCP-REF en source-url, MCP-TARGET en localhost:3001
 - Anti-bot protocol: user-agent override, cookie accept, Cloudflare wait
 - MCP crash recovery via _checkpoint.json (resume from last completed step)
 - preExpandContent() obligatorio antes de TODA extraccion (lazy load, SPA, accordions, tabs, infinite scroll)
 - Descubrimiento automatico de paginas via crawling de links y sitemap.xml
+- Page discovery con cycle detection: MAX_PAGES=50, MAX_DEPTH=3, visited set
 - PAGE_MAPPING.md generado automaticamente — BLOQUEANTE
-- Section inventory extraction (§3.0.10) — BLOQUEANTE
+- Section inventory extraction (§1.19) — BLOQUEANTE
 
-### FASE 1: Extraccion profunda (20 scripts via MCP-REF)
-1. extractFullDesignSystem() — tokens, tipografia, colores, spacing, sombras, gradientes, z-index, breakpoints, @font-face, @container, @layer, media queries extendidas (hover, pointer, prefers-*), CSS-in-JS, Shadow DOM, pseudo-elements (::before/::after/::selection/::placeholder), @property, @supports, Adobe Fonts, custom scrollbar, CSS Motion Path, scroll-margin, content-visibility, color-scheme, container-type/container-name, env(safe-area-inset-*)
+### FASE 1: Extraccion profunda (23 scripts via MCP-REF)
+1. extractFullDesignSystem() — tokens, tipografia, colores, spacing, sombras, gradientes, z-index, breakpoints, @font-face, @container, @layer, media queries extendidas (hover, pointer, prefers-*), CSS-in-JS, Shadow DOM, pseudo-elements (::before/::after/::selection/::placeholder), @property, @supports, Adobe Fonts, custom scrollbar, CSS Motion Path, scroll-margin, content-visibility, color-scheme, container-type/container-name, env(safe-area-inset-*), dvh/svh/lvh units, color-mix(), @starting-style, -webkit-text-stroke, oklch
 2. fetchCrossOriginCSS() — fetch manual de hojas de estilo cross-origin bloqueadas por CORS
 3. extractShadowStyles() — traversal de Shadow DOM roots para estilos encapsulados
-4. extractAnimationSystem() — GSAP (22 plugins), Lenis, Framer Motion, CSS keyframes, CSS transitions, IntersectionObserver, RAF, video scrub, canvas/WebGL, CSS scroll-driven animations (scroll-timeline, view-timeline), View Transitions API, Web Animations API, Lottie, Rive, Spline
+4. extractAnimationSystem() — GSAP (22 plugins + matchMedia + ScrollSmoother instance), Lenis, Framer Motion, CSS keyframes, CSS transitions, IntersectionObserver, RAF, video scrub, canvas/WebGL, CSS scroll-driven animations (scroll-timeline, view-timeline), View Transitions API, Web Animations API, Lottie, Rive, Spline
 5. captureIntersectionObserverConfigs() — monkey-patch IO para capturar threshold/rootMargin reales
 6. extractLottieRiveSpline() — extraccion completa de animaciones Lottie/dotLottie, Rive, Spline
 7. extractScrollScrubTrace() — video/canvas scrub trace a 0/10/25/50/75/100% scroll (BLOQUEANTE si hay media fullscreen)
@@ -101,6 +104,8 @@ que tienen estructura visual DIFERENTE.
 19. recordScrollBehavior() — scroll programatico 0-100% capturando estado de 200+ elementos en 21 posiciones (transforms, opacity, rect, videoCurrentTime, visibility, pinned state). BLOQUEANTE para verificacion.
 20. detectAnimationImplementation() — detecta QUE usa el source (GSAP vs native RAF vs CSS). BLOQUEANTE para FASE 3.
 21. extractElementStyleMap() — per-element computed styles + hover CSS rules + pseudo-elements
+22. extractNetworkProfile() — performance.getEntriesByType resource analysis, CDN library detection, network summary
+23. extractSectionInventory() — section count, bg colors, layout types, height ratios — BLOQUEANTE para paridad
 
 TODOS los JSONs de extraccion DEBEN incluir campo _metadata (version, url, timestamp, viewport, userAgent).
 
@@ -153,6 +158,8 @@ UI: MARQUEE, TABS, ACCORDION, CAROUSEL, COUNTER, TEXT_SPLIT, MAGNETIC_HOVER,
   PAGE_TRANSITION, CLIP_PATH_ANIM, BACKDROP_BLUR
 Extras: LOTTIE/DOTLOTTIE, RIVE, SPLINE 3D, SCROLL-TIMELINE CSS,
   VIEW TRANSITIONS API, NATIVE DIALOG/MODAL, PREFERS-REDUCED-MOTION.
+Modern CSS (v3.4): DVH/SVH/LVH, @STARTING-STYLE, WEBKIT-TEXT-STROKE,
+  COLOR-MIX(), GSAP SCROLLSMOOTHER, GSAP FLIP, GSAP MATCHMEDIA.
 
 ### FASE 4: Verificacion QA
 - PROGRAMATICA: compareScrollBehavior() en CADA pagina — datos numericos, no screenshots
@@ -235,6 +242,12 @@ BUILD-5: PASS = exit 0, cero errores TS, cero warnings nuevos
 - Target instala Lenis pero source NO usa smooth scroll lib → STOP
 - Target architecture NO detectada antes de FASE 3 → STOP
 - Font name de source brand en codigo target → STOP + renombrar
+- extractNetworkProfile() NO ejecutado → STOP + librerias CDN pueden no detectarse
+- extractSectionInventory() NO ejecutado → STOP + paridad no verificable
+- Source usa 100dvh y target usa 100vh → STOP + diferente en iOS
+- Source usa @starting-style y target usa JS → STOP + copiar CSS nativo
+- Source usa -webkit-text-stroke y target no lo replica → STOP
+- ScrollSmoother Y Lenis instalados simultaneamente → STOP + incompatibles
 
 ## Criterios de completitud
 
@@ -255,13 +268,16 @@ BUILD-5: PASS = exit 0, cero errores TS, cero warnings nuevos
 - View Transitions: si source usa, target implementa con fallback
 - prefers-reduced-motion: respetado en CSS y animaciones
 
-### Verificacion programatica (v3.3)
+### Verificacion programatica (v3.4)
 - recordScrollBehavior() ejecutado en source Y target para CADA pagina
 - compareScrollBehavior() retorna pass:true para TODAS las paginas
 - detectAnimationImplementation() ejecutado Y respetado en FASE 3
 - Target NO instala dependencias que source no usa
 - target-architecture.json generado y respetado
 - Font names del source brand NO en codigo target
+- extractNetworkProfile() ejecutado, librerias CDN detectadas
+- extractSectionInventory() ejecutado, paridad estructural verificada
+- gsap.matchMedia breakpoints respetados si source los usa
 
 ### Tecnico
 - Build PASS (exit 0, cero errores TS)

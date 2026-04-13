@@ -6,7 +6,7 @@ description = "Autonomous visual porting skill v3.0. Clones the complete design 
 [prompt]
 text = '''
 
-# /port-design-system-from-local-clone v3.3
+# /port-design-system-from-local-clone v3.4
 
 ## Invocacion
 
@@ -202,6 +202,17 @@ no para copiar el valor.
 
 ### 0.1 Dual MCP — primera accion, nunca cerrar
 
+**Deteccion del MCP disponible**: Antes de abrir browsers, identificar que herramienta
+MCP esta disponible. Los scripts de extraccion se ejecutan via `evaluate` / `execute`
+JavaScript en el browser. Compatibles con:
+- **Playwright MCP** (`mcp_microsoft_playwright`): `browser_navigate`, `browser_evaluate`,
+  `browser_snapshot`, `browser_take_screenshot`, `browser_click`, `browser_resize`
+- **Puppeteer MCP**: `puppeteer_navigate`, `puppeteer_evaluate`, `puppeteer_screenshot`
+- **Browser-tools MCP**: `getConsoleLogs`, `getNetworkLogs`, `runJavascript`
+- **Modo degradado (sin MCP)**: Si no hay MCP browser disponible, indicar al usuario
+  que pegue los scripts manualmente en DevTools Console y copie los resultados.
+  Los scripts funcionan igual — solo cambia el mecanismo de ejecucion.
+
 Abrir DOS instancias de MCP browser:
 - MCP-REF: navegar a `<source-url>`
 - MCP-TARGET: navegar a `http://localhost:3001` (o el puerto del dev server)
@@ -337,7 +348,18 @@ Ejecutar en MCP-REF:
 
 Intentar tambien: `fetch('/sitemap.xml').then(r => r.text())` para extraer rutas adicionales.
 
-Navegar a CADA subpagina descubierta y ejecutar el mismo script para encontrar enlaces profundos.
+Navegar a CADA subpagina descubierta y ejecutar el mismo script para encontrar
+enlaces profundos, con las siguientes protecciones anti-loop:
+
+- **MAX_PAGES = 50**: No descubrir mas de 50 paginas unicas. Si el sitemap tiene
+  mas, priorizar las de la navegacion principal.
+- **MAX_DEPTH = 3**: No seguir enlaces mas alla de 3 niveles de profundidad
+  desde la home (home = depth 0, /about = depth 1, /about/team = depth 2).
+- **Visited set**: Mantener un Set de paginas ya visitadas para evitar ciclos.
+- **Ignorar paginacion**: Rutas que matcheen `/page/\d+`, `?page=`, `/p/\d+`
+  no cuentan como paginas unicas — son variantes de la misma pagina.
+- **Ignorar anchors y query params**: Normalizar URLs removiendo `#hash` y `?query`
+  antes de comparar.
 
 ### 0.3 Analisis de rutas del target
 
@@ -647,6 +669,73 @@ Guardar resultados en `docs/pds/extraction/`.
   });
   result.containerElements = result.containerElements.slice(0, 20);
 
+  // Modern CSS: dvh/svh/lvh units detection
+  result.modernViewportUnits = { dvh: false, svh: false, lvh: false };
+  for (const sheet of document.styleSheets) {
+    try {
+      for (const rule of sheet.cssRules) {
+        const text = rule.cssText || '';
+        if (text.match(/\d+dvh/)) result.modernViewportUnits.dvh = true;
+        if (text.match(/\d+svh/)) result.modernViewportUnits.svh = true;
+        if (text.match(/\d+lvh/)) result.modernViewportUnits.lvh = true;
+      }
+    } catch(e) {}
+  }
+
+  // Modern CSS: color-mix() detection
+  result.colorMix = [];
+  for (const sheet of document.styleSheets) {
+    try {
+      for (const rule of sheet.cssRules) {
+        const text = rule.cssText || '';
+        const matches = text.matchAll(/color-mix\([^)]+\)/g);
+        for (const m of matches) {
+          result.colorMix.push({ selector: rule.selectorText?.slice(0,80), value: m[0].slice(0,150) });
+        }
+      }
+    } catch(e) {}
+  }
+  result.colorMix = result.colorMix.slice(0, 20);
+
+  // Modern CSS: @starting-style detection (entry animations for new DOM elements)
+  result.startingStyle = [];
+  for (const sheet of document.styleSheets) {
+    try {
+      for (const rule of sheet.cssRules) {
+        if (rule.cssText?.includes('@starting-style')) {
+          result.startingStyle.push({ css: rule.cssText.slice(0, 300) });
+        }
+      }
+    } catch(e) {}
+  }
+
+  // Modern CSS: -webkit-text-stroke / text-stroke detection
+  result.textStroke = [];
+  document.querySelectorAll('h1,h2,h3,h4,[class*="heading"],[class*="title"],[class*="hero"],[class*="outline"]').forEach((el, i) => {
+    if (i > 20) return;
+    const cs = getComputedStyle(el);
+    const wts = cs.webkitTextStroke || cs.getPropertyValue('-webkit-text-stroke');
+    const wtsc = cs.webkitTextStrokeColor || cs.getPropertyValue('-webkit-text-stroke-color');
+    const wtsw = cs.webkitTextStrokeWidth || cs.getPropertyValue('-webkit-text-stroke-width');
+    if ((wts && wts !== '' && wts !== 'initial') || (wtsw && wtsw !== '0px' && wtsw !== 'initial')) {
+      result.textStroke.push({
+        element: el.tagName + '.' + (el.className||'').split(' ')[0]?.slice(0,40),
+        textStroke: wts, color: wtsc, width: wtsw,
+        webkitTextFillColor: cs.webkitTextFillColor || cs.getPropertyValue('-webkit-text-fill-color')
+      });
+    }
+  });
+
+  // oklch() color usage detection (beyond computed — check raw CSS)
+  result.oklchUsage = false;
+  for (const sheet of document.styleSheets) {
+    try {
+      for (const rule of sheet.cssRules) {
+        if (rule.cssText?.includes('oklch(')) { result.oklchUsage = true; break; }
+      }
+    } catch(e) {}
+  }
+
   // Computed typography for ALL relevant selectors
   const typoSelectors = ['h1','h2','h3','h4','h5','h6','p','span','a','button','input','textarea','select','label','nav','nav a','li','blockquote','figcaption','small','strong','em','code','pre','th','td','dt','dd','.btn','[class*="title"]','[class*="heading"]','[class*="subtitle"]','[class*="caption"]','[class*="label"]'];
   typoSelectors.forEach(sel => {
@@ -765,7 +854,7 @@ Anadir al inicio de CADA script de extraccion:
 ```javascript
 const _metadata = { extractedAt: new Date().toISOString(), sourceUrl: location.href,
   userAgent: navigator.userAgent, viewportWidth: innerWidth, viewportHeight: innerHeight,
-  scrollHeight: document.documentElement.scrollHeight, skillVersion: '3.1' };
+  scrollHeight: document.documentElement.scrollHeight, skillVersion: '3.4' };
 ```
 
 Y en el return: `return { _metadata, ...result };`
@@ -803,6 +892,25 @@ Y en el return: `return { _metadata, ...result };`
      'GSDevTools','MotionPathHelper'].forEach(p => {
       if (window[p] || window.gsap?.plugins?.[p]) result.gsap.registered.push(p);
     });
+    // gsap.matchMedia() usage detection — responsive animations
+    // matchMedia is ALWAYS available if GSAP is loaded, but detecting its USAGE matters
+    result.gsap.matchMediaUsed = false;
+    if (window.gsap.matchMedia) {
+      // Check if ScrollTrigger instances have media query conditions
+      const mediaSTs = (window.ScrollTrigger?.getAll?.() || []).filter(st => st.vars?.matchMedia || st.vars?.media);
+      if (mediaSTs.length > 0) {
+        result.gsap.matchMediaUsed = true;
+        result.gsap.matchMediaBreakpoints = mediaSTs.map(st => st.vars.matchMedia || st.vars.media).filter(Boolean);
+      }
+    }
+    // ScrollSmoother instance detection
+    if (window.ScrollSmoother) {
+      const sm = window.ScrollSmoother.get?.();
+      result.gsap.scrollSmoother = sm ? {
+        smooth: sm.vars?.smooth, effects: sm.vars?.effects,
+        smoothTouch: sm.vars?.smoothTouch, normalizeScroll: sm.vars?.normalizeScroll
+      } : { detected: true };
+    }
   }
 
   // ScrollTrigger instances
@@ -2574,6 +2682,151 @@ Guardar en: `docs/pds/extraction/element-style-map-[pagina].json`
 Este mapa se usa en FASE 3 para reconstruir CADA elemento con estilos IDENTICOS,
 y en FASE 4 para verificar que los computed styles del target coinciden.
 
+### 1.18 extractNetworkProfile() — QUE CARGA REALMENTE EL SITE
+
+Emulacion programatica de DevTools Network tab. Captura TODOS los recursos
+que el site carga en runtime, incluyendo librerias via CDN que no exponen
+globales en `window`. Este script complementa `detectAnimationImplementation()`
+(§1.16) que solo detecta librerias con globales.
+
+```javascript
+(function extractNetworkProfile() {
+  const entries = performance.getEntriesByType('resource');
+  const result = {
+    scripts: [], stylesheets: [], fonts: [], images: [], videos: [],
+    iframes: [], other: [], summary: {}
+  };
+
+  entries.forEach(e => {
+    const entry = {
+      url: e.name.slice(0, 300),
+      type: e.initiatorType,
+      size: e.transferSize || e.encodedBodySize || 0,
+      duration: Math.round(e.duration),
+    };
+
+    // Classify
+    if (e.name.match(/\.(js|mjs)(\?|$)/i) || e.initiatorType === 'script') {
+      // Detect known libraries in script URLs
+      const lib = e.name.match(/(gsap|scrolltrigger|scrollsmoother|split-?text|lenis|locomotive|framer-motion|three|lottie|rive|spline|swiper|barba|anime|popmotion|motion-one|scroll-timeline|webgl|pixi|p5)/i);
+      entry.detectedLibrary = lib ? lib[1].toLowerCase() : null;
+      result.scripts.push(entry);
+    } else if (e.name.match(/\.css(\?|$)/i) || e.initiatorType === 'css' || e.initiatorType === 'link') {
+      result.stylesheets.push(entry);
+    } else if (e.name.match(/\.(woff2?|ttf|otf|eot)(\?|$)/i) || e.initiatorType === 'css') {
+      result.fonts.push(entry);
+    } else if (e.name.match(/\.(png|jpg|jpeg|webp|avif|gif|svg|ico)(\?|$)/i)) {
+      result.images.push(entry);
+    } else if (e.name.match(/\.(mp4|webm|ogv|m3u8)(\?|$)/i)) {
+      result.videos.push(entry);
+    } else {
+      result.other.push(entry);
+    }
+  });
+
+  // Console error/warning detection
+  result.consoleState = {
+    performanceEntries: entries.length,
+    // Check for common error indicators
+    hasServiceWorker: !!navigator.serviceWorker?.controller,
+    connectionType: navigator.connection?.effectiveType || 'unknown'
+  };
+
+  // Summary of detected libraries (from ALL sources: network + global)
+  const detectedLibs = new Set();
+  result.scripts.forEach(s => { if (s.detectedLibrary) detectedLibs.add(s.detectedLibrary); });
+  // Also check globals that might not be in network (bundled)
+  ['gsap','ScrollTrigger','ScrollSmoother','Lenis','lenis','THREE',
+   'lottie','bodymovin','rive','PIXI','anime','barba'].forEach(g => {
+    if (window[g]) detectedLibs.add(g.toLowerCase());
+  });
+  result.summary = {
+    totalResources: entries.length,
+    totalScripts: result.scripts.length,
+    totalStylesheets: result.stylesheets.length,
+    totalFonts: result.fonts.length,
+    detectedLibraries: [...detectedLibs],
+    totalTransferSize: entries.reduce((sum, e) => sum + (e.transferSize || 0), 0)
+  };
+
+  return result;
+})();
+```
+
+Guardar en: `docs/pds/extraction/network-profile.json`
+
+Este perfil de red permite detectar librerias que se cargan via CDN sin exponer
+globales (ej: `<script src="cdn.jsdelivr.net/gsap">`), cuyo uso no se puede
+detectar solo con `window.gsap`. Tambien sirve para verificar que el target
+carga los mismos tipos de recursos que el source.
+
+### 1.19 Section Inventory Extraction — BLOQUEANTE
+
+Extraer el inventario completo de secciones del source para la regla de
+paridad estructural 1:1. Sin este inventario, no se puede verificar que
+el target tiene el mismo numero y tipo de secciones.
+
+```javascript
+(function extractSectionInventory() {
+  const sections = [];
+  // Detect sections using multiple strategies
+  const sectionEls = document.querySelectorAll(
+    'section, [class*="section"], [class*="Section"], [data-section], ' +
+    'main > div, main > article, [role="region"]'
+  );
+
+  // Fallback: if few sections found, use direct children of main/body
+  const candidates = sectionEls.length >= 3 ? sectionEls :
+    document.querySelectorAll('main > *, body > main > *, body > div > *');
+
+  candidates.forEach((el, i) => {
+    const cs = getComputedStyle(el);
+    const rect = el.getBoundingClientRect();
+    // Skip invisible or tiny elements
+    if (rect.height < 50) return;
+
+    sections.push({
+      index: i,
+      tag: el.tagName,
+      classes: (el.className || '').toString().slice(0, 120),
+      id: el.id || null,
+      rect: { width: Math.round(rect.width), height: Math.round(rect.height) },
+      heightPct: Math.round((rect.height / document.documentElement.scrollHeight) * 100),
+      backgroundColor: cs.backgroundColor,
+      backgroundImage: cs.backgroundImage !== 'none' ? cs.backgroundImage.slice(0, 100) : null,
+      display: cs.display,
+      position: cs.position,
+      flexDirection: cs.flexDirection !== 'row' ? cs.flexDirection : null,
+      gridTemplateColumns: cs.gridTemplateColumns !== 'none' ? cs.gridTemplateColumns : null,
+      layoutType: cs.display.includes('grid') ? 'grid' : cs.display.includes('flex') ? 'flex' : 'block',
+      childCount: el.children.length,
+      hasVideo: el.querySelector('video') !== null,
+      hasCanvas: el.querySelector('canvas') !== null,
+      hasIframe: el.querySelector('iframe') !== null,
+      firstHeading: el.querySelector('h1,h2,h3')?.tagName || null,
+      textPreview: el.textContent?.trim().slice(0, 100) || null
+    });
+  });
+
+  return {
+    totalSections: sections.length,
+    totalPageHeight: document.documentElement.scrollHeight,
+    sections
+  };
+})();
+```
+
+Guardar en: `docs/pds/extraction/section-inventory-[pagina].json`
+
+Este inventario se usa para:
+- Verificar paridad 1:1 (target DEBE tener el mismo numero de secciones)
+- Comparar backgroundColor por seccion
+- Verificar layoutType por seccion (grid/flex/block)
+- Calcular ratio de alturas (debe estar dentro del 20%)
+
+STOP CONDITION: Si el target tiene diferente numero de secciones que el source,
+STOP + ajustar antes de continuar.
+
 ## FASE 2: Analisis del target
 
 ### 2.1 Baseline del target
@@ -4053,6 +4306,186 @@ function ParallaxLayer({ speed, children }: { speed: number; children: React.Rea
 
 Regla: speed value IDENTICO al source. Calcular del difference recording.
 
+### 3.5 Patrones de CSS moderno
+
+#### DVH / SVH / LVH — viewport units para mobile
+
+Si `extractFullDesignSystem()` detecto `modernViewportUnits.dvh: true`:
+
+```css
+/* En globals.css — usar dvh donde el source lo usa */
+.hero-section {
+  height: 100dvh; /* dynamic viewport height — ajusta en iOS con address bar */
+  /* Fallback para navegadores sin soporte: */
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* svh = smallest viewport height (address bar visible) */
+/* lvh = largest viewport height (address bar oculta) */
+```
+
+REGLA: Si el source usa `100dvh`, NO sustituir por `100vh`. En iOS/Android
+el resultado visual es DIFERENTE porque `vh` no descuenta la address bar
+dinamica pero `dvh` si. Copiar las unidades EXACTAS del source.
+
+#### @STARTING-STYLE — transiciones de entrada al DOM
+
+Si `extractFullDesignSystem()` detecto `startingStyle` entries:
+
+```css
+/* Permite animar la entrada de un elemento al DOM (ej: dialog, popover) */
+dialog[open] {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+@starting-style {
+  dialog[open] {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+```
+
+REGLA: Si el source usa `@starting-style`, NO sustituir por JavaScript
+`requestAnimationFrame(() => el.classList.add('visible'))`. El resultado visual
+es diferente (CSS @starting-style es sincrono con el renderizado del browser,
+JS no lo es).
+
+Soporte: Chrome 117+, Safari 17.5+. Si el target necesita soporte para
+navegadores mas antiguos, agregar fallback JS que replica el mismo efecto.
+
+#### WEBKIT-TEXT-STROKE — texto outline
+
+Si `extractFullDesignSystem()` detecto `textStroke` entries:
+
+```css
+.outline-heading {
+  -webkit-text-stroke: /* valor del source, ej: 1px #000 */;
+  -webkit-text-fill-color: /* valor del source, ej: transparent */;
+  /* Fallback para Firefox (no soporta text-stroke): */
+  color: /* color del source sin stroke */;
+}
+
+/* Soporte real */
+@supports (-webkit-text-stroke: 1px black) {
+  .outline-heading {
+    -webkit-text-fill-color: transparent;
+    -webkit-text-stroke: /* valor exacto */;
+  }
+}
+```
+
+REGLA: Incluir `@supports` para que los navegadores sin soporte muestren
+el texto con el color de fallback en vez de invisible.
+
+#### GSAP SCROLLSMOOTHER — smooth scroll premium
+
+Si `extractAnimationSystem()` detecto `gsap.scrollSmoother`:
+
+```tsx
+'use client';
+import { useLayoutEffect } from 'react';
+import dynamic from 'next/dynamic';
+
+// ScrollSmoother requiere GSAP premium (Club GreenSock)
+const initSmoother = async () => {
+  const { gsap } = await import('gsap');
+  const { ScrollTrigger } = await import('gsap/ScrollTrigger');
+  const { ScrollSmoother } = await import('gsap/ScrollSmoother');
+  gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
+
+  ScrollSmoother.create({
+    smooth: /* valor del source, ej: 1.5 */,
+    effects: /* valor del source, ej: true */,
+    smoothTouch: /* valor del source, ej: 0.1 */,
+    normalizeScroll: /* valor del source, ej: true */,
+  });
+};
+```
+
+HTML structure requerida por ScrollSmoother:
+```tsx
+<div id="smooth-wrapper">
+  <div id="smooth-content">
+    {/* Todo el contenido de la pagina */}
+  </div>
+</div>
+```
+
+REGLA: ScrollSmoother es INCOMPATIBLE con Lenis. Si el source usa ScrollSmoother,
+NO instalar Lenis. Si el source usa Lenis, NO instalar ScrollSmoother.
+
+#### GSAP FLIP — animaciones de layout
+
+Si GSAP Flip plugin fue detectado en el source:
+
+```tsx
+'use client';
+import { useRef, useCallback } from 'react';
+
+const flipAnimate = async (targets: Element[], containerRef: Element) => {
+  const { gsap } = await import('gsap');
+  const { Flip } = await import('gsap/Flip');
+  gsap.registerPlugin(Flip);
+
+  // 1. Capturar estado ANTES del cambio de layout
+  const state = Flip.getState(targets);
+
+  // 2. Hacer el cambio de layout (ej: reordenar, cambiar grid)
+  // ... manipulacion del DOM ...
+
+  // 3. Animar desde el estado anterior al nuevo
+  Flip.from(state, {
+    duration: /* valor del source */,
+    ease: /* valor del source */,
+    stagger: /* valor del source */,
+    absolute: true,
+    onComplete: () => { /* callbacks del source */ }
+  });
+};
+```
+
+REGLA: Flip se usa cuando el source anima elementos entre posiciones de layout
+(ej: un grid que se reordena, un item que pasa de lista a grid). NO sustituir
+por `transform` manual — el resultado no es igual porque Flip calcula los
+deltas automaticamente.
+
+#### GSAP MATCHMEDIA — animaciones responsive
+
+Si `extractAnimationSystem()` detecto `gsap.matchMediaUsed: true`:
+
+```tsx
+useLayoutEffect(() => {
+  const mm = gsap.matchMedia();
+
+  mm.add("(min-width: 768px)", () => {
+    // Animaciones para desktop/tablet
+    gsap.to(".hero-title", {
+      scrollTrigger: { /* config del source */ },
+      /* valores del source para desktop */
+    });
+    return () => { /* cleanup automatico */ };
+  });
+
+  mm.add("(max-width: 767px)", () => {
+    // Animaciones diferentes para mobile
+    gsap.to(".hero-title", {
+      /* valores del source para mobile */
+    });
+    return () => { /* cleanup */ };
+  });
+
+  return () => mm.revert();
+}, []);
+```
+
+REGLA: Si el source usa gsap.matchMedia, los breakpoints de las animaciones
+deben ser IDENTICOS a los del source (extraidos en matchMediaBreakpoints).
+NO usar los breakpoints de Tailwind si son diferentes a los de GSAP.
+
 ## FASE 4: Verificacion QA
 
 ### 4.1 Protocolo de espera antes de captura
@@ -4727,6 +5160,19 @@ Si la migracion se interrumpe, se puede retomar desde el ultimo checkpoint.
 - Font name de source brand encontrado en target code -> STOP + renombrar (§2.5)
 - `extractElementStyleMap()` (§1.17) NO ejecutado -> STOP + sin esto los
   hover/pseudo-element styles no se pueden replicar con precision
+- `extractNetworkProfile()` (§1.18) NO ejecutado -> STOP + puede haber librerias
+  CDN sin global que no se detectaron con §1.16
+- `extractSectionInventory()` (§1.19) NO ejecutado -> STOP + sin inventario
+  la paridad estructural no se puede verificar
+- Source usa `100dvh` y target usa `100vh` -> STOP + en iOS el resultado es
+  visualmente diferente (address bar dinamica)
+- Source usa `@starting-style` y target usa JS para la misma transicion -> STOP
+  + copiar las CSS rules nativas
+- Source usa `-webkit-text-stroke` y target no lo replica -> STOP + copiar valores
+- Source usa `color-mix()` y target usa color hardcodeado diferente -> STOP
+  + usar color-mix() o el valor computado exacto
+- ScrollSmoother Y Lenis instalados al mismo tiempo -> STOP + son incompatibles,
+  elegir el que usa el source
 
 ## Criterios de completitud
 
@@ -4776,8 +5222,13 @@ Completo SOLO si TODOS estos criterios se cumplen SIMULTANEAMENTE:
 - color-scheme en :root replicado si source lo define
 - Iframes/embeds (YouTube, Vimeo, Maps) replicados con mismos src y dimensiones
 - touch-action, user-select, writing-mode replicados donde source los define
+- dvh/svh/lvh units replicados si source los usa (no sustituir por vh)
+- @starting-style replicado si source lo usa (no sustituir por JS)
+- -webkit-text-stroke replicado si source lo usa (con @supports fallback)
+- color-mix() replicado o valor computado exacto usado
+- ScrollSmoother y Lenis NUNCA instalados simultaneamente
 
-### Verificacion programatica (v3.3)
+### Verificacion programatica (v3.4)
 - `detectAnimationImplementation()` ejecutado Y su resultado respetado en FASE 3
 - `recordScrollBehavior()` ejecutado en source Y target para CADA pagina
 - `compareScrollBehavior()` retorna `pass: true` para TODAS las paginas
@@ -4787,6 +5238,10 @@ Completo SOLO si TODOS estos criterios se cumplen SIMULTANEAMENTE:
 - `target-architecture.json` generado y respetado (monorepo, i18n, Tailwind version)
 - Font names del source brand NO aparecen en el codigo target
 - `extractElementStyleMap()` ejecutado y hover/pseudo styles replicados
+- `extractNetworkProfile()` ejecutado y librerias CDN detectadas
+- `extractSectionInventory()` ejecutado y paridad estructural verificada
+- Section count source == section count target (de §1.19)
+- gsap.matchMedia breakpoints respetados si source los usa
 
 ### Documentacion
 - PAGE_MAPPING: todas las rutas ✅
