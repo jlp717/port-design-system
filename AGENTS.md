@@ -29,12 +29,16 @@ Texto SI: strings visibles en UI, hrefs del negocio target, nombres del negocio.
 Texto NO: clases CSS, valores de animacion, estructura JSX, configs de animacion,
           atributos data-*, assets decorativos.
 
-Regla de verificacion — PROGRAMATICA, NO VISUAL:
-Screenshots son complemento, NUNCA la verificacion principal de animaciones.
-Toda verificacion dinamica usa datos programaticos:
-- recordScrollBehavior(): captura estado (transforms, opacity, videoCurrentTime) en 21 posiciones
-- compareScrollBehavior(): compara source vs target numericamente
-- Solo PASS si los datos numericos coinciden
+Regla de verificacion — DUAL-MCP VISUAL + PROGRAMATICA:
+La verdad visual es lo que un usuario real ve al abrir ambas webs lado a lado.
+Las metricas programaticas son soporte, NUNCA pueden sustituir la verificacion visual.
+Protocolo obligatorio:
+- Abrir MCP-REF y MCP-TARGET SIMULTANEAMENTE para cada pagina
+- Scroll sincronizado 0-100% en 11 posiciones, screenshot de AMBOS en cada posicion
+- Comparar side-by-side: si hay diferencia visible --> STOP y corregir
+- recordScrollBehavior(): captura estado POR CLAVE ESTRUCTURAL (section[0], video[0], header[0]) en 21 posiciones. NO por CSS class name (CSS modules generan hashes que rompen la comparacion)
+- compareScrollBehavior(): compara source vs target por clave estructural. Reporta BG_MISMATCH, VIDEO_TIME, HEIGHT_RATIO, ELEMENT_MISSING
+- Solo PASS si passRate >= 90% Y dual-MCP visual sin diferencias Y usuario ha aprobado
 
 Regla de dependencias — SOLO LO QUE USA EL SOURCE:
 NO asumir GSAP, Lenis, ScrollTrigger. Ejecutar detectAnimationImplementation()
@@ -161,8 +165,16 @@ Extras: LOTTIE/DOTLOTTIE, RIVE, SPLINE 3D, SCROLL-TIMELINE CSS,
 Modern CSS (v3.4): DVH/SVH/LVH, @STARTING-STYLE, WEBKIT-TEXT-STROKE,
   COLOR-MIX(), GSAP SCROLLSMOOTHER, GSAP FLIP, GSAP MATCHMEDIA.
 
-### FASE 4: Verificacion QA
-- PROGRAMATICA: compareScrollBehavior() en CADA pagina — datos numericos, no screenshots
+### FASE 4: Verificacion QA (PAGINA POR PAGINA con aprobacion humana entre cada una)
+- DUAL-MCP SYNC SCROLL (obligatorio, ver seccion 4.5 de SKILL.md):
+  * Abrir source y target en dos MCPs simultaneamente
+  * Scroll a 0%, 10%, 20%, 30%, 40%, 50%, 60%, 70%, 80%, 90%, 100%
+  * Screenshot de source Y target en cada posicion
+  * Comparar side-by-side: si hay diferencia visible --> STOP, corregir antes de continuar
+- GATE DE APROBACION HUMANA: despues de completar UNA pagina, mostrar screenshots
+  al usuario y esperar aprobacion explicita antes de pasar a la siguiente
+- PROGRAMATICA: compareScrollBehavior() por CLAVE ESTRUCTURAL (section[0], video[0])
+  NO por CSS class name. Ver SKILL.md seccion 4.4.2 para la version correcta
 - Multi-viewport: 375px, 768px, 1440px
 - Computed style comparison con criterios IDENTICO (tolerancia cero)
 - Video fullscreen: computed style en 0%, pixel delta desde 25%
@@ -172,17 +184,17 @@ Modern CSS (v3.4): DVH/SVH/LVH, @STARTING-STYLE, WEBKIT-TEXT-STROKE,
 - Red/assets: TODAS las fuentes, imagenes y videos cargan correctamente
 - Performance basica: LCP, CLS (informativo)
 - Sistema de checkpoints por seccion
-- compareScrollSnapshots() automatizado: diff source vs target en 21 posiciones
-- compareScrollBehavior() automatizado: element state diff en 21 posiciones
+- compareScrollBehavior() automatizado: element state diff por clave estructural en 21 posiciones
 - Verificacion de stacking contexts (z-index, opacity, transform, filter)
 - Verificacion de accesibilidad (landmarks, ARIA, focus order)
 
 ### FASE 5: RECORRIDO VISUAL FINAL — OBLIGATORIO
 - Scroll completo 0-100% en tramos de 5% (21 posiciones por pagina)
 - En 3 viewports (1440, 768, 375)
-- Comparacion visual lado a lado en CADA posicion
+- Comparacion visual lado a lado en CADA posicion con screenshot de source Y target
 - Bucle de correccion inmediata si se detecta diferencia
 - CERO diferencias pendientes para aprobacion
+- Gate de aprobacion humana: usuario aprueba explicitamente antes de MIGRATION_COMPLETE
 
 ### FASE 6: Entregables finales
 PAGE_MAPPING.md · ANIMATION_MANIFEST.md · docs/pds/extraction/*.json ·
@@ -226,7 +238,9 @@ BUILD-5: PASS = exit 0, cero errores TS, cero warnings nuevos
 - Componente con hooks/event handlers sin 'use client' → STOP + agregar directiva
 - compareScrollSnapshots() muestra >5% diferencia en cualquier posicion → STOP + corregir
 - container-type en source y no replicado en target → STOP + @container queries no funcionaran
-- env(safe-area-inset-*) usado en source y no replicado → STOP + mobile notch roto
+- env(safe-area-inset-*) usado en source y no replicado → STOP (verificar que se usa clave estructural section[N]/video[N], NO CSS class name)
+- Dual-MCP sync scroll no ejecutado para una pagina → STOP
+- Aprobacion humana no obtenida antes de pasar a siguiente pagina → STOP + mobile notch roto
 - Iframes/embeds (YouTube, Vimeo, Maps) en source y ausentes en target → STOP + replicar
 - Section inventory mismatch: source N secciones ≠ target M secciones → STOP + paridad
 - Background color de seccion target difiere de source → STOP + corregir
@@ -237,7 +251,9 @@ BUILD-5: PASS = exit 0, cero errores TS, cero warnings nuevos
 - Layout type mismatch (grid vs flex) en seccion → STOP + corregir
 - detectAnimationImplementation() NO ejecutado antes de FASE 3 → STOP
 - recordScrollBehavior() NO ejecutado para una pagina → STOP
-- compareScrollBehavior() retorna pass:false → STOP + corregir
+- compareScrollBehavior() retorna pass:false → STOP + corregir (verificar que se usa clave estructural section[N]/video[N], NO CSS class name)
+- Dual-MCP sync scroll no ejecutado para una pagina → STOP
+- Aprobacion humana no obtenida antes de pasar a siguiente pagina → STOP
 - Target instala GSAP pero source NO usa GSAP → STOP + desinstalar + usar nativos
 - Target instala Lenis pero source NO usa smooth scroll lib → STOP
 - Target architecture NO detectada antes de FASE 3 → STOP

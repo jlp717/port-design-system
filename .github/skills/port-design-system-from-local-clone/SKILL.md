@@ -2328,103 +2328,121 @@ Ejecutar en MCP-REF para CADA pagina:
 async function recordScrollBehavior() {
   const wait = ms => new Promise(r => setTimeout(r, ms));
   const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-  const recording = { url: location.href, totalHeight: document.documentElement.scrollHeight,
-    viewportHeight: window.innerHeight, viewportWidth: window.innerWidth, frames: [] };
+  const recording = {
+    url: location.href,
+    totalHeight: document.documentElement.scrollHeight,
+    viewportHeight: window.innerHeight,
+    viewportWidth: window.innerWidth,
+    positions: []  // keyed by scrollPercent, elements keyed by STRUCTURAL KEY
+  };
 
-  // Selectors for ALL elements we need to track
-  const trackedSelectors = 'nav,header,footer,section,[class*="section"],[class*="Section"],'+
-    '[class*="hero"],[class*="Hero"],video,canvas,h1,h2,h3,'+
-    '[class*="card"],[class*="Card"],[class*="partner"],[class*="Partner"],'+
-    '[class*="news"],[class*="News"],[class*="footer"],[class*="Footer"],'+
-    '[class*="nav"],[class*="Nav"],[class*="logo"],[class*="Logo"],'+
-    '[class*="btn"],[class*="button"],[class*="cta"],'+
-    '[class*="reveal"],[class*="fade"],[class*="animate"],'+
-    '[class*="scroll"],[class*="Scroll"],[class*="sticky"],[class*="pin"],'+
-    '[class*="parallax"],[class*="wrapper"],[class*="Wrapper"],'+
-    'img[class],svg[class],a[class],button';
+  // STRUCTURAL KEY: identifies elements by DOM role/position, NOT by CSS class name.
+  // This makes cross-site comparison possible even with CSS Modules (hash suffixes).
+  // key format: "section[0]", "video[0]", "h2[1]", "nav[0]" etc.
+  function getStructuralKey(el, counters) {
+    const t = el.tagName.toLowerCase();
+    let bucket =
+      t === 'nav' || el.getAttribute('role') === 'navigation' ? 'nav' :
+      t === 'header' ? 'header' :
+      t === 'footer' ? 'footer' :
+      t === 'section' ? 'section' :
+      t === 'video' ? 'video' :
+      t === 'canvas' ? 'canvas' :
+      t === 'h1' ? 'h1' :
+      t === 'h2' ? 'h2' :
+      t === 'h3' ? 'h3' :
+      t === 'main' || el.getAttribute('role') === 'main' ? 'main' :
+      t; // fallback: use tag name
+    counters[bucket] = (counters[bucket] || 0);
+    const key = `${bucket}[${counters[bucket]}]`;
+    counters[bucket]++;
+    return key;
+  }
+
+  // Capture only semantically meaningful structural elements
+  const trackedSelectors = 'nav,header,footer,section,main,video,canvas,h1,h2,h3,[role="navigation"],[role="main"]';
 
   for (let pct = 0; pct <= 100; pct += 5) {
     window.scrollTo(0, maxScroll * (pct / 100));
-    await wait(500); // let animations settle
+    await wait(500);
 
-    const frame = { pct, scrollY: Math.round(window.scrollY), elements: [] };
+    const counters = {};
+    const pos = {
+      scrollPercent: pct,
+      scrollY: Math.round(window.scrollY),
+      viewportHeight: window.innerHeight,
+      elements: {}  // STRUCTURAL KEY -> state object (NOT an array)
+    };
 
-    // Capture state of ALL tracked elements
     document.querySelectorAll(trackedSelectors).forEach((el, i) => {
-      if (i > 200) return;
+      if (i > 100) return;
       const rect = el.getBoundingClientRect();
-      // Skip elements completely above or far below viewport
-      if (rect.bottom < -500 || rect.top > window.innerHeight + 500) return;
+      if (rect.bottom < -800 || rect.top > window.innerHeight + 800) return;
       const cs = getComputedStyle(el);
-      const state = {
-        index: i,
+      const key = getStructuralKey(el, counters);
+
+      pos.elements[key] = {
         tag: el.tagName,
-        classes: (el.className || '').toString().slice(0, 100),
-        // Position in viewport (critical for comparison)
-        rect: { x: Math.round(rect.x), y: Math.round(rect.y),
-                w: Math.round(rect.width), h: Math.round(rect.height) },
-        // Visual state
+        rect: { x: Math.round(rect.x), y: Math.round(rect.y), w: Math.round(rect.width), h: Math.round(rect.height) },
         opacity: cs.opacity,
         transform: cs.transform,
         backgroundColor: cs.backgroundColor,
         color: cs.color,
-        position: cs.position,
-        zIndex: cs.zIndex,
-        // Visibility
         visibility: cs.visibility,
         display: cs.display,
+        position: cs.position,
+        zIndex: cs.zIndex,
         clipPath: cs.clipPath !== 'none' ? cs.clipPath : null,
-        overflow: cs.overflow,
-        // For sticky/fixed elements
-        top: cs.position === 'fixed' || cs.position === 'sticky' ? cs.top : null,
-        // Backdrop
         backdropFilter: cs.backdropFilter !== 'none' ? cs.backdropFilter : null,
-        // Transition in progress
-        willChange: cs.willChange !== 'auto' ? cs.willChange : null
+        isVisible: rect.bottom > 0 && rect.top < window.innerHeight &&
+                   cs.visibility !== 'hidden' && cs.opacity !== '0' && cs.display !== 'none'
       };
 
-      // Special: video state
       if (el.tagName === 'VIDEO') {
-        state.videoCurrentTime = Number(el.currentTime.toFixed(3));
-        state.videoPaused = el.paused;
-        state.videoDuration = Number((el.duration || 0).toFixed(3));
+        pos.elements[key].videoCurrentTime = Number(el.currentTime.toFixed(3));
+        pos.elements[key].videoPaused = el.paused;
+        pos.elements[key].videoDuration = Number((el.duration || 0).toFixed(3));
       }
-
-      // Special: canvas
       if (el.tagName === 'CANVAS') {
-        state.canvasWidth = el.width;
-        state.canvasHeight = el.height;
+        pos.elements[key].canvasWidth = el.width;
+        pos.elements[key].canvasHeight = el.height;
       }
-
-      frame.elements.push(state);
     });
 
-    // Capture active CSS/Web animations
-    frame.activeAnimations = (document.getAnimations?.() || []).filter(a =>
-      a.playState === 'running' || a.playState === 'paused'
-    ).length;
+    // Top-level nav state (critical: transparent nav → solid on scroll)
+    const navEl = document.querySelector('nav, header');
+    if (navEl) {
+      const ncs = getComputedStyle(navEl);
+      pos.navState = {
+        backgroundColor: ncs.backgroundColor,
+        opacity: ncs.opacity,
+        backdropFilter: ncs.backdropFilter
+      };
+    }
 
-    // Capture pinned elements specifically
-    frame.pinnedElements = [...document.querySelectorAll('*')].filter(el => {
+    // Global video currentTime (for video scrub verification)
+    const vid = document.querySelector('video');
+    if (vid) pos.videoCurrentTime = Number(vid.currentTime.toFixed(3));
+
+    pos.activeAnimations = (document.getAnimations?.() || [])
+      .filter(a => a.playState === 'running').length;
+
+    pos.pinnedElements = [...document.querySelectorAll('*')].filter(el => {
       const cs = getComputedStyle(el);
       return (cs.position === 'fixed' || cs.position === 'sticky') &&
              el.offsetHeight > 20 && el.offsetWidth > 20;
-    }).map(el => ({
-      tag: el.tagName,
-      classes: (el.className||'').toString().slice(0,60),
-      rect: { y: Math.round(el.getBoundingClientRect().y), h: el.offsetHeight }
-    })).slice(0, 15);
+    }).length;
 
-    recording.frames.push(frame);
+    recording.positions.push(pos);
   }
 
-  // ALSO record scroll from 100% back to 0% (detect hysteresis in animations)
-  recording.returnFrames = [];
+  // Return scroll (detect hysteresis in scrub animations)
+  recording.returnPositions = [];
   for (let pct = 95; pct >= 0; pct -= 5) {
     window.scrollTo(0, maxScroll * (pct / 100));
     await wait(400);
     const video = document.querySelector('video');
-    recording.returnFrames.push({
+    recording.returnPositions.push({
       pct,
       scrollY: Math.round(window.scrollY),
       videoTime: video ? Number(video.currentTime.toFixed(3)) : null,
@@ -4639,86 +4657,106 @@ subjetiva por datos numericos exactos. Ejecuta `recordScrollBehavior()`
 
 ```javascript
 function compareScrollBehavior(sourceBehavior, targetBehavior) {
-  const report = { pass: true, totalChecks: 0, totalFails: 0, details: [] };
+  const report = { pass: true, passRate: '0%', totalChecks: 0, totalFails: 0, details: [] };
 
+  // CRITICAL: compare by STRUCTURAL KEY (section[0], video[0], nav[0])
+  // NEVER by CSS class name — CSS Modules generate hash-suffixed class names
+  // that are DIFFERENT between source and target. Selector string matching
+  // always returns 0.0% passRate for CSS Modules sites. This is the correct approach.
   sourceBehavior.positions.forEach((srcPos, i) => {
     const tgtPos = targetBehavior.positions[i];
     if (!tgtPos) {
-      report.details.push({ pct: srcPos.scrollPercent, error: 'Missing target position' });
-      report.pass = false; report.totalFails++; return;
+      report.details.push({ pct: srcPos.scrollPercent, error: 'MISSING_POSITION' });
+      report.pass = false; report.totalFails++;
+      return;
     }
 
-    // Comparar cada elemento tracked
-    Object.keys(srcPos.elements).forEach(selector => {
-      const srcEl = srcPos.elements[selector];
-      const tgtEl = tgtPos.elements?.[selector];
+    // Compare each element tracked by structural key
+    Object.entries(srcPos.elements || {}).forEach(([structKey, srcEl]) => {
+      const tgtEl = tgtPos.elements?.[structKey]; // same structural key = same element
       report.totalChecks++;
 
       if (!tgtEl) {
-        report.details.push({ pct: srcPos.scrollPercent, selector, error: 'Element missing in target' });
-        report.pass = false; report.totalFails++; return;
+        report.details.push({ pct: srcPos.scrollPercent, key: structKey, type: 'ELEMENT_MISSING' });
+        report.pass = false; report.totalFails++;
+        return;
       }
 
-      // Comparar opacity
-      if (Math.abs(parseFloat(srcEl.opacity) - parseFloat(tgtEl.opacity)) > 0.05) {
-        report.details.push({ pct: srcPos.scrollPercent, selector, prop: 'opacity', src: srcEl.opacity, tgt: tgtEl.opacity });
+      // Opacity (tolerance 0.05)
+      const srcOp = parseFloat(srcEl.opacity);
+      const tgtOp = parseFloat(tgtEl.opacity);
+      if (Math.abs(srcOp - tgtOp) > 0.05) {
+        report.details.push({ pct: srcPos.scrollPercent, key: structKey, type: 'OPACITY_MISMATCH', src: srcEl.opacity, tgt: tgtEl.opacity });
         report.pass = false; report.totalFails++;
       }
 
-      // Comparar transform (extraer translateY)
-      const srcTY = parseTranslateY(srcEl.transform);
-      const tgtTY = parseTranslateY(tgtEl.transform);
+      // Transform translateY (tolerance 10px)
+      const srcTY = extractTranslateY(srcEl.transform);
+      const tgtTY = extractTranslateY(tgtEl.transform);
       if (srcTY !== null && tgtTY !== null && Math.abs(srcTY - tgtTY) > 10) {
-        report.details.push({ pct: srcPos.scrollPercent, selector, prop: 'translateY', src: srcTY, tgt: tgtTY, delta: Math.abs(srcTY - tgtTY) });
+        report.details.push({ pct: srcPos.scrollPercent, key: structKey, type: 'TRANSFORM_MISMATCH', srcTY, tgtTY, delta: Math.abs(srcTY - tgtTY) });
         report.pass = false; report.totalFails++;
       }
 
-      // Comparar visibility match
+      // Visibility (must match)
       if (srcEl.isVisible !== tgtEl.isVisible) {
-        report.details.push({ pct: srcPos.scrollPercent, selector, prop: 'visibility', src: srcEl.isVisible, tgt: tgtEl.isVisible });
+        report.details.push({ pct: srcPos.scrollPercent, key: structKey, type: 'VISIBILITY_MISMATCH', src: srcEl.isVisible, tgt: tgtEl.isVisible });
         report.pass = false; report.totalFails++;
       }
 
-      // Comparar rect position (dentro del 5% del viewport)
-      if (srcEl.rect && tgtEl.rect) {
-        const viewH = srcPos.viewportHeight || 900;
-        const yDelta = Math.abs(srcEl.rect.top - tgtEl.rect.top);
-        if (yDelta > viewH * 0.05) {
-          report.details.push({ pct: srcPos.scrollPercent, selector, prop: 'position.top', src: srcEl.rect.top, tgt: tgtEl.rect.top, delta: yDelta });
+      // Section background color (must be identical)
+      if (structKey.startsWith('section[') && srcEl.backgroundColor !== tgtEl.backgroundColor) {
+        report.details.push({ pct: srcPos.scrollPercent, key: structKey, type: 'BG_MISMATCH', src: srcEl.backgroundColor, tgt: tgtEl.backgroundColor });
+        report.pass = false; report.totalFails++;
+      }
+
+      // Video currentTime per element
+      if (srcEl.videoCurrentTime !== undefined && tgtEl.videoCurrentTime !== undefined) {
+        if (Math.abs(srcEl.videoCurrentTime - tgtEl.videoCurrentTime) > 0.5) {
+          report.details.push({ pct: srcPos.scrollPercent, key: structKey, type: 'VIDEO_TIME', src: srcEl.videoCurrentTime, tgt: tgtEl.videoCurrentTime });
           report.pass = false; report.totalFails++;
         }
       }
     });
 
-    // Comparar video currentTime
-    if (srcPos.videoCurrentTime !== undefined && tgtPos.videoCurrentTime !== undefined) {
+    // Global nav state (transparent → solid transition)
+    if (srcPos.navState && tgtPos.navState) {
       report.totalChecks++;
-      if (Math.abs(srcPos.videoCurrentTime - tgtPos.videoCurrentTime) > 0.5) {
-        report.details.push({ pct: srcPos.scrollPercent, prop: 'videoCurrentTime', src: srcPos.videoCurrentTime, tgt: tgtPos.videoCurrentTime });
+      if (srcPos.navState.backgroundColor !== tgtPos.navState.backgroundColor) {
+        report.details.push({ pct: srcPos.scrollPercent, key: 'navState', type: 'NAV_BG_MISMATCH', src: srcPos.navState.backgroundColor, tgt: tgtPos.navState.backgroundColor });
         report.pass = false; report.totalFails++;
       }
     }
 
-    // Comparar nav state
-    if (srcPos.navState && tgtPos.navState) {
+    // Global video scrub currentTime
+    if (srcPos.videoCurrentTime !== undefined && tgtPos.videoCurrentTime !== undefined) {
       report.totalChecks++;
-      if (srcPos.navState.backgroundColor !== tgtPos.navState.backgroundColor) {
-        report.details.push({ pct: srcPos.scrollPercent, prop: 'nav.backgroundColor', src: srcPos.navState.backgroundColor, tgt: tgtPos.navState.backgroundColor });
+      if (Math.abs(srcPos.videoCurrentTime - tgtPos.videoCurrentTime) > 0.5) {
+        report.details.push({ pct: srcPos.scrollPercent, key: 'video[0]', type: 'VIDEO_SCRUB_TIME', src: srcPos.videoCurrentTime, tgt: tgtPos.videoCurrentTime });
         report.pass = false; report.totalFails++;
       }
     }
   });
 
-  report.passRate = ((report.totalChecks - report.totalFails) / report.totalChecks * 100).toFixed(1) + '%';
+  const pRate = report.totalChecks > 0
+    ? ((report.totalChecks - report.totalFails) / report.totalChecks * 100).toFixed(1)
+    : '0';
+  report.passRate = pRate + '%';
+
+  // elementRatio: how many structural keys target has vs source (should be ~1.0)
+  const srcKeys = Object.keys(sourceBehavior.positions[0]?.elements || {}).length;
+  const tgtKeys = Object.keys(targetBehavior.positions[0]?.elements || {}).length;
+  report.elementRatio = srcKeys > 0 ? (tgtKeys / srcKeys).toFixed(2) : 'N/A';
+
   return report;
 }
 
-function parseTranslateY(transform) {
+function extractTranslateY(transform) {
   if (!transform || transform === 'none') return 0;
-  const m = transform.match(/translateY\(([-\d.]+)px\)/);
-  if (m) return parseFloat(m[1]);
-  const mat = transform.match(/matrix\([^,]+,[^,]+,[^,]+,[^,]+,[^,]+,\s*([-\d.]+)\)/);
-  return mat ? parseFloat(mat[1]) : null;
+  const direct = transform.match(/translateY\(([-\d.]+)px\)/);
+  if (direct) return parseFloat(direct[1]);
+  const matrix = transform.match(/matrix\([^,]+,[^,]+,[^,]+,[^,]+,[^,]+,\s*([-\d.]+)\)/);
+  return matrix ? parseFloat(matrix[1]) : null;
 }
 ```
 
@@ -4759,22 +4797,149 @@ Comparar stacking contexts del source (de `advanced-patterns.json`) con el targe
 Comparar con el source: mismo numero de stacking contexts, mismo orden de z-index.
 Si difieren, ajustar `z-index`, `position`, `isolation` en el target.
 
-### 4.5 Comparacion visual lado a lado
+### 4.5 Dual-MCP Sync Scroll — EMULACION DE USUARIO REAL — OBLIGATORIO
 
-Para CADA pagina del PAGE_MAPPING:
+Esta es la verificacion mas importante porque es la unica que refleja exactamente
+lo que un usuario real veria al abrir las dos webs lado a lado. Las metricas
+programaticas son soporte. ESTO es la prueba definitiva.
 
-1. Abrir MCP-REF en source-url/pagina y MCP-TARGET en localhost/pagina
-2. Hacer scroll simultaneo desde 0% hasta 100% en incrementos de 10%
-3. En CADA posicion, comparar visualmente:
-   - Layout identico (mismas columnas, mismos bloques, mismo orden)
-   - Colores identicos (fondos, textos, bordes, sombras)
-   - Tipografia identica (familia, tamano, peso, espaciado)
-   - Imagenes/videos en la misma posicion y tamano
-   - Animaciones activas en ese punto son las mismas
-4. Si hay CUALQUIER diferencia visible: PARAR y corregir antes de continuar
-5. Guardar screenshot de cada posicion en `docs/pds/qa-evidence/[pagina]/`
+**Principio**: abrir source en MCP-REF Y target en MCP-TARGET SIMULTANEAMENTE.
+Nunca verificar solo uno. Nunca usar screenshots de memoria o de iteraciones anteriores.
+Cada verificacion = dos browsers abiertos en el mismo momento.
 
-### 4.6 Verificacion de efectos y animaciones (EXHAUSTIVA)
+**Protocolo obligatorio por pagina:**
+
+```
+PASO 1 — Abrir ambos browsers
+  MCP-REF:    navegar a <source-url>/<ruta>
+  MCP-TARGET: navegar a http://localhost:<puerto>/<ruta-equivalente>
+
+PASO 2 — Sincronizar viewport
+  En MCP-REF:    browser_resize a 1440x900
+  En MCP-TARGET: browser_resize a 1440x900
+
+PASO 3 — Scroll sincronizado: 11 posiciones
+  Para cada pct en [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]:
+    En MCP-REF:    window.scrollTo(0, document.documentElement.scrollHeight * pct/100)
+    En MCP-TARGET: window.scrollTo(0, document.documentElement.scrollHeight * pct/100)
+    Screenshot MCP-REF  → guardar como source-[ruta]-[pct]pct.png
+    Screenshot MCP-TARGET → guardar como target-[ruta]-[pct]pct.png
+    COMPARAR side-by-side visualmente:
+      ¿Colores de fondo identicos?
+      ¿Layout (columnas, bloques) identico?
+      ¿Tipografia (familia, peso, tamaño) identica?
+      ¿Imagenes/videos en la misma posicion?
+      ¿Animaciones activas en ese punto son las mismas?
+    SI hay diferencia visible → STOP → corregir → volver al PASO 3
+
+PASO 4 — Verificar efectos durante scroll (NO solo estado estatico)
+  En MCP-REF, hacer scroll LENTO de 0 a 100%:
+    ¿El video scrub avanza? (video.currentTime debe cambiar)
+    ¿Hay parallax (elementos moviendose a velocidades distintas)?
+    ¿Hay pin sections (elementos que quedan fijos mientras el fondo avanza)?
+    ¿La nav cambia de transparente a solida?
+    ¿Hay elementos que aparecen con fade/slide al entrar en viewport?
+  Repetir exactamente lo mismo en MCP-TARGET.
+  Cada efecto del source DEBE existir identico en target.
+
+PASO 5 — Mobile (375px) y tablet (768px)
+  Repetir PASOS 2-4 con viewport 375px
+  Repetir PASOS 2-4 con viewport 768px
+```
+
+**Script de scroll sincronizado** (ejecutar en CADA browser antes de screenshot):
+
+```javascript
+// Ejecutar en MCP-REF, luego el mismo pct en MCP-TARGET
+function syncScrollTo(pct) {
+  const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+  window.scrollTo({ top: maxScroll * (pct / 100), behavior: 'instant' });
+  return { pct, scrollY: window.scrollY, totalHeight: document.documentElement.scrollHeight };
+}
+syncScrollTo(/* 0, 10, 20, ... 100 */);
+```
+
+**Que buscar en cada comparacion:**
+- `BACKGROUND`: mismo color de fondo en cada seccion
+- `LAYOUT`: misma estructura de columnas y bloques
+- `TYPOGRAPHY`: misma fuente, mismo peso, mismo tamaño
+- `MEDIA`: imagenes y videos en la misma posicion y dimension
+- `MOTION`: efectos activos en ese punto de scroll son los mismos
+- `NAV`: mismo estado de la navegacion (transparente/solida/animada)
+- `SPACING`: mismos margenes y paddings visibles
+
+**Diferencia encontrada → protocolo de correccion:**
+```
+DIFERENCIA:
+  Pagina: [ruta]
+  Scroll: [X%]
+  Viewport: [1440/768/375]
+  Elemento: [descripcion del elemento]
+  Source:   [lo que se ve en source]
+  Target:   [lo que se ve en target]
+  Causa:    [clase CSS / valor de token / animacion faltante]
+  Accion:   [que cambiar exactamente]
+```
+1. Corregir el archivo
+2. `npm run build` → PASS
+3. Volver a la misma posicion de scroll en MCP-TARGET y comparar de nuevo
+4. Solo continuar si la diferencia esta resuelta
+
+
+
+### 4.6 Gate de aprobacion humana — OBLIGATORIO — nunca saltarse
+
+Despues de completar la verificacion dual-MCP de UNA pagina (§4.5 completo),
+la migracion PARA y espera aprobacion explicita del usuario.
+
+**NUNCA pasar a la siguiente pagina sin este gate.**
+
+**Protocolo:**
+
+```
+1. Presentar al usuario:
+   "Pagina [ruta] verificada en 1440/768/375px.
+    Screenshots en: 0%, 25%, 50%, 75%, 100% adjuntos.
+    [adjuntar screenshots side-by-side]
+    ¿APROBADO? ¿O hay diferencias que corregir?"
+
+2. Escribir archivo:
+   docs/pds/qa-evidence/APPROVAL-GATE-[pagina].md
+   Con: screenshots, checkslist de verificaciones, solicitud de aprobacion
+
+3. ESPERAR respuesta explicita del usuario:
+   - "APROBADO" → continuar con la siguiente pagina
+   - "Corregir X" → corregir, re-verificar dual-MCP, volver al punto 1
+   - Silencio / respuesta ambigua → NO asumir aprobacion, preguntar de nuevo
+
+4. Solo cuando el usuario diga explicitamente "APROBADO" o equivalente:
+   - Marcar pagina como ✅ en PAGE_MAPPING.md
+   - Continuar con la siguiente pagina del PAGE_MAPPING
+```
+
+**Ejemplo de presentacion al usuario:**
+```markdown
+## Pagina: /productos — Lista de verificacion dual-MCP
+
+| Posicion | Source | Target | Estado |
+|----------|--------|--------|--------|
+| 0%       | [img]  | [img]  | ✅ / ❌ |
+| 25%      | [img]  | [img]  | ✅ / ❌ |
+| 50%      | [img]  | [img]  | ✅ / ❌ |
+| 75%      | [img]  | [img]  | ✅ / ❌ |
+| 100%     | [img]  | [img]  | ✅ / ❌ |
+
+Viewport mobile 375px: ✅ / ❌
+Efectos de scroll: ✅ / ❌
+Hover states: ✅ / ❌
+
+¿APROBADO para continuar a la siguiente pagina?
+```
+
+**STOP condition**: si el agente avanza a la siguiente pagina sin que el usuario
+haya dicho explicitamente "APROBADO" → STOP INMEDIATO + volver a la pagina anterior.
+
+### 4.7 Verificacion de efectos y animaciones (EXHAUSTIVA)
 
 Para CADA entrada en ANIMATION_MANIFEST:
 
@@ -4808,7 +4973,7 @@ Para `LENIS_INIT`:
 2. Comparar: suavidad, velocidad, inercia
 3. Deben sentirse IDENTICOS
 
-### 4.7 Verificacion de interacciones (EXHAUSTIVA)
+### 4.8 Verificacion de interacciones (EXHAUSTIVA)
 
 Para CADA elemento interactivo visible (nav links, botones, cards, inputs, etc.):
 
@@ -4819,7 +4984,7 @@ Para CADA elemento interactivo visible (nav links, botones, cards, inputs, etc.)
 5. Focus states: tab a traves de elementos, comparar outline/ring
 6. Active states: click en botones, comparar respuesta visual
 
-### 4.8 Verificacion responsive (OBLIGATORIA)
+### 4.9 Verificacion responsive (OBLIGATORIA)
 
 Para CADA pagina:
 1. Viewport 1440px: scroll completo 0-100%, comparar visualmente
@@ -4834,7 +4999,7 @@ Verificar en cada viewport:
 - Animaciones se comportan igual (o se desactivan si el source las desactiva)
 - Spacing se ajusta igual
 
-### 4.9 Verificacion de consola JS — CERO errores
+### 4.10 Verificacion de consola JS — CERO errores
 
 Ejecutar en MCP-TARGET en CADA pagina:
 
@@ -4866,7 +5031,7 @@ Criterios:
 - Warnings aceptables: solo los que tambien existen en el source
 - Si el target tiene errores que el source NO tiene: FAIL → corregir
 
-### 4.10 Verificacion de red y carga de assets
+### 4.11 Verificacion de red y carga de assets
 
 Ejecutar en MCP-TARGET:
 
@@ -4923,7 +5088,7 @@ Criterios:
 - Si alguna fuente no carga: verificar @font-face y next/font config
 - Si alguna imagen esta rota: verificar src path y public/ directory
 
-### 4.11 Verificacion de performance basica
+### 4.12 Verificacion de performance basica
 
 Ejecutar en MCP-TARGET:
 
