@@ -15,7 +15,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SKILL_NAME = 'port-design-system-from-local-clone';
 const STALE_NAMES = ['port-design'];
 const SHORT_DESC =
-  'Autonomous visual porting skill v3.0. Clones the complete design system from any public URL into a Next.js target. 13 extraction scripts: tokens, animations, scroll scrub trace, DOM, interactions, assets, Three.js, dark mode, deep visual fingerprint, advanced patterns (marquee/tabs/carousels/etc.), full CSS rules, scroll snapshots. 15+ reconstruction patterns. Multi-viewport QA (375/768/1440px) at 21 scroll positions (5%). ZERO tolerance computed styles. Console JS + asset loading verification. Mandatory visual walkthrough. Single command, zero manual input.';
+  'CLON LITERAL PIXEL-PERFECT v4.0. Obsessive pixel-perfect web cloner: target must be INDISTINGUISHABLE from source in all viewports (1920x1080, 768x1024, 375x812), in the 21 scroll positions, in every animation, hover, focus and state. Zero tolerance. RAW extraction of fullHTML + allCSS + keyframes + scrollData + assets + JS behaviors — NO static screenshots as source of truth. Numeric analysis with getBoundingClientRect + getComputedStyle of ALL visible elements (no 200-element limit). Visual difference < 0.5% measured numerically. Source assets hotlinked (AI prompts only if branding is baked in). Blocking checklist displayed in every response. 23 RAW extraction scripts + mandatory PHASE 0.5. Single command, zero shortcuts, zero approximations.';
 const ARGUMENT_HINT = '"<target-path>" "<source-url>"';
 const NO_ARGS_TEXT =
   'the target path and source URL provided by the user';

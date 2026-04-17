@@ -1,13 +1,609 @@
 ---
-description: "Autonomous visual porting skill v3.0. Clones the complete design system from any public URL into a Next.js target. 13 extraction scripts: tokens, animations, scroll scrub trace, DOM, interactions, assets, Three.js, dark mode, deep visual fingerprint, advanced patterns (marquee/tabs/carousels/etc.), full CSS rules, scroll snapshots. 15+ reconstruction patterns. Multi-viewport QA (375/768/1440px) at 21 scroll positions (5%). ZERO tolerance computed styles. Console JS + asset loading verification. Mandatory visual walkthrough. Single command, zero manual input."
+description: "CLON LITERAL PIXEL-PERFECT v4.0. Obsessive pixel-perfect web cloner: target must be INDISTINGUISHABLE from source in all viewports (1920x1080, 768x1024, 375x812), in the 21 scroll positions, in every animation, hover, focus and state. Zero tolerance. RAW extraction of fullHTML + allCSS + keyframes + scrollData + assets + JS behaviors — NO static screenshots as source of truth. Numeric analysis with getBoundingClientRect + getComputedStyle of ALL visible elements (no 200-element limit). Visual difference < 0.5% measured numerically. Source assets hotlinked (AI prompts only if branding is baked in). Blocking checklist displayed in every response. 23 RAW extraction scripts + mandatory PHASE 0.5. Single command, zero shortcuts, zero approximations."
 ---
 <!-- AUTO-GENERATED from .claude/skills/port-design-system-from-local-clone/SKILL.md - do not edit directly.
      Run `node scripts/sync-skills.mjs` to regenerate. -->
 
 
-# /port-design-system-from-local-clone v3.4
+# /port-design-system-from-local-clone v4.0 — CLON LITERAL PIXEL-PERFECT
 
-## Invocacion
+## 0. PROMPT MAESTRO v4.0 — INSTRUCCION PRINCIPAL
+
+> Este bloque es la instruccion principal de la skill. Se aplica ANTES que cualquier otra regla.
+> Nunca se resume, nunca se salta, nunca se suaviza.
+
+ROLE: Eres un clonador web pixel-perfect obsesivo. Tu única misión es hacer que el sitio destino sea indistinguible del original en todos los dispositivos, todos los scroll, todas las animaciones, todos los hover, todos los estados y todos los viewports. Tolerancia cero. No hay “parecido”, no hay “aproximado”, no hay “inspirado”. Es clon literal o falla.
+
+SOURCE-URL: [PEGA AQUÍ LA URL EJEMPLO: https://jobyaviation.com]
+
+TARGET: Mi design system en /port-design-system (usando la estructura actual del repo).
+
+REGLAS OBLIGATORIAS (nunca las saltes, nunca las resumas, nunca digas “voy a intentar”):
+
+1. NUNCA uses solo screenshots estáticos. Prohibido.
+   - Siempre debes ejecutar extracciones RAW de código fuente, CSS completo, JavaScript de animaciones, scroll behavior, interacciones y datos numéricos.
+
+2. ANÁLISIS PIXEL-PERFECT OBLIGATORIO:
+   - Debes analizar 1920x1080 (desktop full), 768x1024 (tablet) y 375x812 (mobile iPhone) en modo “device emulation” completo.
+   - Para cada viewport: captura completa de página (no trozos), scroll en 21 posiciones exactas (0%, 10%, 20%…100%), y mide con getBoundingClientRect() + getComputedStyle() de TODOS los elementos visibles (sin límite de 200).
+   - Calcula diferencias numéricas de spacing, sombras, opacidad, transforms, timings, easing curves, etc.
+
+3. FASE 0.5 — INSPECCIÓN RAW (BLOQUEANTE)
+   Ejecuta exactamente este script en consola del navegador en la SOURCE-URL y pega el output completo antes de continuar:
+
+(async () => {
+  const data = { url: location.href, fullHTML: document.documentElement.outerHTML, allCSS: [], jsBehaviors: [], assets: [], scrollData: [], animations: [] };
+  for (let sheet of document.styleSheets) {
+    try {
+      if (sheet.href) {
+        const css = await fetch(sheet.href).then(r => r.text()).catch(() => 'CORS BLOCKED - usar alternativa');
+        data.allCSS.push({href: sheet.href, content: css});
+      } else if (sheet.cssRules) {
+        let rules = '';
+        for (let rule of sheet.cssRules) rules += rule.cssText + '\n';
+        data.allCSS.push({href: 'inline', content: rules});
+      }
+    } catch(e) {}
+  }
+  document.querySelectorAll('img, video, source, svg, audio').forEach(el => {
+    if (el.src || el.currentSrc) data.assets.push(el.src || el.currentSrc);
+  });
+  const positions = Array.from({length: 21}, (_, i) => i * 0.05);
+  for (let pos of positions) {
+    window.scrollTo({top: document.body.scrollHeight * pos, left: 0, behavior: 'instant'});
+    await new Promise(r => setTimeout(r, 150));
+    data.scrollData.push({ scrollPercent: pos * 100, visibleElements: Array.from(document.querySelectorAll('*')).filter(el => el.getBoundingClientRect().height > 0).length });
+  }
+  console.log('%c✅ RAW EXTRACTION COMPLETA - COPIA TODO ESTO', 'color:#0f0;font-size:20px;font-weight:bold');
+  console.dir(data);
+  return data;
+})();
+
+4. RECREACIÓN EXACTA: Copia CSS, keyframes, variables, layers, custom properties tal cual. Detecta librerías de animación y usa la misma. Transiciones/hovers con valores exactos. Imágenes y videos: SIEMPRE usa los URLs originales del source (hotlink temporal). Solo si tienen branding incrustado genera prompt IA ultra-detallado al final.
+
+5. CHECKLIST QUE DEBES MOSTRAR Y MARCAR CON ✅ EN CADA RESPUESTA (sin excepción):
+[ ] FASE 0.5 RAW HTML + CSS + scrollData completado
+[ ] Análisis 1920x1080 + 768x1024 + 375x812 completado
+[ ] Todos los assets source usados (hotlink o descargados)
+[ ] Todas las animaciones/transiciones recreadas con valores numéricos exactos
+[ ] Diferencia visual < 0.5% en todos los viewports (medido numéricamente)
+[ ] Prompts IA generados para cualquier asset que no se pueda copiar
+[ ] Código entregado listo para copiar-pegar en el design system
+
+6. AL FINAL DE CADA PÁGINA: Entrega el código completo + sección de prompts IA + pide confirmación visual.
+
+7. REGLAS EXTRA: Nunca asumas nada. Detecta breakpoints exactos, tipografía exacta, micro-interacciones. Al final del proyecto genera un “diff report”. Si algo falla, dime exactamente qué y cómo solucionarlo.
+
+Empieza ahora mismo con la FASE 0.5 en la SOURCE-URL que te voy a dar. No me des resúmenes, no me digas “voy a analizar”, ejecuta y entrega el output raw completo.
+
+---
+
+## 1. INVOCACION
+
+```txt
+/port-design-system-from-local-clone "<target-path>" "<source-url>"
+```
+
+- `<target-path>`: ruta local del proyecto Next.js a modificar (por defecto `/port-design-system`).
+- `<source-url>`: URL publica de la web cuyo diseno se clona (fuente de verdad absoluta).
+
+## 2. REGLA ABSOLUTA — TOLERANCIA CERO
+
+La source-url es la UNICA fuente de verdad visual.
+El target debe ser INDISTINGUIBLE de la source-url en pantalla, frame por frame, pixel por pixel.
+Si un usuario abre las dos webs lado a lado en dos pantallas, NO debe poder
+diferenciar cual es cual (excepto por el texto de contenido y los hrefs del negocio).
+
+Cualquier diferencia visual detectable NUMERICAMENTE es FAIL:
+- Color, backgroundColor, borderColor fuera de match exacto: FAIL
+- fontFamily distinto, fontSize con delta > 0 px, fontWeight distinto: FAIL
+- padding, margin, gap con delta > 0 px: FAIL
+- transform, opacity, filter, boxShadow, borderRadius con delta medible: FAIL
+- Animacion ausente o con duration/easing/delay distintos: FAIL
+- Hover/focus/active sin producir los mismos valores computados: FAIL
+- Scroll sin producir el mismo efecto (parallax, pin, video scrub): FAIL
+- Layout grid/flex con columnas, gap, orden o alignment distintos: FAIL
+- Responsive que se rompe o cambia de layout en mobile/tablet: FAIL
+- Nav que no es sticky/transparente/animado igual: FAIL
+- Footer con estructura visual diferente: FAIL
+- Diferencia visual > 0.5% en cualquier viewport o scroll: FAIL
+
+NO existen "aproximaciones aceptables". NO existen "parecidos". NO existen "inspirados".
+Es clon literal o es FAIL.
+
+## 3. QUE SE CONSERVA DEL TARGET — INMUTABLE
+
+DISENO (100% del source, sin adaptar, sin reescribir):
+  CSS tokens, custom properties, tipografia, colores, espaciado, sombras,
+  gradientes, border-radius, z-index, breakpoints, grid/flexbox layout,
+  animaciones (GSAP, Lenis, CSS keyframes, Framer Motion, Three.js, Lottie, Rive, Spline),
+  assets decorativos, hover/focus/active states, dark mode tokens, @font-face,
+  estructura JSX/HTML, clases CSS/Tailwind, configs de animacion,
+  atributos data-*, responsive behavior, breakpoints, media queries,
+  pseudo-elements, keyframes, IntersectionObserver configs, RAF loops.
+
+TEXTO Y NEGOCIO (100% del target):
+  Strings visibles en UI (h1, p, span, button, label, alt, title, meta, og:*),
+  hrefs de negocio del target, nombres del negocio, contenido CMS,
+  rutas/redirects/rewrites, API routes, server actions, auth, middleware,
+  analytics, integraciones, handlers de formularios, validacion, data fetching,
+  mutations, base de datos, variables de entorno.
+
+BACKEND = INTOCABLE. Se toca archivo `app/api/*`, `middleware.ts`, `server/*`,
+`auth/*`, `db/*` → STOP INMEDIATO.
+
+## 4. REGLA DE VERIFICACION — PROGRAMATICA NUMERICA (NO SCREENSHOTS)
+
+Las SCREENSHOTS estaticas NO son un mecanismo valido para verificar nada.
+Se usan solo como evidencia complementaria para el humano, nunca como fuente de verdad.
+
+TODA verificacion DEBE ser PROGRAMATICA Y NUMERICA:
+
+1. RAW source code comparison (FASE 0.5): fullHTML, allCSS, keyframes, custom
+   properties, CSS variables, @layer, @container, @property — copiados literal,
+   no reinterpretados.
+
+2. Element-by-element computed styles: `getBoundingClientRect()` +
+   `getComputedStyle()` de TODOS los elementos visibles (sin limite de 200),
+   en TODOS los viewports (1920, 768, 375), en TODAS las posiciones de scroll
+   (21 posiciones: 0-100% cada 5%).
+
+3. Numeric diff: calcular delta absoluto en px/unidades para cada propiedad.
+   Criterio PASS: delta = 0 en propiedades discretas (fontFamily, color,
+   backgroundColor, fontWeight) y delta <= 0.5% / 1px en propiedades
+   continuas (fontSize, padding, margin, gap, borderRadius, opacity, transform).
+
+4. Motion trace: grabar video scrub / parallax / pin DOWN (0→100%) y UP
+   (100→0%) capturando `video.currentTime`, transform matrices, opacity,
+   en cada frame. Tolerancia numerica <= 2% en cada punto de la traza.
+
+5. Interaction state testing: disparar hover/focus/active via JS
+   (`element.dispatchEvent(new MouseEvent('mouseover'))` + CSS :hover
+   simulacion via devtools protocol), capturar computed styles antes y
+   despues, comparar con source.
+
+## 5. REGLA ANTI-HARDCODING — CRITICA
+
+CERO valores inventados. TODOS los valores visuales provienen de la extraccion RAW.
+Esta skill NO contiene valores de diseno reutilizables.
+
+- Colores (hex, rgb, hsl, oklch, oklab): `design-tokens.json` / `raw-extraction.json`
+- Fuentes: `design-tokens.json` fontFaces / googleFonts / adobeFonts
+- Spacing, radii, shadows: `design-tokens.json`
+- Animaciones (duration, easing, delay, keyframes): `animations.json` / `raw-extraction.allCSS`
+- Breakpoints, z-index: `design-tokens.json`
+- Hover/focus: `css-rules.json` / `interactions.json`
+- Pseudo-elements: `design-tokens.json.pseudoElements`
+
+Si un valor CSS no aparece en ningun JSON de extraccion:
+1. Re-ejecutar el script de extraccion relevante.
+2. Inspeccionar el elemento especifico en MCP-REF con getComputedStyle().
+3. NUNCA "adivinar" ni "aproximar" — STOP y re-extraer.
+
+## 6. CHECKLIST BLOQUEANTE — MOSTRAR EN CADA RESPUESTA
+
+La IA DEBE mostrar este checklist en TODA respuesta que toque codigo, extraccion o QA.
+Marcar con `✅` cada item solo si hay evidencia programatica numerica que lo respalde.
+`❌` = no completado. `⚠️` = parcial, debe bloquear el avance.
+
+```
+CHECKLIST PIXEL-PERFECT v4.0 (bloqueante, obligatorio en cada respuesta)
+[ ] FASE 0.5 RAW HTML + allCSS + keyframes + scrollData + assets capturados
+[ ] Analisis 1920x1080 (desktop full) completado — 21 scroll positions
+[ ] Analisis 768x1024  (tablet)        completado — 21 scroll positions
+[ ] Analisis 375x812   (mobile iPhone) completado — 21 scroll positions
+[ ] getBoundingClientRect + getComputedStyle de TODOS los visibles (sin limite)
+[ ] Todos los assets source usados (hotlink o descargados a /public/pds-source-assets)
+[ ] Todas las animaciones/transiciones recreadas con valores numericos exactos
+[ ] Libreria de animacion detectada y usada (no substituida)
+[ ] Diferencia visual < 0.5% en los 3 viewports (medida numericamente)
+[ ] Hover/focus/active testeados programaticamente en todos los elementos interactivos
+[ ] Motion trace DOWN + UP registrada para cada video/canvas/pin/parallax
+[ ] Prompts IA generados para cualquier asset con branding incrustado
+[ ] Codigo entregado listo para copiar-pegar en el design system
+[ ] Build PASS (exit 0, cero errores TS, cero warnings nuevos)
+[ ] Consola JS: cero errores (incluye hydration mismatch)
+```
+
+Si cualquier item esta en `❌` o `⚠️`, la respuesta DEBE incluir:
+`STATUS: NO APROBADO — razon: <descripcion numerica del gap>`.
+
+## 7. VIEWPORTS OBLIGATORIOS — BLOQUEANTES
+
+| Viewport | Ancho | Alto  | Contexto               |
+|----------|-------|-------|------------------------|
+| Desktop  | 1920  | 1080  | Device emulation full  |
+| Tablet   | 768   | 1024  | Device emulation iPad  |
+| Mobile   | 375   | 812   | Device emulation iPhone|
+
+Reglas:
+- Los tres viewports son BLOQUEANTES. Saltarse uno = FAIL.
+- Device emulation completo (userAgent, devicePixelRatio, touch, viewport meta).
+- Captura de pagina completa (`fullPage: true`), no trozos recortados.
+- 21 posiciones de scroll por viewport por pagina.
+- `getBoundingClientRect` + `getComputedStyle` en cada posicion.
+
+## 8. FASE 0 — SETUP Y DESCUBRIMIENTO
+
+### 8.1 Dual MCP (primera accion)
+
+Abrir dos browsers MCP en paralelo y mantenerlos abiertos hasta `MIGRATION_COMPLETE.md`:
+- MCP-REF: `<source-url>`
+- MCP-TARGET: `http://localhost:3001` (o puerto del dev server del target)
+
+Compatibles:
+- Playwright MCP (`browser_navigate`, `browser_evaluate`, `browser_resize`, `browser_screenshot`)
+- Puppeteer MCP (`puppeteer_evaluate`, `puppeteer_navigate`, `puppeteer_screenshot`)
+- Browser-tools MCP (`runJavascript`, `getConsoleLogs`, `getNetworkLogs`)
+- Modo degradado: usuario pega scripts en DevTools Console y comparte output RAW.
+
+### 8.2 Anti-bot + recovery
+
+- Cloudflare / hCaptcha: esperar 10s; si persiste, reportar al usuario. NUNCA bypassear.
+- MCP crash: volcar `docs/pds/extraction/_checkpoint.json` con `{lastPhase, lastScript, lastPage, completedPages, timestamp}` y reanudar al reconectar.
+
+### 8.3 Device emulation por viewport
+
+Antes de extraer, fijar viewport + userAgent:
+
+```javascript
+// pseudo: adaptar al API del MCP
+await browser.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 1 });
+await browser.setUserAgent('Mozilla/5.0 ... Desktop');
+// repetir con 768x1024 y 375x812 (iPhone 13 Pro)
+```
+
+### 8.4 Descubrimiento automatico de paginas
+
+Rutas: ejecutar crawler de `<a href>` + `fetch('/sitemap.xml')` + enlaces de `nav`, `footer`, `[role=navigation]`. Guardar en `PAGE_MAPPING.md` (BLOQUEANTE).
+
+Limites anti-loop: MAX_PAGES=50, MAX_DEPTH=3, visited set, same-origin only.
+
+### 8.5 Pre-extraccion obligatoria (`preExpandContent`)
+
+Ejecutar en CADA pagina ANTES de cualquier script RAW. Hace scroll 0→100% en tramos de 5%, fuerza lazy images (`loading=eager`, `data-src→src`, `data-srcset→srcset`), fuerza videos, espera SPA chunks, re-scroll para capturar contenido reaparecido.
+
+Output esperado: `{ finalHeight, totalElements, images, videos, sections }`. Si `finalHeight` crece despues del primer pase, re-ejecutar.
+
+## 9. FASE 0.5 — INSPECCION RAW (BLOQUEANTE)
+
+Ejecutar el script del PROMPT MAESTRO (§0.3) en MCP-REF en CADA pagina. El output COMPLETO se guarda en:
+
+```
+docs/pds/extraction/raw-extraction-<page>.json
+```
+
+Campos obligatorios capturados:
+- `url`
+- `fullHTML` (outerHTML del documento entero)
+- `allCSS` (cada stylesheet: href + content; CORS BLOCKED flag para fallback manual)
+- `jsBehaviors` (animaciones, listeners detectados — rellenado en FASE 1)
+- `assets` (src/currentSrc de img/video/source/svg/audio)
+- `scrollData` (21 posiciones con visibleElements count)
+- `animations` (rellenado en FASE 1)
+
+**Regla bloqueante**: hasta que `raw-extraction-<page>.json` exista con los 7 campos llenos, NO se avanza. Si CORS bloquea una hoja de estilo, ejecutar §10.2 (`fetchCrossOriginCSS`) desde otro origen o documentar como FAIL con fallback manual.
+
+## 10. FASE 1 — EXTRACCION PROFUNDA (23 SCRIPTS RAW)
+
+Ejecutar EN ORDEN en MCP-REF por pagina. Todos los JSONs de salida DEBEN incluir `_metadata: { version, url, timestamp, viewport, userAgent }`.
+
+| #  | Script                                | Salida                                        | Bloqueante |
+|----|---------------------------------------|-----------------------------------------------|------------|
+| 1  | `extractFullDesignSystem()`           | `design-tokens.json`                          | si         |
+| 2  | `fetchCrossOriginCSS()`               | `cross-origin-css.json`                       | si (si CORS) |
+| 3  | `extractShadowStyles()`               | `shadow-styles.json`                          | si (si shadow) |
+| 4  | `extractAnimationSystem()`            | `animations.json`                             | si         |
+| 5  | `captureIntersectionObserverConfigs()`| dentro de `animations.json`                   | si         |
+| 6  | `extractLottieRiveSpline()`           | `lottie-rive-spline.json`                     | si (si detectado) |
+| 7  | `extractScrollScrubTrace()`           | `scroll-scrub-trace-<page>.json`              | si (si video/canvas fullscreen) |
+| 8  | `extractDOMStructure()`               | `structure.json`                              | si         |
+| 9  | `extractInteractions()`               | `interactions.json`                           | si         |
+| 10 | `extractAssets()`                     | `assets.json` + protocolo de descarga/hotlink | si         |
+| 11 | `extractThreeJSScene()`               | `three-scene.json`                            | si (si Three.js) |
+| 12 | `extractDarkMode()`                   | `dark-mode.json`                              | si         |
+| 13 | `extractDeepVisualFingerprint()`      | `visual-fingerprint-<page>.json`              | si         |
+| 14 | `extractAdvancedPatterns()`           | `advanced-patterns.json`                      | si         |
+| 15 | `extractFullCSSRules()`               | `css-rules.json`                              | si         |
+| 16 | `extractScrollSnapshot()`             | `scroll-snapshots-<page>.json`                | si         |
+| 17 | `extractAccessibility()`              | `accessibility.json`                          | si         |
+| 18 | Scroll narrative textual              | `scroll-narrative-<page>.md`                  | si         |
+| 19 | `recordScrollBehavior()`              | `scroll-behavior-<page>.json`                 | si         |
+| 20 | `detectAnimationImplementation()`     | `animation-implementation.json`               | si         |
+| 21 | `extractElementStyleMap()`            | `element-style-map-<page>.json`               | si         |
+| 22 | `extractNetworkProfile()`             | `network-profile.json`                        | si         |
+| 23 | `extractSectionInventory()`           | `section-inventory-<page>.json`               | si         |
+
+Notas criticas:
+- `extractDeepVisualFingerprint()` en v4.0 NO tiene limite de 200 elementos — captura 60+ CSS props de TODOS los elementos visibles.
+- `recordScrollBehavior()` captura por CLAVE ESTRUCTURAL (`section[0]`, `video[0]`, `header[0]`), NO por CSS class name (los hashes de CSS modules rompen la comparacion).
+- `detectAnimationImplementation()` determina que usa el source (GSAP vs Lenis vs native RAF vs CSS scroll-timeline vs IO). El target DEBE usar lo MISMO. Substituir libreria = FAIL.
+
+Tipos de animacion reconocidos (para el manifest):
+- Library: GSAP_TWEEN, GSAP_SCROLLTRIGGER, GSAP_TIMELINE, GSAP_SPLITTEXT,
+  GSAP_SCROLLSMOOTHER, GSAP_FLIP, GSAP_MATCHMEDIA, LENIS_INIT, LENIS_CB,
+  FRAMER_MOTION, THREE_ANIMATION, LOTTIE, LOTTIE_DOTLOTTIE, RIVE_ANIMATION, SPLINE_SCENE.
+- Native JS: NATIVE_RAF_VIDEO_SCRUB, NATIVE_RAF_PARALLAX, INTERSECTION_OBS,
+  RAF_LOOP, SCROLL_LISTENER, WEB_ANIMATION_API.
+- CSS-only: CSS_KEYFRAME, CSS_TRANSITION, CSS_MODULE_ANIMATION, CSS_IO_REVEAL,
+  CSS_SCROLL_TIMELINE, CSS_VIEW_TIMELINE, CSS_MOTION_PATH, CSS_PROPERTY_ANIM,
+  PSEUDO_ELEMENT_ANIM, SCROLL_DRIVEN_ANIMATION, STARTING_STYLE.
+- Pattern: VIDEO_SCRUB, CANVAS_SCROLL, MARQUEE, TAB_SWITCH, ACCORDION, CAROUSEL,
+  COUNTER_ANIM, TEXT_SPLIT, MAGNETIC_HOVER, CUSTOM_CURSOR, SCROLL_SNAP,
+  PARALLAX_LAYER, STAGGER_GROUP, PRELOADER, PAGE_TRANSITION, SCROLL_INDICATOR,
+  STICKY_ELEMENT, CLIP_PATH_ANIM, BACKDROP_BLUR, VIEW_TRANSITION, NATIVE_DIALOG,
+  POPOVER_API, ANCHOR_POSITIONING, GRID_SUBGRID, CONTAINER_QUERY_ANIM,
+  DETAILS_SUMMARY, CUSTOM_SCROLLBAR, DATA_ATTR.
+
+Deliverable FASE 1 bloqueante: `ANIMATION_MANIFEST.md` con cada animacion/efecto del source listada, tipo detectado, valores numericos (duration, easing, delay, stagger, scrub, pin start/end), pendiente de validacion en FASE 4.
+
+## 11. FASE 2 — ANALISIS DEL TARGET
+
+- Build baseline (`next build`) antes de tocar nada.
+- Extraccion de strings de texto del target (grep de `<h1..h6>`, `<p>`, `<span>`, `<button>`, `<label>`, `alt=`, `title=`, metadata).
+- Deteccion de arquitectura: monorepo, i18n routing, Tailwind version (v3 config vs v4 @theme), UI library, Next.js App/Pages Router.
+- Solo instalar dependencias que el source REALMENTE usa (segun `detectAnimationImplementation()` + `extractNetworkProfile()`).
+- Deteccion y renombramiento de font names del source brand (no dejar el nombre de marca source en el codigo target).
+- `target-architecture.json` obligatorio.
+
+## 12. FASE 3 — RECRECION EXACTA POR SECCIONES
+
+Orden: tokens → tailwind (v3 config o v4 @theme) → fonts (`next/font`) → animation libs (solo las que el source usa) → navbar → footer → paginas → compartidos.
+
+### 12.1 Reglas Next.js App Router
+- `'use client'` obligatorio si hay: `useState/useEffect/useRef`, event handlers, animation libs, browser APIs.
+- Dynamic imports (`ssr: false`) para libs pesadas (GSAP, Lenis, Three.js, Lottie, Rive, Spline).
+- `next/font` para TODAS las fuentes (Google + local + variable + Adobe).
+- `next/image` con `sizes` y `priority` correctos (igualar attr del source).
+- `useIsClient()` o `suppressHydrationWarning` para prevenir mismatch.
+- Tailwind v3 → `tailwind.config.ts` extend (NO @theme). v4 → `@theme` directive en `globals.css`.
+
+### 12.2 Assets — HOTLINK OBLIGATORIO POR DEFECTO
+
+Regla v4.0 reforzada:
+- Por defecto, TODO asset visual (img, video, svg, poster, bg) se HOTLINKEA con la URL original del source. Cero assets decorativos del target en el diseno.
+- Si el asset tiene CORS o dominio bloqueado: descargar a `public/pds-source-assets/<path>` y servir desde ahi.
+- Solo se genera prompt IA en `docs/pds/assets-reemplazo-ia.md` si el asset contiene branding incrustado (logo del source en video/imagen, texto SVG con nombre del source). El prompt IA es entregable posterior, la migracion inicial mantiene el asset source.
+
+### 12.3 Loop INSPECT → BUILD → SWAP texto → BUILD verify → VERIFY dual MCP
+
+Por cada seccion:
+1. INSPECT: leer `raw-extraction-*.json`, `design-tokens.json`, `css-rules.json`, `animations.json`.
+2. BUILD: escribir JSX + CSS copiando literal (keyframes tal cual, custom properties tal cual, clases Tailwind equivalentes cuando aplique).
+3. SWAP texto: reemplazar strings visibles por los del target. NO tocar clases, animaciones, estructura.
+4. BUILD verify: `next build` → exit 0 antes de seguir.
+5. VERIFY dual MCP: seccion a seccion, `recordScrollBehavior()` + `compareScrollBehavior()` en source y target.
+
+### 12.4 Reglas de build (BUILD-1 a BUILD-5)
+- BUILD-1: archivo modificado → build inmediato.
+- BUILD-2: build falla → corregir antes de tocar otro.
+- BUILD-3: 3 fallos en mismo archivo → STOP + reporte.
+- BUILD-4: cero imports de chunks/hashes/`.next/server/`.
+- BUILD-5: PASS = exit 0, cero errores TS, cero warnings nuevos.
+
+## 13. FASE 4 — VERIFICACION QA (PAGINA POR PAGINA, APROBACION HUMANA ENTRE PAGINAS)
+
+### 13.1 Dual-MCP sync scroll (obligatorio)
+- Abrir source y target simultaneamente.
+- Scroll sincronizado a 0%, 5%, 10%, 15%... hasta 100% (21 posiciones).
+- En cada posicion: capturar `getBoundingClientRect`+`getComputedStyle` de todos los elementos visibles.
+- Comparar NUMERICAMENTE — si delta > 0.5% en cualquier propiedad: STOP + corregir antes de avanzar.
+
+### 13.2 `recordScrollBehavior` + `compareScrollBehavior`
+- Ejecutar en source Y target por cada pagina.
+- Comparar por CLAVE ESTRUCTURAL (`section[N]`, `video[N]`), NO por CSS class name.
+- Reportar: `BG_MISMATCH`, `VIDEO_TIME`, `HEIGHT_RATIO`, `ELEMENT_MISSING`, `TRANSFORM_DELTA`, `OPACITY_DELTA`.
+- `passRate` se calcula como % de props identicas (delta <= 0.5%). Requisito: `passRate >= 95%` (v4.0 sube el umbral desde 90%).
+
+### 13.3 Multi-viewport obligatorio
+- 1920x1080, 768x1024, 375x812 — los tres con dual-MCP + 21 scroll positions + compare.
+- Device emulation real (userAgent, DPR, touch).
+
+### 13.4 Interactions testing programatico
+- Para cada elemento interactivo (nav, button, link, card, menu, tab, accordion, input):
+  - Disparar `mouseover`, `mouseenter`, `focus`, `mousedown`, `click` via JS.
+  - Capturar computed styles ANTES / DURANTE / DESPUES.
+  - Comparar source vs target — delta 0 en propiedades discretas.
+
+### 13.5 Motion trace
+- Para cada `VIDEO_SCRUB`, `CANVAS_SCROLL`, `STICKY_ELEMENT`, `PARALLAX_LAYER`, `PIN`:
+  - Grabar DOWN (0→100%) y UP (100→0%).
+  - Capturar `video.currentTime`, transform matrix, opacity, filter, blur en cada frame.
+  - Comparar por frame — delta <= 2%.
+
+### 13.6 Otras verificaciones obligatorias
+- Consola JS: CERO errores en target (incluye hydration mismatch).
+- Red/assets: TODAS las fuentes, imagenes, videos, iframes cargan 200 OK.
+- Performance basica: LCP, CLS, INP (informativo).
+- Stacking contexts (z-index, opacity, transform, filter, isolation) verificados.
+- Accesibilidad: landmarks, ARIA roles, skip links, focus order, `prefers-reduced-motion` respetado.
+
+## 14. FASE 5 — RECORRIDO VISUAL FINAL (GATE HUMANO)
+
+Obligatorio antes de `MIGRATION_COMPLETE.md`:
+- Scroll completo 0-100% en tramos de 5% (21 posiciones) por pagina.
+- En los 3 viewports (1920, 768, 375).
+- Side-by-side source/target en CADA posicion, con screenshot de ambos Y diff numerico.
+- Bucle de correccion inmediata si hay diferencia numerica > 0.5%.
+- `diff-report.md` con toda anomalia detectada y su fix.
+- Gate de aprobacion humana explicita antes de `MIGRATION_COMPLETE.md`.
+
+## 15. FASE 6 — ENTREGABLES FINALES
+
+Todos obligatorios:
+
+```
+PAGE_MAPPING.md
+ANIMATION_MANIFEST.md
+docs/pds/extraction/raw-extraction-*.json          (FASE 0.5)
+docs/pds/extraction/design-tokens.json
+docs/pds/extraction/animations.json
+docs/pds/extraction/structure.json
+docs/pds/extraction/interactions.json
+docs/pds/extraction/assets.json
+docs/pds/extraction/dark-mode.json
+docs/pds/extraction/visual-fingerprint-*.json
+docs/pds/extraction/advanced-patterns.json
+docs/pds/extraction/css-rules.json
+docs/pds/extraction/cross-origin-css.json
+docs/pds/extraction/shadow-styles.json
+docs/pds/extraction/lottie-rive-spline.json
+docs/pds/extraction/accessibility.json
+docs/pds/extraction/scroll-snapshots-*.json
+docs/pds/extraction/scroll-scrub-trace-*.json
+docs/pds/extraction/scroll-narrative-*.md
+docs/pds/extraction/scroll-behavior-*.json
+docs/pds/extraction/scroll-diff-*.json
+docs/pds/extraction/animation-implementation.json
+docs/pds/extraction/element-style-map-*.json
+docs/pds/extraction/network-profile.json
+docs/pds/extraction/section-inventory-*.json
+docs/pds/extraction/target-architecture.json
+docs/pds/modified-files.md
+docs/pds/assets-reemplazo-ia.md                    (prompts IA SOLO para branding)
+docs/pds/assets-manual-download.md
+docs/pds/qa-evidence/                              (side-by-side + diff numerico)
+docs/pds/qa-evidence/recorrido-final/              (FASE 5)
+docs/pds/qa-evidence/pixel-diff-summary.json
+docs/pds/qa-evidence/pixel-diff.json
+docs/pds/qa-evidence/motion-down-up.json
+docs/pds/diff-report.md                            (anomalias + fix)
+MIGRATION_COMPLETE.md                              (solo si TODO PASS)
+```
+
+## 16. PROMPTS IA PARA ASSETS CON BRANDING
+
+Solo cuando un asset source contiene branding incrustado (logo, nombre, texto SVG con marca del source) que NO se puede usar en el target. La migracion inicial mantiene el asset source (hotlink/local); el prompt IA es entregable posterior.
+
+Estructura en `docs/pds/assets-reemplazo-ia.md` por asset:
+
+```yaml
+- sourceUrl: <url original hotlinked>
+  usedInRoute: <ruta donde aparece>
+  visualRole: <hero bg / decorative / icon / texture / logo>
+  sourceDescription: <que muestra literalmente>
+  targetBusinessConcept: <equivalente conceptual del target>
+  imagePrompt | videoPrompt: <prompt ultra-detallado>
+  negativePrompt: <que NO debe aparecer>
+  aspectRatio: <w:h>
+  duration / fps / cameraMotion: <solo video>
+  mustMatchSourceStyle: color, lens, composition, crop, motion, lighting
+```
+
+## 17. STOP CONDITIONS (AMPLIADO v4.0)
+
+La skill DETIENE la ejecucion ante cualquiera de estas condiciones:
+
+- `raw-extraction-<page>.json` ausente o incompleto (menos de los 7 campos) → STOP + re-ejecutar FASE 0.5.
+- `PAGE_MAPPING.md` inexistente cuando se intenta codigo → STOP.
+- Build sin resolver antes del siguiente archivo → STOP.
+- `design-tokens.json` vacio → STOP + re-extraer.
+- `ScrollTrigger.getAll()` vacio con animaciones visibles → STOP + scroll + re-extraer.
+- `VIDEO_SCRUB` detectado en source y target usa `autoplay/loop` sin `currentTime` ligado a scroll → STOP + rehacer.
+- `scroll-scrub-trace` ausente para pagina con video/canvas fullscreen → STOP.
+- Evidencia MCP programatica ausente para item marcado ✅ → STOP.
+- Texto de source encontrado en target despues de SWAP → STOP.
+- 3 builds fallidos consecutivos en mismo archivo → STOP.
+- Diferencia numerica > 0.5% durante recorrido final → STOP + corregir.
+- Se intenta `MIGRATION_COMPLETE.md` sin FASE 5 completa → STOP.
+- Se modifica archivo de backend (API, auth, middleware, server actions, db) → STOP INMEDIATO.
+- `preExpandContent()` no ejecutado antes de extraccion → STOP.
+- JSON de extraccion sin campo `_metadata` → STOP + re-extraer.
+- Cross-origin stylesheets detectadas y no extraidas via `fetchCrossOriginCSS()` → STOP.
+- Shadow DOM detectado y no extraido → STOP.
+- Lottie/Rive/Spline detectado en source y no incluido en extraction → STOP.
+- CSS scroll-timeline / view-timeline en source y target usa JS scroll listener → STOP + usar CSS nativo.
+- Hydration mismatch en consola target → STOP.
+- Componente con hooks/event handlers sin `'use client'` → STOP.
+- `compareScrollBehavior()` con passRate < 95% → STOP + corregir (verificar clave estructural, no CSS class name).
+- Dual-MCP sync scroll no ejecutado para una pagina → STOP.
+- Aprobacion humana no obtenida antes de pasar a siguiente pagina → STOP.
+- Viewport faltante (1920, 768, 375 los tres obligatorios) → STOP.
+- Checklist §6 con algun item en ❌ o ⚠️ → STOP + declarar NO APROBADO.
+- Iframes/embeds en source y ausentes en target → STOP.
+- Section inventory mismatch (source N secciones ≠ target M secciones) → STOP.
+- Background color de seccion target difiere de source → STOP.
+- Componente generico reutilizado para 2+ secciones source diferentes → STOP.
+- Footer target solo texto cuando source footer tiene ilustracion → STOP.
+- Pagina target con placeholder/coming-soon cuando source tiene diseno completo → STOP.
+- Texto source brand en HTML/SVG target → STOP.
+- Layout type mismatch (grid vs flex) → STOP.
+- `detectAnimationImplementation()` NO ejecutado antes de FASE 3 → STOP.
+- `recordScrollBehavior()` NO ejecutado para una pagina → STOP.
+- Target instala GSAP pero source NO usa GSAP → STOP + desinstalar + usar nativos.
+- Target instala Lenis pero source NO usa smooth scroll lib → STOP.
+- `target-architecture.json` NO generado antes de FASE 3 → STOP.
+- Font name de source brand en codigo target → STOP + renombrar.
+- `extractNetworkProfile()` NO ejecutado → STOP.
+- `extractSectionInventory()` NO ejecutado → STOP.
+- Source usa `100dvh` y target usa `100vh` → STOP.
+- Source usa `@starting-style` y target lo sustituye por JS → STOP + copiar CSS nativo.
+- Source usa `-webkit-text-stroke` y target no lo replica → STOP.
+- `ScrollSmoother` + `Lenis` instalados simultaneamente → STOP (incompatibles).
+- Asset decorativo del target usado en vez del source → STOP + hotlink o descargar del source.
+- Screenshot estatico presentado como unica evidencia de animacion/scroll → STOP + ejecutar extraccion RAW.
+
+## 18. CRITERIOS DE COMPLETITUD
+
+### Visual (tolerancia cero)
+- FASE 5 completada con CERO diferencias numericas > 0.5% en los 3 viewports.
+- 21 posiciones de scroll verificadas por pagina por viewport.
+- Computed styles IDENTICOS (delta 0 en propiedades discretas).
+
+### Efectos y animaciones
+- `ANIMATION_MANIFEST.md` con 100% de animaciones verificadas (grep -c "✅" == TOTAL).
+- `VIDEO_SCRUB` con `currentTime` ligado a scroll, NO autoplay/loop.
+- Hover/focus/active con deltas 0 vs source.
+- Stacking contexts verificados.
+- Lottie/Rive/Spline con reproduccion identica.
+- CSS scroll-timeline/view-timeline: source usa CSS → target usa CSS.
+- IntersectionObserver: `threshold` y `rootMargin` identicos.
+- View Transitions API: si source las usa, target tambien.
+- `prefers-reduced-motion` respetado.
+
+### Verificacion programatica (v4.0)
+- FASE 0.5 `raw-extraction-<page>.json` presente y completo.
+- `recordScrollBehavior()` + `compareScrollBehavior()` con `passRate >= 95%` en TODAS las paginas.
+- `detectAnimationImplementation()` ejecutado y respetado.
+- Target NO instala dependencias que source no usa.
+- `target-architecture.json` generado y respetado.
+- Font names del source brand NO presentes en codigo target.
+- `extractNetworkProfile()`, `extractSectionInventory()`, `extractElementStyleMap()` ejecutados.
+- `gsap.matchMedia` breakpoints respetados si aplica.
+
+### Tecnico
+- Build PASS (exit 0, cero errores TS, cero warnings nuevos).
+- Consola JS: cero errores (cero hydration mismatch).
+- Assets source: 100% hotlinkeados o descargados (cero assets del target como diseno).
+- Texto target preservado. Backend INTOCABLE.
+- Dynamic imports para libs pesadas.
+- `'use client'` en todo componente con hooks/event handlers.
+- `next/font` para todas las fuentes.
+- Iframes/embeds replicados.
+- `container-type/name`, `env(safe-area-inset-*)`, `color-scheme` replicados si aplican.
+- Section inventory paridad exacta.
+- Cero componentes genericos reutilizados para secciones source distintas.
+- Cero paginas placeholder/coming-soon cuando source tiene diseno.
+- Source brand text: cero leaks en HTML/SVG target.
+
+## 19. MANTENIMIENTO
+
+Fuente de verdad: `.claude/skills/port-design-system-from-local-clone/SKILL.md`.
+Sync a todas las plataformas: `node scripts/sync-skills.mjs && bash scripts/sync-agent-rules.sh`.
+
+---
+
+## 20. COMO USAR LA SKILL v4.0 — PASO A PASO
+
+Esta seccion es la guia operativa. Seguir EXACTAMENTE los pasos en orden.
+
+### Paso 1 — Preparar el entorno
+
+1. Tener el target en local y correr el dev server: `npm run dev` (por defecto `http://localhost:3001`).
+2. Tener acceso a un MCP browser (Playwright / Puppeteer / Browser-tools) o, en su defecto, DevTools abierto.
+3. Confirmar que existen las carpetas: `docs/pds/extraction/`, `docs/pds/qa-evidence/`, `docs/pds/qa-evidence/recorrido-final/`. Crearlas si faltan.
+
+### Paso 2 — Invocar la skill
 
 ```txt
 /port-design-system-from-local-clone "<target-path>" "<source-url>"
@@ -15,5275 +611,65 @@ description: "Autonomous visual porting skill v3.0. Clones the complete design s
 
 Ejemplo:
 ```txt
-/port-design-system-from-local-clone "/Users/usuario/proyectos/mari-pepa" "https://jobyaviation.com"
+/port-design-system-from-local-clone "/Users/javi/port-design-system" "https://jobyaviation.com"
 ```
 
-- `<target-path>`: ruta local del proyecto Next.js a modificar.
-- `<source-url>`: URL publica de la web cuyo diseno se clona.
+### Paso 3 — PROMPT MAESTRO v4.0 (§0)
 
-## Regla absoluta — TOLERANCIA CERO
+La IA DEBE cargar el PROMPT MAESTRO v4.0 como instruccion principal y reproducirlo verbatim al inicio de su primera respuesta, junto con el CHECKLIST (§6).
 
-La source-url es la UNICA fuente de verdad visual.
-El target debe ser INDISTINGUIBLE de la source-url visualmente.
-Si un usuario abre las dos webs lado a lado en dos pantallas, NO debe poder
-diferenciar cual es cual (excepto por el texto de contenido).
+### Paso 4 — FASE 0: dual MCP + descubrimiento
 
-Cualquier diferencia visual detectable a simple vista es FAIL:
-- Distinto color de fondo en cualquier seccion: FAIL
-- Tipografia con peso, tamano o familia diferente: FAIL
-- Espaciado, padding o margin visiblemente distinto: FAIL
-- Animacion o efecto que no existe o se comporta diferente: FAIL
-- Hover que no produce el mismo cambio visual: FAIL
-- Scroll que no produce el mismo efecto (parallax, pin, video scrub): FAIL
-- Layout o grid con columnas/filas diferentes: FAIL
-- Responsive que se rompe en mobile o tablet: FAIL
-- Nav que no es sticky/transparente/animado igual: FAIL
-- Footer con estructura visual diferente: FAIL
+- Abrir MCP-REF en `<source-url>` y MCP-TARGET en `http://localhost:3001`.
+- Ejecutar anti-bot + device emulation para los 3 viewports.
+- Crawler de paginas → `PAGE_MAPPING.md`.
+- `preExpandContent()` obligatorio antes de cualquier extraccion.
 
-NO existen "aproximaciones aceptables". Pixel por pixel, efecto por efecto.
-Lo unico que se conserva del target es el texto visible al usuario y la logica de negocio.
-El backend es INTOCABLE: rutas, API, auth, middleware, server actions, base de datos, CMS.
+### Paso 5 — FASE 0.5: inspeccion RAW (bloqueante)
 
-## Regla de verificacion — PROGRAMATICA, NO VISUAL
+Ejecutar el script del PROMPT MAESTRO (§0.3) en CADA pagina en MCP-REF. Guardar output COMPLETO en `docs/pds/extraction/raw-extraction-<page>.json`. Si algun campo falta: STOP y re-ejecutar.
 
-Las SCREENSHOTS no son un mecanismo valido para verificar animaciones, efectos
-de scroll, transiciones o interacciones. Son utiles solo como evidencia final
-de estados estaticos.
+### Paso 6 — FASE 1: 23 scripts de extraccion
 
-TODA verificacion de comportamiento dinamico DEBE ser PROGRAMATICA:
+Ejecutar en orden (§10). Guardar cada JSON con `_metadata`. Generar `ANIMATION_MANIFEST.md`. No avanzar a FASE 3 sin `detectAnimationImplementation()` y `target-architecture.json`.
 
-1. **Scroll-driven state recording**: ejecutar scroll programatico en source y target,
-   capturar el estado computado (transforms, opacity, positions, video currentTime,
-   nav background, classes activas) en CADA posicion de scroll (21 posiciones: 0-100% en
-   tramos de 5%).
+### Paso 7 — FASE 2: analizar el target
 
-2. **Dual-site automated comparison**: para cada posicion de scroll, comparar
-   NUMERICAMENTE los valores capturados entre source y target. No "mirar" — MEDIR.
+Build baseline, strings visibles, arquitectura (monorepo, i18n, Tailwind v3/v4), dependencias REALES del source. Renombrar fuentes del source brand.
 
-3. **Interaction state testing**: para cada elemento interactivo, programaticamente
-   activar hover/focus/active (via CSS :hover simulation Y JS event dispatch),
-   capturar computed styles ANTES y DESPUES, comparar con source.
+### Paso 8 — FASE 3: reconstruir exacto
 
-4. **Motion trace recording**: para video scrub, parallax, y pin, grabar el
-   progreso completo DOWN (0→100%) y UP (100→0%) del scroll, capturando
-   variables de movimiento en cada frame. El trace del target debe coincidir
-   con el del source dentro de 2% de tolerancia.
+Orden: tokens → tailwind → fonts → animation libs → navbar → footer → paginas → compartidos.
+Por seccion: INSPECT → BUILD → SWAP texto → BUILD verify → VERIFY dual MCP. Hotlink de assets.
 
-La verificacion basada en screenshots solo complementa — NUNCA sustituye — las
-comparaciones programaticas.
+### Paso 9 — FASE 4: QA programatica numerica
 
-## Umbral cuantitativo minimo — BLOQUEANTE
+Por cada pagina en los 3 viewports: dual-MCP sync scroll (21 posiciones), `recordScrollBehavior` + `compareScrollBehavior` (passRate >= 95%), motion trace DOWN+UP, interactions testing, consola JS, red/assets, stacking contexts, accesibilidad.
 
-La migracion NO puede declararse completa si cualquier pagina, viewport o tramo de
-scroll queda por debajo de **90% de similitud visual** frente al source.
+Gate de aprobacion humana entre paginas.
 
-Reglas:
-- `avgSimilarity < 0.90` en cualquier pagina/viewport: FAIL.
-- `worstSimilarity < 0.90` en cualquier pagina/viewport/scroll: FAIL.
-- Una seccion con video/canvas fullscreen no se aprueba solo con screenshot:
-  requiere `motionTrace` down y up con progreso, `currentTime`/frame/uniform y
-  posicion/tamano comparados source vs target.
-- Las diferencias de texto target/source NO eximen de cumplir composicion,
-  color, escala, spacing, media, motion y jerarquia. Si el texto target tiene
-  longitud distinta, se ajusta el wrapping sin cambiar el layout source.
-- Un reporte `MIGRATION_COMPLETE.md` solo puede existir con todos los checks
-  `PASS >= 90%`; si no, escribir `MIGRATION_STATUS.md` o marcar
-  `NO APROBADO`.
+### Paso 10 — FASE 5: recorrido visual final
 
-Guardar siempre:
-- `docs/pds/qa-evidence/pixel-diff-summary.json`
-- `docs/pds/qa-evidence/pixel-diff.json`
-- `docs/pds/qa-evidence/motion-down-up.json`
-- side-by-side source/target para todo item FAIL.
+21 posiciones por pagina en los 3 viewports. Side-by-side con diff numerico. Bucle de correccion. `diff-report.md`. Gate humano antes de cerrar.
 
-## Regla absoluta de assets visuales source-only
+### Paso 11 — FASE 6: entregables y MIGRATION_COMPLETE.md
 
-Durante la migracion visual, los elementos visuales NO-textuales deben venir del
-source, no del target:
-- SI usar: imagenes, videos, gifs/webp animados, SVG decorativos, canvas/WebGL,
-  iconos decorativos, fondos, posters, texturas, logos decorativos del source.
-- NO usar: fotos, videos, logos decorativos, ilustraciones, iconos decorativos,
-  fondos o assets de marca del target.
-- Excepcion: texto visible, hrefs, datos de negocio, formularios y logica del
-  target. Si un logo target es texto visible/nombre de empresa, recrearlo con
-  la estructura visual del source, no insertar imagen target.
-- Descargar/cachear todo asset source usado bajo `public/pds-source-assets/`
-  salvo bloqueo CORS/licencia; si se hotlinkea temporalmente, documentarlo como
-  FAIL pendiente.
+Solo si TODO el checklist (§6) esta ✅ y `passRate >= 95%` en todas las paginas y viewports. En caso contrario: `MIGRATION_STATUS.md` con `NO APROBADO` y lista de gaps numericos.
 
-## Prompts IA por asset visual — obligatorio
+### Paso 12 — Checklist en cada respuesta
 
-Cada asset visual source usado debe tener una propuesta de reemplazo propio para
-la marca target en `docs/pds/assets-reemplazo-ia.md`.
+La IA MUESTRA el checklist (§6) en cada respuesta que toque extraccion, codigo o QA. Si algo esta en ❌ o ⚠️, declara `STATUS: NO APROBADO` y sigue trabajando hasta cerrarlo.
 
-Por cada imagen/video/gif/SVG decorativo:
-- `sourceUrl`
-- `usedInRoute`
-- `visualRole`
-- `sourceDescription`
-- `targetBusinessConcept`
-- `imagePrompt` o `videoPrompt`
-- `negativePrompt`
-- `aspectRatio`
-- `duration/fps/cameraMotion` cuando sea video
-- `mustMatchSourceStyle`: color, lens, composition, crop, motion, lighting
+### Recordatorios finales (no saltarselos jamas)
 
-La migracion inicial usa assets source para garantizar similitud visual. Los
-prompts IA son entregable para sustituirlos despues por assets propios sin
-romper el sistema visual.
+- Es clon literal o es FAIL.
+- Screenshots estaticos NUNCA son fuente de verdad.
+- RAW > screenshots siempre.
+- 1920x1080 + 768x1024 + 375x812 son los tres obligatorios.
+- 21 posiciones de scroll por pagina por viewport.
+- Assets source se hotlinkean o descargan — cero assets del target como diseno.
+- Diferencia < 0.5% medida numericamente, no "parecido".
+- Backend = INTOCABLE.
+- Checklist bloqueante = se muestra SIEMPRE.
 
-## Regla absoluta de motion y efectos
-
-Los efectos del source son parte del diseno, no son opcionales. Una migracion que
-solo copia colores, tipografia, imagenes o layout y sustituye efectos por
-autoplay, fade generico o transiciones aproximadas es FAIL.
-
-Para cada pagina se debe copiar tal cual:
-- Scroll scrub de video/canvas/imagenes: el progreso visual debe depender del
-  scroll, con `currentTime`, frame, uniform, transform o timeline ligado al
-  progreso 0..1 de la seccion.
-- Pinning/sticky sections: duracion, start/end, scrub, pin spacing, z-index y
-  stacking context iguales al source.
-- Lenis/smooth scroll: instancia, lerp/duration/easing, wheel/touch multipliers
-  y RAF loop equivalentes al source.
-- GSAP/ScrollTrigger/timelines: targets, from/to values, easings, stagger,
-  scrub, pin, start/end, toggleActions y callbacks equivalentes.
-- Microinteracciones: hover/focus/active/nav/menu/cards/buttons con timing y
-  transform del source.
-
-Si el source tiene un hero que "reproduce" el video al hacer scroll, el target
-DEBE implementar ese mismo scroll-video scrub. Usar `autoplay loop` sin ligar
-`video.currentTime` al scroll es FAIL aunque el aspecto estatico parezca similar.
-
-## DISENO vs TEXTO — inmutable
-
-DISENO (100% del source):
-  CSS tokens, custom properties, tipografia, colores, espaciado, sombras,
-  gradientes, border-radius, z-index, breakpoints, grid/flexbox layout,
-  animaciones (GSAP, Lenis, CSS, Framer Motion, Three.js), assets
-  decorativos, hover/focus/active states, dark mode tokens, @font-face,
-  estructura JSX/HTML, clases CSS/Tailwind, configs de animacion,
-  atributos data-*, responsive behavior.
-
-TEXTO (100% del target):
-  Strings visibles en UI (h1, p, span, button, label, alt, title, meta),
-  hrefs de negocio del target, nombres del negocio, contenido CMS,
-  rutas/redirects/rewrites, API routes, server actions, auth, middleware,
-  analytics, integraciones, logica de negocio, handlers de formularios,
-  validacion, data fetching, mutations.
-
-## REGLA ANTI-HARDCODING — CRITICA
-
-CERO valores hardcodeados. TODOS los valores visuales deben provenir de la
-extraccion (FASE 1). Esta skill NO contiene valores de diseno reutilizables.
-
-- Los colores (#hex, rgb, hsl, oklch) vienen de `design-tokens.json`
-- Las fuentes vienen de `design-tokens.json` fontFaces/googleFonts/adobeFonts
-- Los spacing, radii, shadows vienen de `design-tokens.json`
-- Las animaciones (duration, easing, delay) vienen de `animations.json`
-- Los breakpoints vienen de `design-tokens.json` breakpoints
-- Los z-index vienen de `design-tokens.json` zIndices
-- Los hover/focus states vienen de `css-rules.json` y `interactions.json`
-- Los ::before/::after vienen de `design-tokens.json` pseudoElements
-
-Si un valor CSS no aparece en ningun JSON de extraccion:
-1. Re-ejecutar el script de extraccion relevante
-2. Inspeccionar el elemento especifico en MCP-REF
-3. NUNCA "adivinar" o "aproximar" un valor
-
-Los ejemplos de codigo en esta SKILL.md usan comentarios como
-`/* valor de design-tokens.json */` o `/* valor del source */` para indicar
-donde va un valor extraido. Si ves un valor concreto en un ejemplo
-(como `#1a1a2e` o `duration: 1.2`), es solo para ilustrar la ESTRUCTURA,
-no para copiar el valor.
-
-## FASE 0: Setup y descubrimiento automatico
-
-### 0.1 Dual MCP — primera accion, nunca cerrar
-
-**Deteccion del MCP disponible**: Antes de abrir browsers, identificar que herramienta
-MCP esta disponible. Los scripts de extraccion se ejecutan via `evaluate` / `execute`
-JavaScript en el browser. Compatibles con:
-- **Playwright MCP** (`mcp_microsoft_playwright`): `browser_navigate`, `browser_evaluate`,
-  `browser_snapshot`, `browser_take_screenshot`, `browser_click`, `browser_resize`
-- **Puppeteer MCP**: `puppeteer_navigate`, `puppeteer_evaluate`, `puppeteer_screenshot`
-- **Browser-tools MCP**: `getConsoleLogs`, `getNetworkLogs`, `runJavascript`
-- **Modo degradado (sin MCP)**: Si no hay MCP browser disponible, indicar al usuario
-  que pegue los scripts manualmente en DevTools Console y copie los resultados.
-  Los scripts funcionan igual — solo cambia el mecanismo de ejecucion.
-
-Abrir DOS instancias de MCP browser:
-- MCP-REF: navegar a `<source-url>`
-- MCP-TARGET: navegar a `http://localhost:3001` (o el puerto del dev server)
-
-Si MCP-REF no puede cargar source-url despues del protocolo anti-bot: STOP + reportar error.
-Ambas instancias permanecen abiertas hasta MIGRATION_COMPLETE.md.
-
-### 0.1.1 Protocolo anti-bot y recuperacion MCP
-
-Si la pagina muestra Cloudflare challenge, hCaptcha, o pantalla de "checking browser":
-
-1. Esperar 10 segundos (algunos challenges se resuelven con wait)
-2. Si persiste: reportar al usuario con screenshot del challenge
-3. Fallback: el usuario puede abrir la web manualmente y compartir screenshots
-4. NUNCA intentar bypassear captchas automaticamente
-
-Si MCP se desconecta a mitad del proceso:
-
-1. Guardar el estado actual en `docs/pds/extraction/_checkpoint.json`:
-   ```json
-   {
-     "lastPhase": "FASE_1",
-     "lastScript": "1.3",
-     "lastPage": "/technology",
-     "completedPages": ["/"],
-     "timestamp": "ISO-8601"
-   }
-   ```
-2. Reconectar MCP-REF y navegar a la misma pagina
-3. Reanudar desde el ultimo script no completado
-4. No re-ejecutar scripts ya guardados en `docs/pds/extraction/`
-
-### 0.1.2 Pre-extraccion: expandir contenido lazy y SPA
-
-Ejecutar ANTES de cualquier script de extraccion en CADA pagina:
-
-```javascript
-async function preExpandContent() {
-  const wait = ms => new Promise(r => setTimeout(r, ms));
-  const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-
-  // 1. Scroll completo para trigger lazy loading e IntersectionObservers
-  for (let pct = 0; pct <= 100; pct += 5) {
-    window.scrollTo(0, maxScroll * (pct / 100));
-    await wait(300);
-  }
-  window.scrollTo(0, 0);
-  await wait(1000);
-
-  // 2. Forzar lazy images
-  document.querySelectorAll('img[loading="lazy"],img[data-src],img[data-lazy]').forEach(img => {
-    img.loading = 'eager';
-    if (img.dataset.src) img.src = img.dataset.src;
-    if (img.dataset.lazy) img.src = img.dataset.lazy;
-    if (img.dataset.srcset) img.srcset = img.dataset.srcset;
-  });
-
-  // 3. Forzar videos
-  document.querySelectorAll('video[data-src],video source[data-src]').forEach(el => {
-    if (el.dataset.src) el.src = el.dataset.src;
-  });
-
-  // 4. Esperar posibles SPA chunks
-  await wait(2000);
-
-  // 5. Re-scroll para trigger contenido que aparecio
-  for (let pct = 0; pct <= 100; pct += 10) {
-    window.scrollTo(0, maxScroll * (pct / 100));
-    await wait(200);
-  }
-  window.scrollTo(0, 0);
-  await wait(500);
-
-  return {
-    finalHeight: document.documentElement.scrollHeight,
-    totalElements: document.querySelectorAll('body *').length,
-    images: document.querySelectorAll('img').length,
-    videos: document.querySelectorAll('video').length,
-    sections: document.querySelectorAll('section,[class*="section"]').length
-  };
-}
-preExpandContent();
-```
-
-Si `finalHeight` es significativamente mayor que la altura inicial, re-ejecutar.
-ESTE SCRIPT ES OBLIGATORIO antes de cada extraccion. Sin el, secciones lazy se pierden.
-
-### 0.2 Descubrimiento automatico de paginas
-
-Ejecutar en MCP-REF:
-
-```javascript
-(function discoverPages() {
-  const base = new URL(window.location.origin);
-  const links = new Set();
-  // Internal links
-  document.querySelectorAll('a[href]').forEach(a => {
-    try {
-      const u = new URL(a.href, base);
-      if (u.origin === base.origin && !u.hash && !u.href.match(/\.(pdf|zip|png|jpg|svg|mp4)$/i)) {
-        links.add(u.pathname.replace(/\/$/, '') || '/');
-      }
-    } catch(e) {}
-  });
-  // Navigation links (higher priority)
-  const navLinks = [];
-  document.querySelectorAll('nav a[href], header a[href], [role="navigation"] a[href]').forEach(a => {
-    try {
-      const u = new URL(a.href, base);
-      if (u.origin === base.origin) {
-        navLinks.push({ path: u.pathname.replace(/\/$/, '') || '/', text: a.textContent.trim().slice(0, 60) });
-      }
-    } catch(e) {}
-  });
-  // Footer links
-  const footerLinks = [];
-  document.querySelectorAll('footer a[href]').forEach(a => {
-    try {
-      const u = new URL(a.href, base);
-      if (u.origin === base.origin) {
-        footerLinks.push({ path: u.pathname.replace(/\/$/, '') || '/', text: a.textContent.trim().slice(0, 60) });
-      }
-    } catch(e) {}
-  });
-  return {
-    allPaths: [...links].sort(),
-    navLinks,
-    footerLinks,
-    totalFound: links.size
-  };
-})();
-```
-
-Intentar tambien: `fetch('/sitemap.xml').then(r => r.text())` para extraer rutas adicionales.
-
-Navegar a CADA subpagina descubierta y ejecutar el mismo script para encontrar
-enlaces profundos, con las siguientes protecciones anti-loop:
-
-- **MAX_PAGES = 50**: No descubrir mas de 50 paginas unicas. Si el sitemap tiene
-  mas, priorizar las de la navegacion principal.
-- **MAX_DEPTH = 3**: No seguir enlaces mas alla de 3 niveles de profundidad
-  desde la home (home = depth 0, /about = depth 1, /about/team = depth 2).
-- **Visited set**: Mantener un Set de paginas ya visitadas para evitar ciclos.
-- **Ignorar paginacion**: Rutas que matcheen `/page/\d+`, `?page=`, `/p/\d+`
-  no cuentan como paginas unicas — son variantes de la misma pagina.
-- **Ignorar anchors y query params**: Normalizar URLs removiendo `#hash` y `?query`
-  antes de comparar.
-
-### 0.3 Analisis de rutas del target
-
-```bash
-find "$TARGET_PATH/src/app" -name "page.tsx" -o -name "page.jsx" -o -name "page.js" | \
-  sed "s|$TARGET_PATH/src/app||" | sed 's|/page\.[tj]sx\?||' | sed 's|^$|/|' | sort
-```
-
-### 0.4 PAGE_MAPPING.md — BLOQUEANTE
-
-Crear PAGE_MAPPING.md en raiz del target ANTES de cualquier componente.
-Mapear automaticamente cada ruta del target a la pagina source mas similar.
-Si una ruta target no tiene equivalente, asignar la pagina source estructuralmente mas parecida.
-
-```markdown
-| Target route | Source page | Razon | Estado |
-|---|---|---|---|
-| / | / | Home equivalente | ☐ |
-| /productos | /technology | Features similar | ☐ |
-| /contacto | /contact | Contacto equivalente | ☐ |
-```
-
-Sin PAGE_MAPPING.md completo: migracion BLOQUEADA.
-
-## FASE 1: Extraccion profunda del design system
-
-Ejecutar los siguientes scripts en MCP-REF para CADA pagina listada en PAGE_MAPPING.
-Guardar resultados en `docs/pds/extraction/`.
-
-### 1.1 extractFullDesignSystem()
-
-```javascript
-(function extractFullDesignSystem() {
-  const result = { cssVars: {}, typography: {}, colors: [], spacing: [], shadows: [], gradients: [], radii: [], zIndices: [], fontFaces: [], googleFonts: [], breakpoints: [], filters: [] };
-
-  // CSS Custom Properties
-  for (const sheet of document.styleSheets) {
-    try {
-      for (const rule of sheet.cssRules) {
-        const text = rule.cssText || '';
-        if (rule.selectorText === ':root' || rule.selectorText === 'html' || rule.selectorText === ':root, :host') {
-          const matches = text.matchAll(/--([^:]+):\s*([^;]+)/g);
-          for (const m of matches) result.cssVars[`--${m[1].trim()}`] = m[2].trim();
-        }
-        // @font-face
-        if (rule instanceof CSSFontFaceRule) {
-          result.fontFaces.push({
-            family: rule.style.getPropertyValue('font-family').replace(/['"]/g, ''),
-            src: rule.style.getPropertyValue('src').slice(0, 200),
-            weight: rule.style.getPropertyValue('font-weight'),
-            style: rule.style.getPropertyValue('font-style'),
-            display: rule.style.getPropertyValue('font-display')
-          });
-        }
-        // @media breakpoints
-        if (rule instanceof CSSMediaRule) {
-          const mq = rule.conditionText || rule.media?.mediaText;
-          if (mq) {
-            const bpMatch = mq.match(/(min|max)-width:\s*(\d+)/);
-            if (bpMatch) result.breakpoints.push({ type: bpMatch[1], value: parseInt(bpMatch[2]), unit: 'px', query: mq });
-            // Extended media queries: height, orientation, hover, pointer, prefers-*
-            if (mq.includes('height') || mq.includes('orientation') || mq.includes('hover') ||
-                mq.includes('pointer') || mq.includes('prefers-') || mq.includes('resolution') ||
-                mq.includes('forced-colors')) {
-              result.extendedMediaQueries = result.extendedMediaQueries || [];
-              result.extendedMediaQueries.push({ query: mq, ruleCount: rule.cssRules?.length || 0 });
-            }
-          }
-        }
-        // @container queries (CSSContainerRule extends CSSConditionRule, NOT CSSMediaRule)
-        if (rule instanceof CSSContainerRule || rule.cssText?.startsWith('@container')) {
-          result.containerQueries = result.containerQueries || [];
-          result.containerQueries.push({ name: rule.containerName || '', query: rule.conditionText, ruleCount: rule.cssRules?.length || 0 });
-        }
-        // @layer (CSSLayerBlockRule extends CSSGroupingRule, NOT CSSMediaRule)
-        if (rule instanceof CSSLayerBlockRule || rule.cssText?.startsWith('@layer')) {
-          result.cssLayers = result.cssLayers || [];
-          result.cssLayers.push({ name: rule.name || '', ruleCount: rule.cssRules?.length || 0 });
-        }
-      }
-    } catch(e) {
-      // Cross-origin stylesheet — fetch and parse manually
-      if (e.name === 'SecurityError' && sheet.href) {
-        result.crossOriginSheets = result.crossOriginSheets || [];
-        result.crossOriginSheets.push(sheet.href);
-      }
-    }
-  }
-
-  // CSS-in-JS: capture all <style> tags and adoptedStyleSheets
-  result.inlineStyleTags = [];
-  document.querySelectorAll('style').forEach((tag, i) => {
-    const text = tag.textContent || '';
-    if (text.length > 10) {
-      result.inlineStyleTags.push({ index: i, length: text.length, snippet: text.slice(0, 300), hasVars: text.includes('--'), hasKeyframes: text.includes('@keyframes') });
-    }
-  });
-  if (document.adoptedStyleSheets?.length) {
-    result.adoptedStyleSheets = document.adoptedStyleSheets.length;
-  }
-
-  // Shadow DOM: find all shadow roots
-  result.shadowDOMElements = [];
-  document.querySelectorAll('*').forEach(el => {
-    if (el.shadowRoot) {
-      result.shadowDOMElements.push({ tag: el.tagName, classes: (el.className||'').toString().slice(0,80), childCount: el.shadowRoot.childElementCount });
-    }
-  });
-
-  // Google Fonts from <link>
-  document.querySelectorAll('link[href*="fonts.googleapis"], link[href*="fonts.gstatic"]').forEach(l => {
-    result.googleFonts.push(l.href);
-  });
-  // Adobe Fonts (Typekit)
-  document.querySelectorAll('link[href*="use.typekit.net"], link[href*="typekit"]').forEach(l => {
-    result.adobeFonts = result.adobeFonts || [];
-    result.adobeFonts.push(l.href);
-  });
-  if (document.querySelector('script[src*="typekit"]') || document.querySelector('style[data-adobe-fonts]')) {
-    result.adobeFonts = result.adobeFonts || ['detected-via-script'];
-  }
-  // Preconnect font hints
-  document.querySelectorAll('link[rel="preconnect"][href*="font"], link[rel="preload"][as="font"]').forEach(l => {
-    result.googleFonts.push(l.href);
-  });
-  // FontFace API loaded fonts
-  result.loadedFonts = [];
-  document.fonts.forEach(f => {
-    result.loadedFonts.push({ family: f.family, weight: f.weight, style: f.style, unicodeRange: f.unicodeRange, display: f.display, status: f.status });
-  });
-
-  // @font-face: add unicode-range and size-adjust
-  result.fontFaces.forEach(ff => {
-    // Re-scan for extended properties
-  });
-  // Re-scan fontFaces with unicode-range and size-adjust
-  for (const sheet of document.styleSheets) {
-    try {
-      for (const rule of sheet.cssRules) {
-        if (rule instanceof CSSFontFaceRule) {
-          const ur = rule.style.getPropertyValue('unicode-range');
-          const sa = rule.style.getPropertyValue('size-adjust');
-          const ad = rule.style.getPropertyValue('ascent-override');
-          const dd = rule.style.getPropertyValue('descent-override');
-          const fam = rule.style.getPropertyValue('font-family').replace(/['"]/g, '');
-          const existing = result.fontFaces.find(f => f.family === fam && f.weight === rule.style.getPropertyValue('font-weight'));
-          if (existing) {
-            if (ur) existing.unicodeRange = ur;
-            if (sa) existing.sizeAdjust = sa;
-            if (ad) existing.ascentOverride = ad;
-            if (dd) existing.descentOverride = dd;
-          }
-        }
-        // @property CSS at-rule (animated custom properties)
-        if (rule instanceof CSSPropertyRule || rule.cssText?.startsWith('@property')) {
-          result.cssProperties = result.cssProperties || [];
-          result.cssProperties.push({
-            name: rule.name || rule.cssText?.match(/@property\s+(--[\w-]+)/)?.[1],
-            syntax: rule.syntax || rule.cssText?.match(/syntax:\s*["']([^"']+)["']/)?.[1],
-            inherits: rule.inherits,
-            initialValue: rule.initialValue || rule.cssText?.match(/initial-value:\s*([^;]+)/)?.[1]?.trim()
-          });
-        }
-      }
-    } catch(e) {}
-  }
-
-  // @supports rules detected
-  result.supportsRules = [];
-  for (const sheet of document.styleSheets) {
-    try {
-      for (const rule of sheet.cssRules) {
-        if (rule instanceof CSSSupportsRule) {
-          result.supportsRules.push({ condition: rule.conditionText, ruleCount: rule.cssRules?.length || 0 });
-        }
-      }
-    } catch(e) {}
-  }
-
-  // CSS reset/normalize detection
-  result.cssReset = null;
-  const styleLinks = [...document.querySelectorAll('link[rel="stylesheet"]')];
-  styleLinks.forEach(l => {
-    if (l.href?.match(/normalize|reset|sanitize|modern-normalize/i)) {
-      result.cssReset = l.href;
-    }
-  });
-  // Check if box-sizing: border-box is applied globally
-  result.globalBoxSizing = getComputedStyle(document.body).boxSizing;
-
-  // Pseudo-elements: ::before, ::after, ::selection, ::placeholder, ::marker, scrollbar
-  result.pseudoElements = { selection: null, placeholder: [], marker: [], scrollbar: [] };
-  // ::selection
-  const selCs = getComputedStyle(document.body, '::selection');
-  if (selCs.backgroundColor !== 'rgba(0, 0, 0, 0)' || selCs.color !== getComputedStyle(document.body).color) {
-    result.pseudoElements.selection = { color: selCs.color, backgroundColor: selCs.backgroundColor };
-  }
-  // ::placeholder on inputs
-  document.querySelectorAll('input,textarea').forEach((el, i) => {
-    if (i > 10) return;
-    const pCs = getComputedStyle(el, '::placeholder');
-    result.pseudoElements.placeholder.push({ element: el.tagName + '.' + (el.className||'').split(' ')[0]?.slice(0,30), color: pCs.color, opacity: pCs.opacity, fontStyle: pCs.fontStyle });
-  });
-  // ::before / ::after on key elements (capture content and styles)
-  result.pseudoElements.beforeAfter = [];
-  document.querySelectorAll('h1,h2,h3,a,button,[class*="btn"],[class*="card"],[class*="section"],nav a,li').forEach((el, i) => {
-    if (i > 40) return;
-    ['::before','::after'].forEach(pseudo => {
-      const pCs = getComputedStyle(el, pseudo);
-      const content = pCs.content;
-      if (content && content !== 'none' && content !== 'normal' && content !== '""') {
-        result.pseudoElements.beforeAfter.push({
-          element: el.tagName + '.' + (el.className||'').split(' ')[0]?.slice(0,40),
-          pseudo, content: content.slice(0,100),
-          width: pCs.width, height: pCs.height,
-          backgroundColor: pCs.backgroundColor, position: pCs.position,
-          top: pCs.top, left: pCs.left, transform: pCs.transform,
-          borderRadius: pCs.borderRadius, opacity: pCs.opacity,
-          transition: pCs.transition !== 'all 0s ease 0s' ? pCs.transition : null
-        });
-      }
-    });
-  });
-
-  // Custom scrollbar detection
-  result.customScrollbar = false;
-  for (const sheet of document.styleSheets) {
-    try {
-      for (const rule of sheet.cssRules) {
-        if (rule.selectorText && (rule.selectorText.includes('::-webkit-scrollbar') || rule.selectorText.includes('scrollbar-color') || rule.selectorText.includes('scrollbar-width'))) {
-          result.customScrollbar = true;
-          result.scrollbarRules = result.scrollbarRules || [];
-          result.scrollbarRules.push({ selector: rule.selectorText, css: rule.cssText.slice(0, 300) });
-        }
-      }
-    } catch(e) {}
-  }
-  // scrollbar-color / scrollbar-width on html/body
-  const htmlSb = getComputedStyle(document.documentElement);
-  if (htmlSb.scrollbarColor && htmlSb.scrollbarColor !== 'auto') result.scrollbarColor = htmlSb.scrollbarColor;
-  if (htmlSb.scrollbarWidth && htmlSb.scrollbarWidth !== 'auto') result.scrollbarWidth = htmlSb.scrollbarWidth;
-
-  // content-visibility detection
-  result.contentVisibility = [];
-  document.querySelectorAll('*').forEach(el => {
-    const cv = getComputedStyle(el).contentVisibility;
-    if (cv && cv !== 'visible') result.contentVisibility.push({ tag: el.tagName, classes: (el.className||'').toString().slice(0,60), value: cv });
-  });
-  result.contentVisibility = result.contentVisibility.slice(0, 10);
-
-  // CSS Motion Path detection
-  result.motionPath = [];
-  document.querySelectorAll('*').forEach(el => {
-    const cs = getComputedStyle(el);
-    const op = cs.offsetPath || cs.getPropertyValue('offset-path');
-    if (op && op !== 'none') {
-      result.motionPath.push({ tag: el.tagName, classes: (el.className||'').toString().slice(0,60), offsetPath: op, offsetDistance: cs.offsetDistance || cs.getPropertyValue('offset-distance') });
-    }
-  });
-
-  // scroll-margin-top / scroll-padding-top (for sticky header anchor links)
-  result.scrollMargins = [];
-  document.querySelectorAll('[id]').forEach(el => {
-    const smt = getComputedStyle(el).scrollMarginTop;
-    if (smt && smt !== '0px') result.scrollMargins.push({ id: el.id, scrollMarginTop: smt });
-  });
-  const htmlSpt = getComputedStyle(document.documentElement).scrollPaddingTop;
-  if (htmlSpt && htmlSpt !== 'auto' && htmlSpt !== '0px') result.scrollPaddingTop = htmlSpt;
-
-  // color-scheme on root (affects native form elements, scrollbars, system colors)
-  result.colorScheme = getComputedStyle(document.documentElement).colorScheme || null;
-
-  // env(safe-area-inset-*) detection (mobile notch/dynamic island handling)
-  result.safeAreaInsets = {};
-  ['top','right','bottom','left'].forEach(side => {
-    const testEl = document.createElement('div');
-    testEl.style.paddingTop = `env(safe-area-inset-${side}, 0px)`;
-    document.body.appendChild(testEl);
-    const val = getComputedStyle(testEl).paddingTop;
-    if (val && val !== '0px') result.safeAreaInsets[side] = val;
-    testEl.remove();
-  });
-  // Also check CSS for env() usage
-  result.usesEnvSafeArea = false;
-  for (const sheet of document.styleSheets) {
-    try {
-      for (const rule of sheet.cssRules) {
-        if (rule.cssText?.includes('env(safe-area-inset')) {
-          result.usesEnvSafeArea = true;
-          break;
-        }
-      }
-    } catch(e) {}
-  }
-
-  // container-type / container-name on elements (required for @container queries)
-  result.containerElements = [];
-  document.querySelectorAll('*').forEach(el => {
-    const cs = getComputedStyle(el);
-    const ct = cs.containerType;
-    if (ct && ct !== 'normal') {
-      result.containerElements.push({
-        tag: el.tagName, classes: (el.className||'').toString().slice(0,80),
-        containerType: ct, containerName: cs.containerName || null
-      });
-    }
-  });
-  result.containerElements = result.containerElements.slice(0, 20);
-
-  // Modern CSS: dvh/svh/lvh units detection
-  result.modernViewportUnits = { dvh: false, svh: false, lvh: false };
-  for (const sheet of document.styleSheets) {
-    try {
-      for (const rule of sheet.cssRules) {
-        const text = rule.cssText || '';
-        if (text.match(/\d+dvh/)) result.modernViewportUnits.dvh = true;
-        if (text.match(/\d+svh/)) result.modernViewportUnits.svh = true;
-        if (text.match(/\d+lvh/)) result.modernViewportUnits.lvh = true;
-      }
-    } catch(e) {}
-  }
-
-  // Modern CSS: color-mix() detection
-  result.colorMix = [];
-  for (const sheet of document.styleSheets) {
-    try {
-      for (const rule of sheet.cssRules) {
-        const text = rule.cssText || '';
-        const matches = text.matchAll(/color-mix\([^)]+\)/g);
-        for (const m of matches) {
-          result.colorMix.push({ selector: rule.selectorText?.slice(0,80), value: m[0].slice(0,150) });
-        }
-      }
-    } catch(e) {}
-  }
-  result.colorMix = result.colorMix.slice(0, 20);
-
-  // Modern CSS: @starting-style detection (entry animations for new DOM elements)
-  result.startingStyle = [];
-  for (const sheet of document.styleSheets) {
-    try {
-      for (const rule of sheet.cssRules) {
-        if (rule.cssText?.includes('@starting-style')) {
-          result.startingStyle.push({ css: rule.cssText.slice(0, 300) });
-        }
-      }
-    } catch(e) {}
-  }
-
-  // Modern CSS: -webkit-text-stroke / text-stroke detection
-  result.textStroke = [];
-  document.querySelectorAll('h1,h2,h3,h4,[class*="heading"],[class*="title"],[class*="hero"],[class*="outline"]').forEach((el, i) => {
-    if (i > 20) return;
-    const cs = getComputedStyle(el);
-    const wts = cs.webkitTextStroke || cs.getPropertyValue('-webkit-text-stroke');
-    const wtsc = cs.webkitTextStrokeColor || cs.getPropertyValue('-webkit-text-stroke-color');
-    const wtsw = cs.webkitTextStrokeWidth || cs.getPropertyValue('-webkit-text-stroke-width');
-    if ((wts && wts !== '' && wts !== 'initial') || (wtsw && wtsw !== '0px' && wtsw !== 'initial')) {
-      result.textStroke.push({
-        element: el.tagName + '.' + (el.className||'').split(' ')[0]?.slice(0,40),
-        textStroke: wts, color: wtsc, width: wtsw,
-        webkitTextFillColor: cs.webkitTextFillColor || cs.getPropertyValue('-webkit-text-fill-color')
-      });
-    }
-  });
-
-  // oklch() color usage detection (beyond computed — check raw CSS)
-  result.oklchUsage = false;
-  for (const sheet of document.styleSheets) {
-    try {
-      for (const rule of sheet.cssRules) {
-        if (rule.cssText?.includes('oklch(')) { result.oklchUsage = true; break; }
-      }
-    } catch(e) {}
-  }
-
-  // Computed typography for ALL relevant selectors
-  const typoSelectors = ['h1','h2','h3','h4','h5','h6','p','span','a','button','input','textarea','select','label','nav','nav a','li','blockquote','figcaption','small','strong','em','code','pre','th','td','dt','dd','.btn','[class*="title"]','[class*="heading"]','[class*="subtitle"]','[class*="caption"]','[class*="label"]'];
-  typoSelectors.forEach(sel => {
-    const el = document.querySelector(sel);
-    if (!el) return;
-    const s = getComputedStyle(el);
-    result.typography[sel] = {
-      fontFamily: s.fontFamily, fontSize: s.fontSize, fontWeight: s.fontWeight,
-      lineHeight: s.lineHeight, letterSpacing: s.letterSpacing, color: s.color,
-      textTransform: s.textTransform, textDecoration: s.textDecoration,
-      fontStyle: s.fontStyle, wordSpacing: s.wordSpacing,
-      fontFeatureSettings: s.fontFeatureSettings,
-      fontVariationSettings: s.fontVariationSettings
-    };
-  });
-
-  // Full color palette + shadows + gradients + radii + z-index + spacing + filters
-  const colorSet = new Set(), shadowSet = new Set(), gradientSet = new Set();
-  const radiiSet = new Set(), zSet = new Set(), spacingSet = new Set(), filterSet = new Set();
-  document.querySelectorAll('*').forEach(el => {
-    const s = getComputedStyle(el);
-    if (s.backgroundColor !== 'rgba(0, 0, 0, 0)') colorSet.add(s.backgroundColor);
-    if (s.color) colorSet.add(s.color);
-    if (s.borderColor && s.borderColor !== 'rgba(0, 0, 0, 0)') colorSet.add(s.borderColor);
-    if (s.outlineColor && s.outlineColor !== 'rgba(0, 0, 0, 0)') colorSet.add(s.outlineColor);
-    if (s.boxShadow && s.boxShadow !== 'none') shadowSet.add(s.boxShadow);
-    if (s.backgroundImage && s.backgroundImage !== 'none' && s.backgroundImage.includes('gradient')) gradientSet.add(s.backgroundImage.slice(0, 200));
-    if (s.borderRadius && s.borderRadius !== '0px') radiiSet.add(s.borderRadius);
-    if (s.zIndex && s.zIndex !== 'auto') zSet.add(parseInt(s.zIndex));
-    if (s.filter && s.filter !== 'none') filterSet.add(s.filter);
-    ['padding','margin'].forEach(prop => {
-      const v = s.getPropertyValue(prop);
-      if (v && v !== '0px') spacingSet.add(v);
-    });
-  });
-  result.colors = [...colorSet].slice(0, 300);
-  result.shadows = [...shadowSet].slice(0, 50);
-  result.gradients = [...gradientSet].slice(0, 30);
-  result.radii = [...radiiSet].slice(0, 30);
-  result.zIndices = [...zSet].sort((a,b) => a-b);
-  result.spacing = [...spacingSet].slice(0, 60);
-  result.filters = [...filterSet].slice(0, 20);
-
-  // Unique breakpoints
-  result.breakpoints = [...new Map(result.breakpoints.map(b => [b.value, b])).values()].sort((a,b) => a.value - b.value);
-
-  return result;
-})();
-```
-
-Guardar en: `docs/pds/extraction/design-tokens.json`
-
-Si `crossOriginSheets` no esta vacio, ejecutar tambien:
-
-```javascript
-async function fetchCrossOriginCSS(urls) {
-  const results = [];
-  for (const url of urls) {
-    try {
-      const res = await fetch(url);
-      const text = await res.text();
-      const vars = [...text.matchAll(/--([^:]+):\s*([^;]+)/g)].map(m => [`--${m[1].trim()}`, m[2].trim()]);
-      const fontFaces = [...text.matchAll(/@font-face\s*\{([^}]+)\}/g)].map(m => m[1].slice(0, 300));
-      const keyframes = [...text.matchAll(/@keyframes\s+(\S+)\s*\{/g)].map(m => m[1]);
-      const containers = [...text.matchAll(/@container\s+([^{]*)\{/g)].map(m => m[1].trim());
-      const layers = [...text.matchAll(/@layer\s+([^{;]*)/g)].map(m => m[1].trim());
-      results.push({ url, size: text.length, vars, fontFaces, keyframes, containers, layers });
-    } catch(e) { results.push({ url, error: e.message }); }
-  }
-  return results;
-}
-// Invocar con: fetchCrossOriginCSS(designTokens.crossOriginSheets)
-```
-
-Guardar resultado adicional en: `docs/pds/extraction/cross-origin-css.json`
-
-Si `shadowDOMElements` no esta vacio, ejecutar para CADA shadow host:
-
-```javascript
-function extractShadowStyles(hostSelector) {
-  const host = document.querySelector(hostSelector);
-  if (!host?.shadowRoot) return null;
-  const styles = [];
-  host.shadowRoot.querySelectorAll('style').forEach(s => styles.push(s.textContent));
-  const elements = [];
-  host.shadowRoot.querySelectorAll('*').forEach((el, i) => {
-    if (i > 50) return;
-    const cs = getComputedStyle(el);
-    elements.push({ tag: el.tagName, classes: (el.className||'').toString().slice(0,80),
-      styles: { color: cs.color, backgroundColor: cs.backgroundColor, fontSize: cs.fontSize, fontFamily: cs.fontFamily, display: cs.display, position: cs.position }
-    });
-  });
-  return { host: hostSelector, styles, elements };
-}
-```
-
-### 1.1.1 Metadata de extraccion — OBLIGATORIO
-
-TODOS los archivos JSON de extraccion DEBEN incluir estos campos de metadata:
-
-```json
-{
-  "_metadata": {
-    "extractedAt": "2026-04-12T15:30:00.000Z",
-    "sourceUrl": "https://example.com/page",
-    "userAgent": "navigator.userAgent value",
-    "viewportWidth": 1440,
-    "viewportHeight": 900,
-    "scrollHeight": 8500,
-    "skillVersion": "3.1"
-  }
-}
-```
-
-Anadir al inicio de CADA script de extraccion:
-```javascript
-const _metadata = { extractedAt: new Date().toISOString(), sourceUrl: location.href,
-  userAgent: navigator.userAgent, viewportWidth: innerWidth, viewportHeight: innerHeight,
-  scrollHeight: document.documentElement.scrollHeight, skillVersion: '3.4' };
-```
-
-Y en el return: `return { _metadata, ...result };`
-
-### 1.2 extractAnimationSystem()
-
-```javascript
-(function extractAnimationSystem() {
-  const result = {
-    lenis: null, gsap: { registered: [], scrollTriggers: [], tweens: [] },
-    cssKeyframes: [], cssTransitions: [], framerMotion: false,
-    intersectionObservers: [], rafLoops: false, videoScrub: [],
-    scrollListeners: false, webAnimations: [], mutationObservers: false
-  };
-
-  // Lenis
-  const lenisRef = window.__lenis || window.lenis || window.Lenis;
-  if (lenisRef) {
-    const l = typeof lenisRef === 'function' ? null : lenisRef;
-    result.lenis = l ? {
-      duration: l.options?.duration, easing: l.options?.easing?.toString(),
-      smoothTouch: l.options?.smoothTouch, orientation: l.options?.orientation,
-      lerp: l.options?.lerp, wheelMultiplier: l.options?.wheelMultiplier,
-      touchMultiplier: l.options?.touchMultiplier
-    } : { detected: true, isConstructor: typeof lenisRef === 'function' };
-  }
-
-  // GSAP
-  if (window.gsap) {
-    result.gsap.version = window.gsap.version;
-    // Registered plugins (expanded list — all GSAP premium + free)
-    ['ScrollTrigger','ScrollSmoother','SplitText','DrawSVG','MorphSVG','MotionPath','Flip','Observer',
-     'TextPlugin','ScrambleTextPlugin','Draggable','InertiaPlugin','ScrollToPlugin','CustomEase',
-     'PixiPlugin','Physics2DPlugin','PhysicsPropsPlugin','EaselPlugin','CustomBounce','CustomWiggle',
-     'GSDevTools','MotionPathHelper'].forEach(p => {
-      if (window[p] || window.gsap?.plugins?.[p]) result.gsap.registered.push(p);
-    });
-    // gsap.matchMedia() usage detection — responsive animations
-    // matchMedia is ALWAYS available if GSAP is loaded, but detecting its USAGE matters
-    result.gsap.matchMediaUsed = false;
-    if (window.gsap.matchMedia) {
-      // Check if ScrollTrigger instances have media query conditions
-      const mediaSTs = (window.ScrollTrigger?.getAll?.() || []).filter(st => st.vars?.matchMedia || st.vars?.media);
-      if (mediaSTs.length > 0) {
-        result.gsap.matchMediaUsed = true;
-        result.gsap.matchMediaBreakpoints = mediaSTs.map(st => st.vars.matchMedia || st.vars.media).filter(Boolean);
-      }
-    }
-    // ScrollSmoother instance detection
-    if (window.ScrollSmoother) {
-      const sm = window.ScrollSmoother.get?.();
-      result.gsap.scrollSmoother = sm ? {
-        smooth: sm.vars?.smooth, effects: sm.vars?.effects,
-        smoothTouch: sm.vars?.smoothTouch, normalizeScroll: sm.vars?.normalizeScroll
-      } : { detected: true };
-    }
-  }
-
-  // ScrollTrigger instances
-  if (window.ScrollTrigger) {
-    result.gsap.scrollTriggers = ScrollTrigger.getAll().map(st => ({
-      id: st.vars?.id, trigger: st.trigger?.className?.slice(0,80) || st.trigger?.id || st.trigger?.tagName,
-      start: st.vars?.start, end: st.vars?.end,
-      scrub: st.vars?.scrub, pin: st.vars?.pin,
-      snap: st.vars?.snap, markers: st.vars?.markers,
-      toggleActions: st.vars?.toggleActions,
-      animation: st.animation ? {
-        targets: st.animation._targets?.map(t => t.className?.slice(0,60) || t.tagName).slice(0,3),
-        duration: st.animation._dur, ease: st.animation._ease?.toString()
-      } : null
-    }));
-  }
-
-  // CSS @keyframes
-  for (const sheet of document.styleSheets) {
-    try {
-      for (const rule of sheet.cssRules) {
-        if (rule instanceof CSSKeyframesRule) {
-          const frames = [];
-          for (const kf of rule.cssRules) {
-            frames.push({ offset: kf.keyText, style: kf.cssText.slice(0, 200) });
-          }
-          result.cssKeyframes.push({ name: rule.name, frames });
-        }
-      }
-    } catch(e) {}
-  }
-
-  // CSS transitions on interactive elements
-  document.querySelectorAll('a, button, [role="button"], input, [class*="card"], [class*="btn"], nav a, [class*="link"]').forEach(el => {
-    const s = getComputedStyle(el);
-    if (s.transition && s.transition !== 'all 0s ease 0s' && s.transition !== 'none') {
-      result.cssTransitions.push({
-        selector: el.tagName + (el.className ? '.' + el.className.split(' ')[0].slice(0,40) : ''),
-        transition: s.transition, transform: s.transform, willChange: s.willChange
-      });
-    }
-  });
-
-  // Framer Motion detection
-  if (document.querySelector('[data-framer-appear-id]') || document.querySelector('[style*="--framer"]') || window.__framer_importers) {
-    result.framerMotion = true;
-  }
-
-  // IntersectionObserver targets (detected by common classes)
-  document.querySelectorAll('[class*="reveal"],[class*="fade"],[class*="animate"],[class*="appear"],[class*="slide"],[data-scroll],[data-aos],[data-sal],[class*="inview"],[class*="visible"]').forEach(el => {
-    result.intersectionObservers.push({
-      element: el.tagName + '.' + (el.className || '').split(' ').slice(0,2).join('.').slice(0,80),
-      dataset: Object.keys(el.dataset).slice(0,5)
-    });
-  });
-
-  // Video scrub candidates. This is only a first pass; it is not enough to
-  // mark VIDEO_SCRUB as implemented or verified.
-  document.querySelectorAll('video').forEach((v, i) => {
-    result.videoScrub.push({
-      index: i, src: (v.src || v.currentSrc || '').slice(0, 200),
-      width: v.offsetWidth, height: v.offsetHeight,
-      coversViewport: v.offsetWidth >= window.innerWidth * 0.8,
-      muted: v.muted, autoplay: v.autoplay, loop: v.loop,
-      playsInline: v.playsInline, duration: v.duration,
-      currentTime: v.currentTime, playbackRate: v.playbackRate,
-      parentSection: v.closest('section')?.className?.slice(0,80) || v.parentElement?.className?.slice(0,80),
-      ancestors: [...v.closest('main,body').querySelectorAll('*')]
-        .filter(el => el.contains(v))
-        .slice(-8)
-        .map(el => ({
-          tag: el.tagName,
-          className: String(el.className || '').slice(0, 120),
-          position: getComputedStyle(el).position,
-          height: getComputedStyle(el).height,
-          minHeight: getComputedStyle(el).minHeight,
-          overflow: getComputedStyle(el).overflow,
-          transform: getComputedStyle(el).transform
-        }))
-    });
-  });
-
-  // Canvas/WebGL
-  document.querySelectorAll('canvas').forEach((c, i) => {
-    const ctx = c.getContext('webgl2') || c.getContext('webgl') || c.getContext('2d');
-    result.canvasElements = result.canvasElements || [];
-    result.canvasElements.push({
-      index: i, width: c.width, height: c.height,
-      contextType: ctx ? (ctx instanceof WebGL2RenderingContext ? 'webgl2' : ctx instanceof WebGLRenderingContext ? 'webgl' : '2d') : 'unknown',
-      coversViewport: c.offsetWidth >= window.innerWidth * 0.8
-    });
-  });
-
-  // CSS scroll-driven animations (scroll-timeline / view-timeline)
-  result.scrollDrivenAnimations = [];
-  document.querySelectorAll('*').forEach(el => {
-    const cs = getComputedStyle(el);
-    const at = cs.animationTimeline || cs.getPropertyValue('animation-timeline');
-    const st = cs.scrollTimeline || cs.getPropertyValue('scroll-timeline');
-    const vt = cs.viewTimeline || cs.getPropertyValue('view-timeline');
-    if ((at && at !== 'auto' && at !== 'none') || (st && st !== 'none') || (vt && vt !== 'none')) {
-      result.scrollDrivenAnimations.push({
-        element: el.tagName + '.' + (el.className||'').toString().split(' ')[0]?.slice(0,40),
-        animationTimeline: at, scrollTimeline: st, viewTimeline: vt,
-        animationName: cs.animationName, animationDuration: cs.animationDuration
-      });
-    }
-  });
-
-  // View Transitions API
-  result.viewTransitions = !!document.startViewTransition || !!CSS.supports?.('view-transition-name', 'test');
-  result.viewTransitionNames = [];
-  document.querySelectorAll('*').forEach(el => {
-    const vtn = getComputedStyle(el).viewTransitionName || getComputedStyle(el).getPropertyValue('view-transition-name');
-    if (vtn && vtn !== 'none') result.viewTransitionNames.push({ element: el.tagName + '.' + (el.className||'').toString().split(' ')[0]?.slice(0,40), name: vtn });
-  });
-
-  // Web Animations API (running animations)
-  result.webAnimations = (document.getAnimations?.() || []).map(a => ({
-    name: a.animationName || a.id, playState: a.playState,
-    currentTime: a.currentTime, effect: a.effect?.target?.tagName,
-    duration: a.effect?.getTiming?.()?.duration,
-    easing: a.effect?.getTiming?.()?.easing
-  })).slice(0, 30);
-
-  // Lottie detection
-  result.lottie = [];
-  document.querySelectorAll('[class*="lottie"],lottie-player,dotlottie-player,[data-lottie]').forEach(el => {
-    result.lottie.push({ tag: el.tagName, classes: (el.className||'').toString().slice(0,80), src: el.getAttribute('src')?.slice(0,200) });
-  });
-  if (window.lottie || window.bodymovin) result.lottie.push({ global: true, version: window.lottie?.version || 'unknown' });
-
-  // Rive detection
-  result.rive = [];
-  document.querySelectorAll('canvas[class*="rive"],rive-canvas,[data-rive]').forEach(el => {
-    result.rive.push({ tag: el.tagName, classes: (el.className||'').toString().slice(0,80) });
-  });
-  if (window.rive || window.RiveCanvas) result.rive.push({ global: true });
-
-  // Spline detection
-  result.spline = [];
-  document.querySelectorAll('spline-viewer,canvas[class*="spline"],[data-spline]').forEach(el => {
-    result.spline.push({ tag: el.tagName, classes: (el.className||'').toString().slice(0,80), url: el.getAttribute('url')?.slice(0,200) });
-  });
-
-  return result;
-})();
-```
-
-Guardar en: `docs/pds/extraction/animations.json`
-
-IMPORTANTE: Si `scrollTriggers` array vacio pero la web tiene animaciones scroll visibles:
-hacer scroll manual a 25%, 50%, 75% y re-ejecutar el script.
-
-### 1.2.0.1 captureIntersectionObserverConfigs()
-
-Ejecutar ANTES de la carga de la pagina (inyectar via MCP evaluate antes de navigate).
-Captura los parametros reales de cada IntersectionObserver creado por el source.
-
-```javascript
-// INYECTAR ANTES de que la pagina cargue (via MCP beforeunload o console injection)
-(function patchIntersectionObserver() {
-  const _IO = window.IntersectionObserver;
-  window.__ioConfigs = [];
-  window.IntersectionObserver = function(cb, opts) {
-    window.__ioConfigs.push({
-      threshold: opts?.threshold, rootMargin: opts?.rootMargin,
-      root: opts?.root?.tagName || null,
-      callbackSource: cb.toString().slice(0, 300),
-      timestamp: Date.now()
-    });
-    return new _IO(cb, opts);
-  };
-  window.IntersectionObserver.prototype = _IO.prototype;
-})();
-```
-
-Despues de que la pagina cargue y se haga scroll completo, recoger:
-```javascript
-(function getIOConfigs() { return window.__ioConfigs || []; })();
-```
-
-Guardar en: `docs/pds/extraction/intersection-observers.json`
-Estos valores (`threshold`, `rootMargin`) son CRITICOS para que las animaciones
-de reveal se disparen en el mismo punto de scroll que el source.
-
-### 1.2.0.2 extractLottieRiveSpline()
-
-Solo ejecutar si `extractAnimationSystem()` detecto lottie/rive/spline.
-
-```javascript
-async function extractLottieRiveSpline() {
-  const result = { lottie: [], rive: [], spline: [] };
-
-  // Lottie: extract animation data JSON
-  document.querySelectorAll('lottie-player,dotlottie-player,[data-lottie]').forEach((el, i) => {
-    const src = el.getAttribute('src') || el.dataset.lottie;
-    result.lottie.push({
-      index: i, src: src?.slice(0, 300),
-      autoplay: el.hasAttribute('autoplay'),
-      loop: el.hasAttribute('loop'),
-      mode: el.getAttribute('mode'),
-      speed: el.getAttribute('speed'),
-      direction: el.getAttribute('direction'),
-      width: el.offsetWidth, height: el.offsetHeight
-    });
-  });
-
-  // Lottie via bodymovin/lottie-web global
-  if (window.lottie) {
-    const anims = window.lottie.getRegisteredAnimations?.() || [];
-    anims.forEach((anim, i) => {
-      result.lottie.push({
-        index: i, fromGlobal: true,
-        totalFrames: anim.totalFrames, duration: anim.totalFrames / anim.frameRate,
-        frameRate: anim.frameRate, loop: anim.loop,
-        autoplay: anim.autoplay, direction: anim.playDirection,
-        path: anim.path?.slice(0, 200)
-      });
-    });
-  }
-
-  // Rive: detect instances
-  document.querySelectorAll('canvas').forEach((c, i) => {
-    if (c._rive || c.dataset.rive || (c.className||'').toString().includes('rive')) {
-      result.rive.push({ index: i, width: c.width, height: c.height,
-        src: c.dataset.src?.slice(0, 200) || c.dataset.rive?.slice(0, 200) });
-    }
-  });
-
-  // Spline: detect viewer
-  document.querySelectorAll('spline-viewer').forEach((el, i) => {
-    result.spline.push({
-      index: i, url: el.getAttribute('url')?.slice(0, 300),
-      width: el.offsetWidth, height: el.offsetHeight,
-      loadingAnim: el.getAttribute('loading-anim')
-    });
-  });
-
-  // Fetch lottie JSON data if available
-  for (const item of result.lottie) {
-    if (item.src && item.src.endsWith('.json')) {
-      try {
-        const res = await fetch(item.src);
-        const data = await res.json();
-        item.animationData = { w: data.w, h: data.h, fr: data.fr, ip: data.ip,
-          op: data.op, layers: data.layers?.length, assets: data.assets?.length };
-      } catch(e) { item.fetchError = e.message; }
-    }
-  }
-
-  return result;
-}
-extractLottieRiveSpline();
-```
-
-Guardar en: `docs/pds/extraction/lottie-rive-spline.json`
-
-Si detecta Lottie: descargar el JSON de animacion a `public/animations/`.
-Si detecta Rive: descargar el .riv a `public/animations/`.
-Si detecta Spline: anotar URL para embed con `<spline-viewer>` o `@splinetool/react-spline`.
-
-### 1.2.1 extractScrollScrubTrace() -- BLOQUEANTE si hay video/canvas fullscreen
-
-Ejecutar en MCP-REF para cada pagina con video/canvas/media fullscreen o seccion
-sticky. Guardar en `docs/pds/extraction/scroll-scrub-trace-[pagina].json`.
-
-Este trace prueba si el video/canvas se controla por scroll. No basta detectar
-un `<video>`: hay que medir `currentTime`, rects, sticky wrappers y cambios de
-frame en scroll 0/10/25/50/75/100%.
-
-```javascript
-async function extractScrollScrubTrace() {
-  const wait = (ms = 250) => new Promise(r => setTimeout(r, ms));
-  const maxScroll = Math.max(1, document.documentElement.scrollHeight - innerHeight);
-  const sampleAt = async (pct) => {
-    scrollTo(0, maxScroll * pct);
-    await wait(500);
-    const videos = [...document.querySelectorAll('video')].map((v, i) => {
-      const rect = v.getBoundingClientRect();
-      const cs = getComputedStyle(v);
-      return {
-        index: i,
-        src: (v.currentSrc || v.src || '').slice(0, 260),
-        currentTime: Number(v.currentTime.toFixed(3)),
-        duration: Number((v.duration || 0).toFixed(3)),
-        paused: v.paused,
-        muted: v.muted,
-        autoplay: v.autoplay,
-        loop: v.loop,
-        rect: { x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) },
-        style: {
-          position: cs.position,
-          objectFit: cs.objectFit,
-          transform: cs.transform,
-          opacity: cs.opacity,
-          zIndex: cs.zIndex
-        },
-        wrapperChain: (() => {
-          const out = [];
-          let el = v.parentElement;
-          while (el && out.length < 8) {
-            const s = getComputedStyle(el);
-            const r = el.getBoundingClientRect();
-            out.push({
-              tag: el.tagName,
-              className: String(el.className || '').slice(0, 120),
-              position: s.position,
-              overflow: s.overflow,
-              height: s.height,
-              minHeight: s.minHeight,
-              transform: s.transform,
-              rect: { y: Math.round(r.y), height: Math.round(r.height) }
-            });
-            el = el.parentElement;
-          }
-          return out;
-        })()
-      };
-    });
-    const canvases = [...document.querySelectorAll('canvas')].map((c, i) => {
-      const rect = c.getBoundingClientRect();
-      const cs = getComputedStyle(c);
-      return {
-        index: i,
-        width: c.width,
-        height: c.height,
-        rect: { x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) },
-        style: { position: cs.position, transform: cs.transform, opacity: cs.opacity, zIndex: cs.zIndex }
-      };
-    });
-    return {
-      pct,
-      scrollY: Math.round(scrollY),
-      bodyHeight: document.documentElement.scrollHeight,
-      viewportHeight: innerHeight,
-      videos,
-      canvases
-    };
-  };
-  const samples = [];
-  for (const pct of [0, .1, .25, .5, .75, 1]) samples.push(await sampleAt(pct));
-  scrollTo(0, 0);
-  return {
-    url: location.href,
-    samples,
-    videoScrubDetected: samples.some((s, idx) => idx > 0 && s.videos.some((v, vi) => {
-      const first = samples[0].videos[vi];
-      return first && Math.abs(v.currentTime - first.currentTime) > 0.15;
-    })),
-    fullscreenMediaDetected: samples[0].videos.some(v => v.rect.width >= innerWidth * .8 && v.rect.height >= innerHeight * .8) ||
-      samples[0].canvases.some(c => c.rect.width >= innerWidth * .8 && c.rect.height >= innerHeight * .8)
-  };
-}
-extractScrollScrubTrace();
-```
-
-PASS para VIDEO_SCRUB:
-- `videoScrubDetected === true`
-- `currentTime` cambia monotonicamente con scroll en al menos 4 de 6 samples
-- el media mantiene geometria fullscreen/sticky equivalente al source
-- screenshots REF/TARGET en 0/25/50/75/100 muestran frames distintos y alineados
-
-### 1.3 extractDOMStructure()
-
-```javascript
-(function extractDOMStructure() {
-  const sections = [];
-  document.querySelectorAll(
-    'section, [class*="section"], [class*="hero"], [class*="feature"], [class*="block"], main > div, [class*="banner"], [class*="cta"], [class*="testimonial"], [class*="partner"], [class*="news"], [class*="footer"], header, footer, nav'
-  ).forEach((el, i) => {
-    const cs = getComputedStyle(el);
-    const children = [...el.children].map(c => {
-      const ccs = getComputedStyle(c);
-      return {
-        tag: c.tagName, classes: (c.className || '').slice(0,80),
-        display: ccs.display, position: ccs.position,
-        gridTemplate: ccs.gridTemplateColumns !== 'none' ? ccs.gridTemplateColumns : null,
-        flexDirection: ccs.display.includes('flex') ? ccs.flexDirection : null
-      };
-    }).slice(0, 15);
-
-    sections.push({
-      index: i, tag: el.tagName, id: el.id,
-      classes: (el.className || '').slice(0, 120),
-      rect: { width: el.offsetWidth, height: el.offsetHeight, top: el.getBoundingClientRect().top + window.scrollY },
-      styles: {
-        display: cs.display, position: cs.position, overflow: cs.overflow,
-        background: cs.background.slice(0,120), backgroundColor: cs.backgroundColor,
-        gridTemplateColumns: cs.gridTemplateColumns !== 'none' ? cs.gridTemplateColumns : null,
-        gridTemplateRows: cs.gridTemplateRows !== 'none' ? cs.gridTemplateRows : null,
-        flexDirection: cs.display.includes('flex') ? cs.flexDirection : null,
-        gap: cs.gap, padding: cs.padding, margin: cs.margin,
-        maxWidth: cs.maxWidth, minHeight: cs.minHeight
-      },
-      hasVideo: !!el.querySelector('video'),
-      hasCanvas: !!el.querySelector('canvas'),
-      hasSVG: !!el.querySelector('svg'),
-      children,
-      textSnippet: el.textContent?.trim().slice(0, 100)
-    });
-  });
-
-  // Nav behavior
-  const nav = document.querySelector('nav') || document.querySelector('header');
-  const navInfo = nav ? (() => {
-    const cs = getComputedStyle(nav);
-    return {
-      position: cs.position, top: cs.top, zIndex: cs.zIndex,
-      backgroundColor: cs.backgroundColor, backdropFilter: cs.backdropFilter,
-      transition: cs.transition, height: nav.offsetHeight,
-      isTransparent: cs.backgroundColor === 'rgba(0, 0, 0, 0)' || cs.backgroundColor === 'transparent',
-      isFixed: cs.position === 'fixed' || cs.position === 'sticky'
-    };
-  })() : null;
-
-  return { sections, navInfo, totalSections: sections.length, pageHeight: document.documentElement.scrollHeight, viewportHeight: window.innerHeight };
-})();
-```
-
-Guardar en: `docs/pds/extraction/structure.json`
-
-### 1.4 extractInteractions()
-
-Ejecutar en MCP-REF. Este script necesita simular hover via JS:
-
-```javascript
-(function extractInteractions() {
-  const result = { hoverEffects: [], focusEffects: [], navBehavior: null, mobileMenu: null };
-
-  // Capturar hover effects disparando mouseenter
-  const interactiveEls = document.querySelectorAll('a, button, [role="button"], [class*="card"], [class*="btn"], [class*="link"], nav a, input, textarea');
-  interactiveEls.forEach((el, i) => {
-    if (i > 40) return;
-    const before = getComputedStyle(el);
-    const beforeState = {
-      color: before.color, backgroundColor: before.backgroundColor,
-      transform: before.transform, opacity: before.opacity,
-      boxShadow: before.boxShadow, borderColor: before.borderColor,
-      textDecoration: before.textDecoration, scale: before.scale
-    };
-
-    el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
-    el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
-
-    requestAnimationFrame(() => {
-      const after = getComputedStyle(el);
-      const changes = {};
-      let hasChange = false;
-      Object.keys(beforeState).forEach(k => {
-        const afterVal = after[k];
-        if (beforeState[k] !== afterVal) { changes[k] = { from: beforeState[k], to: afterVal }; hasChange = true; }
-      });
-
-      if (hasChange) {
-        result.hoverEffects.push({
-          selector: el.tagName + (el.className ? '.' + (el.className.split(' ')[0] || '').slice(0,40) : ''),
-          transition: before.transition,
-          changes
-        });
-      }
-
-      el.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
-    });
-  });
-
-  // Mobile menu detection
-  const menuBtn = document.querySelector('[class*="menu"], [class*="hamburger"], [class*="burger"], [aria-label*="menu"], [class*="toggle-nav"]');
-  result.mobileMenu = menuBtn ? {
-    found: true,
-    selector: menuBtn.tagName + '.' + (menuBtn.className || '').split(' ')[0]?.slice(0,40),
-    ariaLabel: menuBtn.getAttribute('aria-label'),
-    ariaExpanded: menuBtn.getAttribute('aria-expanded')
-  } : { found: false };
-
-  return result;
-})();
-```
-
-Guardar en: `docs/pds/extraction/interactions.json`
-
-NOTA: Este script captura un snapshot parcial de hover. Para hover effects CSS-only
-(:hover pseudo-class), inspeccionar las stylesheet rules directamente tambien:
-
-```javascript
-(function extractHoverRules() {
-  const hoverRules = [];
-  for (const sheet of document.styleSheets) {
-    try {
-      for (const rule of sheet.cssRules) {
-        if (rule.selectorText && rule.selectorText.includes(':hover')) {
-          hoverRules.push({ selector: rule.selectorText, css: rule.cssText.slice(0, 300) });
-        }
-        if (rule.selectorText && (rule.selectorText.includes(':focus') || rule.selectorText.includes(':active'))) {
-          hoverRules.push({ selector: rule.selectorText, css: rule.cssText.slice(0, 300) });
-        }
-      }
-    } catch(e) {}
-  }
-  return hoverRules.slice(0, 50);
-})();
-```
-
-### 1.5 extractAssets()
-
-```javascript
-(function extractAssets() {
-  const base = window.location.origin;
-  const result = { images: [], videos: [], svgInline: [], svgExternal: [], fonts: [], backgroundImages: [], icons: [], preloads: [] };
-
-  // Images
-  document.querySelectorAll('img').forEach(img => {
-    result.images.push({
-      src: img.src?.slice(0, 300), srcset: img.srcset?.slice(0, 300),
-      alt: img.alt?.slice(0, 100), width: img.naturalWidth || img.width,
-      height: img.naturalHeight || img.height, loading: img.loading,
-      classes: (img.className || '').slice(0, 80),
-      parentSection: img.closest('section')?.className?.slice(0, 60) || img.closest('[class*="section"]')?.className?.slice(0, 60)
-    });
-  });
-
-  // <picture> sources
-  document.querySelectorAll('picture source').forEach(src => {
-    result.images.push({ src: src.srcset?.slice(0, 300), media: src.media, type: src.type, isPicture: true });
-  });
-
-  // Videos
-  document.querySelectorAll('video').forEach(v => {
-    const sources = [...v.querySelectorAll('source')].map(s => ({ src: s.src?.slice(0, 300), type: s.type }));
-    result.videos.push({
-      src: (v.src || v.currentSrc || '').slice(0, 300), sources,
-      poster: v.poster?.slice(0, 300), width: v.offsetWidth, height: v.offsetHeight,
-      muted: v.muted, autoplay: v.autoplay, loop: v.loop, playsInline: v.playsInline,
-      controls: v.controls
-    });
-  });
-
-  // Inline SVGs
-  document.querySelectorAll('svg').forEach((svg, i) => {
-    if (i > 30) return;
-    result.svgInline.push({
-      viewBox: svg.getAttribute('viewBox'), width: svg.getAttribute('width'),
-      height: svg.getAttribute('height'), classes: (svg.className?.baseVal || '').slice(0, 80),
-      pathCount: svg.querySelectorAll('path').length, outerHTML: svg.outerHTML.slice(0, 500),
-      role: svg.closest('a,button,nav') ? 'interactive' : svg.closest('h1,h2,h3,[class*="logo"]') ? 'logo' : 'decorative'
-    });
-  });
-
-  // Background images from CSS
-  document.querySelectorAll('*').forEach(el => {
-    const bg = getComputedStyle(el).backgroundImage;
-    if (bg && bg !== 'none' && bg.includes('url(')) {
-      const urls = bg.match(/url\(["']?([^"')]+)["']?\)/g);
-      if (urls) urls.forEach(u => {
-        const clean = u.replace(/url\(["']?|["']?\)/g, '');
-        result.backgroundImages.push({ url: clean.slice(0, 300), element: el.tagName + '.' + (el.className || '').split(' ')[0]?.slice(0, 40) });
-      });
-    }
-  });
-
-  // External fonts and preloads
-  document.querySelectorAll('link[rel="preload"], link[rel="prefetch"], link[as="font"], link[as="image"], link[as="video"]').forEach(l => {
-    result.preloads.push({ href: l.href?.slice(0, 300), as: l.getAttribute('as'), type: l.type, crossorigin: l.crossOrigin });
-  });
-
-  // Favicon and icons
-  document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"], link[rel="shortcut icon"]').forEach(l => {
-    result.icons.push({ href: l.href, rel: l.rel, sizes: l.sizes?.toString() });
-  });
-
-  // SVG sprites: <symbol> definitions and <use> references
-  result.svgSprites = [];
-  document.querySelectorAll('svg symbol').forEach(sym => {
-    result.svgSprites.push({ id: sym.id, viewBox: sym.getAttribute('viewBox'), parentSVG: sym.closest('svg')?.id || 'inline' });
-  });
-  result.svgUseRefs = [];
-  document.querySelectorAll('use[href],use[xlink\\:href]').forEach(use => {
-    const href = use.getAttribute('href') || use.getAttribute('xlink:href');
-    result.svgUseRefs.push({ href, parentClasses: (use.closest('svg')?.className?.baseVal || '').slice(0,80) });
-  });
-
-  // External SVGs referenced via <img src="*.svg"> or <object>
-  document.querySelectorAll('img[src$=".svg"],object[data$=".svg"],embed[src$=".svg"]').forEach(el => {
-    result.svgExternal.push({ src: (el.src || el.data || el.getAttribute('src') || '').slice(0, 300), width: el.offsetWidth, height: el.offsetHeight });
-  });
-
-  // Iframes and embeds (YouTube, Vimeo, Google Maps, Calendly, etc.)
-  result.iframes = [];
-  document.querySelectorAll('iframe').forEach(iframe => {
-    result.iframes.push({
-      src: (iframe.src || '').slice(0, 400),
-      title: iframe.title?.slice(0, 100),
-      width: iframe.offsetWidth, height: iframe.offsetHeight,
-      loading: iframe.loading, allow: iframe.allow?.slice(0, 200),
-      classes: (iframe.className || '').slice(0, 80),
-      parentSection: iframe.closest('section')?.className?.slice(0, 60) || iframe.parentElement?.className?.slice(0, 60),
-      type: iframe.src?.includes('youtube') ? 'youtube' : iframe.src?.includes('vimeo') ? 'vimeo' :
-            iframe.src?.includes('google.com/maps') ? 'google-maps' : iframe.src?.includes('calendly') ? 'calendly' :
-            iframe.src?.includes('hubspot') ? 'hubspot' : 'other'
-    });
-  });
-
-  return result;
-})();
-```
-
-Guardar en: `docs/pds/extraction/assets.json`
-
-### 1.5.1 Protocolo de descarga de assets a public/
-
-Despues de extractAssets, descargar TODOS los assets del source que se necesiten
-en el target. No hotlinkear URLs del source — pueden expirar, tener auth, o
-generar CORS errors.
-
-Script de descarga (ejecutar en terminal del target):
-
-```bash
-# Crear directorios
-mkdir -p public/images public/videos public/fonts public/animations public/svg
-
-# Descargar imagenes (extraer URLs de assets.json)
-# Para cada imagen en assets.json:
-curl -L -o "public/images/[nombre].[ext]" "[url]"
-
-# Descargar videos:
-curl -L -o "public/videos/[nombre].[ext]" "[url]"
-
-# Descargar fuentes (de fontFaces en design-tokens.json):
-curl -L -o "public/fonts/[nombre].[ext]" "[url]"
-
-# Descargar SVGs externos:
-curl -L -o "public/svg/[nombre].svg" "[url]"
-
-# Descargar Lottie JSONs:
-curl -L -o "public/animations/[nombre].json" "[url]"
-```
-
-Reglas de descarga:
-- Renombrar archivos a nombres descriptivos (no hashes)
-- Mantener extensiones originales
-- Si URL tiene query params (CDN), limpiarlos del nombre
-- Si URL es data: URI, decodificar y guardar
-- Si URL requiere auth/cookie: anotar en `docs/pds/assets-manual-download.md`
-- VERIFICAR que cada archivo descargado tiene size > 0
-- Actualizar las refs en el codigo del target a rutas `/images/`, `/videos/`, etc.
-
-### 1.6 extractThreeJSScene() — condicional
-
-Solo ejecutar si hay `<canvas>` con contexto WebGL detectado en extractAnimationSystem().
-
-```javascript
-(function extractThreeJSScene() {
-  if (!window.THREE && !window.__THREE__) return { detected: false };
-  const result = { detected: true, version: window.THREE?.REVISION || 'unknown', scenes: [] };
-
-  // Intentar acceder al renderer y scene
-  const canvases = document.querySelectorAll('canvas');
-  canvases.forEach((c, i) => {
-    const sceneData = { index: i, width: c.width, height: c.height };
-    // R3F store
-    const fiber = c.__r$;
-    if (fiber) {
-      const store = fiber?.memoizedState?.memoizedState?.queue?.lastRenderedState;
-      if (store) {
-        const state = typeof store === 'function' ? null : store;
-        if (state?.scene) {
-          sceneData.childCount = state.scene.children?.length;
-          sceneData.camera = state.camera ? {
-            type: state.camera.type, fov: state.camera.fov,
-            position: state.camera.position?.toArray(),
-            near: state.camera.near, far: state.camera.far
-          } : null;
-          sceneData.lights = state.scene.children?.filter(c => c.isLight).map(l => ({
-            type: l.type, color: l.color?.getHexString(), intensity: l.intensity,
-            position: l.position?.toArray()
-          }));
-          sceneData.meshes = state.scene.children?.filter(c => c.isMesh).map(m => ({
-            name: m.name, geometry: m.geometry?.type,
-            material: { type: m.material?.type, color: m.material?.color?.getHexString() },
-            position: m.position?.toArray(), scale: m.scale?.toArray()
-          })).slice(0, 20);
-        }
-      }
-    }
-    result.scenes.push(sceneData);
-  });
-
-  // Global scene references
-  ['scene','camera','renderer','controls'].forEach(name => {
-    if (window[name]) {
-      result[name + 'Global'] = {
-        type: window[name].constructor?.name,
-        exists: true
-      };
-    }
-  });
-
-  return result;
-})();
-```
-
-Guardar en: `docs/pds/extraction/three-scene.json`
-
-### 1.7 extractDarkMode()
-
-```javascript
-(function extractDarkMode() {
-  const result = { mechanism: 'none', tokens: { light: {}, dark: {} }, prefersColorScheme: false };
-
-  // Detect class-based dark mode
-  const hasDarkClass = document.documentElement.classList.contains('dark') || document.body.classList.contains('dark');
-  const hasDataTheme = document.documentElement.dataset.theme || document.body.dataset.theme;
-
-  // Check for prefers-color-scheme media rules
-  for (const sheet of document.styleSheets) {
-    try {
-      for (const rule of sheet.cssRules) {
-        if (rule instanceof CSSMediaRule) {
-          const mq = rule.conditionText || rule.media?.mediaText;
-          if (mq && mq.includes('prefers-color-scheme')) {
-            result.prefersColorScheme = true;
-            // Extract dark mode tokens
-            for (const inner of rule.cssRules) {
-              if (inner.selectorText === ':root' || inner.selectorText === 'html') {
-                const matches = inner.cssText.matchAll(/--([^:]+):\s*([^;]+)/g);
-                for (const m of matches) result.tokens.dark[`--${m[1].trim()}`] = m[2].trim();
-              }
-            }
-          }
-        }
-        // Class-based .dark tokens
-        if (rule.selectorText && (rule.selectorText === '.dark' || rule.selectorText.startsWith('.dark '))) {
-          const matches = rule.cssText.matchAll(/--([^:]+):\s*([^;]+)/g);
-          for (const m of matches) result.tokens.dark[`--${m[1].trim()}`] = m[2].trim();
-          result.mechanism = 'class';
-        }
-        // data-theme dark
-        if (rule.selectorText && rule.selectorText.includes('[data-theme="dark"]')) {
-          result.mechanism = 'data-attribute';
-        }
-      }
-    } catch(e) {}
-  }
-
-  if (result.mechanism === 'none' && result.prefersColorScheme) result.mechanism = 'media-query';
-  if (result.mechanism === 'none' && hasDarkClass) result.mechanism = 'class';
-  if (result.mechanism === 'none' && hasDataTheme) result.mechanism = 'data-attribute';
-
-  return result;
-})();
-```
-
-Guardar en: `docs/pds/extraction/dark-mode.json`
-
-### 1.8 extractDeepVisualFingerprint() — CADA elemento visible
-
-Este script captura TODAS las propiedades CSS relevantes de TODOS los
-elementos visibles en la pagina. Es la base para la comparacion pixel-perfect.
-
-```javascript
-(function extractDeepVisualFingerprint() {
-  const result = [];
-  const allEls = document.querySelectorAll('body *');
-  allEls.forEach((el, i) => {
-    const rect = el.getBoundingClientRect();
-    // Solo elementos visibles en el viewport o justo debajo
-    if (rect.width === 0 || rect.height === 0) return;
-    if (rect.top > window.innerHeight * 3) return;
-    if (i > 500) return; // limite para no sobrecargar
-    const cs = getComputedStyle(el);
-    result.push({
-      index: i,
-      tag: el.tagName,
-      id: el.id || null,
-      classes: (el.className || '').toString().slice(0, 120),
-      rect: { x: Math.round(rect.x), y: Math.round(rect.y), w: Math.round(rect.width), h: Math.round(rect.height) },
-      styles: {
-        // Tipografia
-        fontFamily: cs.fontFamily, fontSize: cs.fontSize, fontWeight: cs.fontWeight,
-        lineHeight: cs.lineHeight, letterSpacing: cs.letterSpacing, wordSpacing: cs.wordSpacing,
-        textTransform: cs.textTransform, textDecoration: cs.textDecoration,
-        textAlign: cs.textAlign, fontStyle: cs.fontStyle, whiteSpace: cs.whiteSpace,
-        textOverflow: cs.textOverflow, WebkitLineClamp: cs.WebkitLineClamp,
-        // Colores
-        color: cs.color, backgroundColor: cs.backgroundColor,
-        borderColor: cs.borderColor, outlineColor: cs.outlineColor,
-        // Box model
-        padding: cs.padding, margin: cs.margin, border: cs.border,
-        borderRadius: cs.borderRadius, borderWidth: cs.borderWidth,
-        borderStyle: cs.borderStyle,
-        // Layout
-        display: cs.display, position: cs.position, float: cs.float,
-        flexDirection: cs.flexDirection, justifyContent: cs.justifyContent,
-        alignItems: cs.alignItems, flexWrap: cs.flexWrap, flexGrow: cs.flexGrow,
-        gridTemplateColumns: cs.gridTemplateColumns !== 'none' ? cs.gridTemplateColumns : null,
-        gridTemplateRows: cs.gridTemplateRows !== 'none' ? cs.gridTemplateRows : null,
-        gap: cs.gap, rowGap: cs.rowGap, columnGap: cs.columnGap,
-        // Dimensiones
-        width: cs.width, height: cs.height, maxWidth: cs.maxWidth,
-        minHeight: cs.minHeight, aspectRatio: cs.aspectRatio,
-        // Visual
-        opacity: cs.opacity, visibility: cs.visibility, overflow: cs.overflow,
-        overflowX: cs.overflowX, overflowY: cs.overflowY,
-        boxShadow: cs.boxShadow !== 'none' ? cs.boxShadow : null,
-        backgroundImage: cs.backgroundImage !== 'none' ? cs.backgroundImage.slice(0, 150) : null,
-        backdropFilter: cs.backdropFilter !== 'none' ? cs.backdropFilter : null,
-        clipPath: cs.clipPath !== 'none' ? cs.clipPath : null,
-        objectFit: cs.objectFit, objectPosition: cs.objectPosition,
-        // Posicionamiento
-        top: cs.top, right: cs.right, bottom: cs.bottom, left: cs.left,
-        zIndex: cs.zIndex !== 'auto' ? cs.zIndex : null,
-        // Transform y animacion
-        transform: cs.transform !== 'none' ? cs.transform : null,
-        transformOrigin: cs.transformOrigin,
-        transition: cs.transition !== 'all 0s ease 0s' ? cs.transition : null,
-        animation: cs.animation !== 'none' ? cs.animationName : null,
-        willChange: cs.willChange !== 'auto' ? cs.willChange : null,
-        // Scroll
-        scrollSnapType: cs.scrollSnapType !== 'none' ? cs.scrollSnapType : null,
-        scrollSnapAlign: cs.scrollSnapAlign !== 'none' ? cs.scrollSnapAlign : null,
-        overscrollBehavior: cs.overscrollBehavior,
-        // Cursor
-        cursor: cs.cursor !== 'auto' ? cs.cursor : null,
-        pointerEvents: cs.pointerEvents !== 'auto' ? cs.pointerEvents : null,
-        // Filter
-        filter: cs.filter !== 'none' ? cs.filter : null,
-        mixBlendMode: cs.mixBlendMode !== 'normal' ? cs.mixBlendMode : null,
-        // CSS Motion Path
-        offsetPath: (cs.offsetPath && cs.offsetPath !== 'none') ? cs.offsetPath : null,
-        offsetDistance: cs.offsetDistance || null,
-        // Containment
-        contain: (cs.contain && cs.contain !== 'none') ? cs.contain : null,
-        contentVisibility: (cs.contentVisibility && cs.contentVisibility !== 'visible') ? cs.contentVisibility : null,
-        // Scroll anchoring
-        scrollMarginTop: (cs.scrollMarginTop && cs.scrollMarginTop !== '0px') ? cs.scrollMarginTop : null,
-        // Touch & interaction
-        touchAction: (cs.touchAction && cs.touchAction !== 'auto') ? cs.touchAction : null,
-        userSelect: (cs.userSelect && cs.userSelect !== 'auto') ? cs.userSelect : null,
-        // Text layout
-        writingMode: (cs.writingMode && cs.writingMode !== 'horizontal-tb') ? cs.writingMode : null,
-        textWrap: cs.textWrap || null,
-        // Image rendering
-        imageRendering: (cs.imageRendering && cs.imageRendering !== 'auto') ? cs.imageRendering : null,
-        // Variable fonts
-        fontVariationSettings: (cs.fontVariationSettings && cs.fontVariationSettings !== 'normal') ? cs.fontVariationSettings : null,
-        // Grid flow
-        gridAutoFlow: (cs.gridAutoFlow && cs.gridAutoFlow !== 'row') ? cs.gridAutoFlow : null,
-        // Container
-        containerType: (cs.containerType && cs.containerType !== 'normal') ? cs.containerType : null,
-        containerName: cs.containerName || null,
-        // Sizing with content-visibility
-        containIntrinsicSize: cs.containIntrinsicSize || cs.containIntrinsicBlockSize || null,
-      },
-      // Contenido especifico
-      isImg: el.tagName === 'IMG' ? { src: el.src?.slice(0,200), alt: el.alt, naturalW: el.naturalWidth, naturalH: el.naturalHeight, loading: el.loading } : null,
-      isVideo: el.tagName === 'VIDEO' ? { src: (el.src||el.currentSrc||'').slice(0,200), muted: el.muted, autoplay: el.autoplay, loop: el.loop, playsInline: el.playsInline } : null,
-      isSvg: el.tagName === 'svg' ? { viewBox: el.getAttribute('viewBox'), paths: el.querySelectorAll('path').length } : null,
-      textContent: el.childNodes.length === 1 && el.childNodes[0].nodeType === 3 ? el.textContent.trim().slice(0,80) : null
-    });
-  });
-  return { totalElements: result.length, elements: result };
-})();
-```
-
-Guardar en: `docs/pds/extraction/visual-fingerprint-[pagina].json`
-
-Ejecutar este script para CADA pagina. Usarlo durante la reconstruccion para
-verificar que CADA elemento del target tiene las MISMAS propiedades CSS que
-el source. Cualquier diferencia en cualquier propiedad es FAIL.
-
-### 1.9 extractAdvancedPatterns() — componentes interactivos
-
-```javascript
-(function extractAdvancedPatterns() {
-  const result = {
-    preloader: null, pageTransitions: false, scrollSnap: false,
-    marquee: [], tabs: [], accordions: [], carousels: [],
-    counters: [], textSplit: [], magneticElements: [],
-    customCursors: [], stickyElements: [], scrollIndicators: [],
-    parallaxLayers: [], staggeredGroups: []
-  };
-
-  // Preloader / splash screen
-  const preloader = document.querySelector('[class*="preload"],[class*="loader"],[class*="splash"],[class*="loading-screen"]');
-  if (preloader) result.preloader = { selector: preloader.className.slice(0,80), visible: preloader.offsetHeight > 0 };
-
-  // Page transitions (barba, swup, etc.)
-  if (window.barba || window.swup || document.querySelector('[data-barba]')) result.pageTransitions = true;
-
-  // Scroll snap containers
-  document.querySelectorAll('*').forEach(el => {
-    const ss = getComputedStyle(el).scrollSnapType;
-    if (ss && ss !== 'none') { result.scrollSnap = true; }
-  });
-
-  // Marquee / ticker
-  document.querySelectorAll('[class*="marquee"],[class*="ticker"],[class*="scroll-text"],[class*="infinite-scroll"]').forEach(el => {
-    result.marquee.push({ selector: el.className.slice(0,80), width: el.offsetWidth, children: el.children.length });
-  });
-
-  // Tabs
-  document.querySelectorAll('[role="tablist"],[class*="tab-list"],[class*="tabs"]').forEach(el => {
-    const tabs = el.querySelectorAll('[role="tab"],[class*="tab-btn"],[class*="tab-item"]');
-    result.tabs.push({ selector: el.className.slice(0,80), count: tabs.length, activeIndex: [...tabs].findIndex(t => t.classList.contains('active') || t.getAttribute('aria-selected') === 'true') });
-  });
-
-  // Accordions
-  document.querySelectorAll('[class*="accordion"],[class*="faq"],[class*="collapse"]').forEach(el => {
-    result.accordions.push({ selector: el.className.slice(0,80), items: el.querySelectorAll('[class*="item"],[class*="panel"]').length });
-  });
-
-  // Carousels / sliders
-  document.querySelectorAll('.swiper,[class*="carousel"],[class*="slider"],[class*="slick"]').forEach(el => {
-    result.carousels.push({
-      selector: el.className.slice(0,80), slides: el.querySelectorAll('[class*="slide"]').length,
-      hasDots: !!el.querySelector('[class*="dot"],[class*="pagination"]'),
-      hasArrows: !!el.querySelector('[class*="arrow"],[class*="prev"],[class*="next"]')
-    });
-  });
-
-  // Animated counters
-  document.querySelectorAll('[class*="counter"],[class*="stat"],[class*="number"],[class*="count"]').forEach(el => {
-    if (/^\d/.test(el.textContent.trim())) result.counters.push({ selector: el.className.slice(0,80), value: el.textContent.trim().slice(0,20) });
-  });
-
-  // Text split (letter-by-letter, word-by-word)
-  document.querySelectorAll('[class*="split"],[class*="char"],[class*="word-wrap"]').forEach(el => {
-    result.textSplit.push({ selector: el.className.slice(0,80), children: el.children.length });
-  });
-
-  // Custom cursors
-  const bodyCursor = getComputedStyle(document.body).cursor;
-  if (bodyCursor !== 'auto' && bodyCursor !== 'default') result.customCursors.push({ element: 'body', cursor: bodyCursor });
-  document.querySelectorAll('[class*="cursor"],[class*="follower"],[class*="dot-cursor"]').forEach(el => {
-    result.customCursors.push({ selector: el.className.slice(0,80), position: getComputedStyle(el).position });
-  });
-
-  // Sticky elements (not just nav)
-  document.querySelectorAll('*').forEach(el => {
-    const pos = getComputedStyle(el).position;
-    if (pos === 'sticky' && el.tagName !== 'NAV' && el.tagName !== 'HEADER') {
-      result.stickyElements.push({ tag: el.tagName, classes: el.className?.toString().slice(0,80), top: getComputedStyle(el).top });
-    }
-  });
-
-  // Scroll indicators (progress bar, arrows)
-  document.querySelectorAll('[class*="scroll-indicator"],[class*="progress-bar"],[class*="scroll-progress"],[class*="scroll-down"],[class*="scroll-arrow"]').forEach(el => {
-    result.scrollIndicators.push({ selector: el.className.slice(0,80), tag: el.tagName });
-  });
-
-  // Staggered animation groups
-  document.querySelectorAll('[class*="stagger"],[data-stagger]').forEach(el => {
-    result.staggeredGroups.push({ selector: el.className.slice(0,80), children: el.children.length });
-  });
-
-  // Native <dialog> and Popover API
-  result.dialogs = [];
-  document.querySelectorAll('dialog').forEach(el => {
-    result.dialogs.push({ id: el.id, open: el.open, classes: (el.className||'').slice(0,80), hasBackdrop: !!getComputedStyle(el, '::backdrop') });
-  });
-  result.popovers = [];
-  document.querySelectorAll('[popover],[popovertarget]').forEach(el => {
-    result.popovers.push({ tag: el.tagName, popover: el.getAttribute('popover'), target: el.getAttribute('popovertarget'), classes: (el.className||'').slice(0,80) });
-  });
-
-  // Grid subgrid and masonry
-  result.subgrids = [];
-  result.masonry = [];
-  document.querySelectorAll('*').forEach(el => {
-    const cs = getComputedStyle(el);
-    if (cs.gridTemplateColumns === 'subgrid' || cs.gridTemplateRows === 'subgrid') {
-      result.subgrids.push({ tag: el.tagName, classes: (el.className||'').toString().slice(0,80) });
-    }
-    if (cs.gridTemplateRows === 'masonry' || cs.gridTemplateColumns === 'masonry') {
-      result.masonry.push({ tag: el.tagName, classes: (el.className||'').toString().slice(0,80) });
-    }
-  });
-
-  // Anchor scroll behavior
-  result.scrollBehavior = getComputedStyle(document.documentElement).scrollBehavior;
-  result.anchorLinks = [];
-  document.querySelectorAll('a[href^="#"]').forEach(a => {
-    result.anchorLinks.push({ href: a.getAttribute('href'), text: a.textContent?.trim().slice(0,40) });
-  });
-
-  // Cookie banner / Consent modal
-  result.cookieBanner = null;
-  const cookieEl = document.querySelector('[class*="cookie"],[class*="consent"],[class*="gdpr"],[id*="cookie"],[id*="consent"]');
-  if (cookieEl) result.cookieBanner = { selector: (cookieEl.className||'').toString().slice(0,80), visible: cookieEl.offsetHeight > 0 };
-
-  // Stacking contexts (elements that create new ones beyond z-index)
-  result.stackingContexts = [];
-  document.querySelectorAll('*').forEach(el => {
-    const cs = getComputedStyle(el);
-    const creates = (cs.opacity !== '1' && cs.opacity !== '') ||
-      (cs.transform !== 'none' && cs.transform !== '') ||
-      (cs.filter !== 'none' && cs.filter !== '') ||
-      (cs.backdropFilter !== 'none' && cs.backdropFilter !== '') ||
-      cs.isolation === 'isolate' ||
-      (cs.mixBlendMode !== 'normal' && cs.mixBlendMode !== '') ||
-      cs.willChange === 'transform' || cs.willChange === 'opacity' ||
-      (cs.perspective !== 'none' && cs.perspective !== '') ||
-      cs.contain === 'paint' || cs.contain === 'layout' || cs.contain === 'strict';
-    if (creates && el.tagName !== 'HTML' && el.tagName !== 'BODY') {
-      result.stackingContexts.push({ tag: el.tagName, classes: (el.className||'').toString().slice(0,60), reason: cs.opacity !== '1' ? 'opacity' : cs.transform !== 'none' ? 'transform' : cs.filter !== 'none' ? 'filter' : 'other', zIndex: cs.zIndex });
-    }
-  });
-  result.stackingContexts = result.stackingContexts.slice(0, 30);
-
-  // Form controls styling
-  result.formControls = [];
-  document.querySelectorAll('select,input[type="checkbox"],input[type="radio"],input[type="range"],input[type="file"],input[type="date"],input[type="color"]').forEach(el => {
-    const cs = getComputedStyle(el);
-    result.formControls.push({ type: el.type, tag: el.tagName, classes: (el.className||'').slice(0,80),
-      appearance: cs.appearance || cs.webkitAppearance, accentColor: cs.accentColor,
-      width: cs.width, height: cs.height, borderRadius: cs.borderRadius, border: cs.border });
-  });
-
-  // <details>/<summary> native HTML disclosure
-  result.disclosureElements = [];
-  document.querySelectorAll('details').forEach(el => {
-    const summary = el.querySelector('summary');
-    result.disclosureElements.push({
-      open: el.open,
-      summaryText: summary?.textContent?.trim().slice(0, 60),
-      classes: (el.className||'').toString().slice(0,80),
-      summaryClasses: (summary?.className||'').toString().slice(0,80),
-      hasCustomMarker: !!el.querySelector('summary .icon, summary svg, summary [class*="arrow"], summary [class*="chevron"]')
-    });
-  });
-
-  return result;
-})();
-```
-
-Guardar en: `docs/pds/extraction/advanced-patterns.json`
-
-Cualquier patron detectado DEBE ser replicado en el target. Si el source tiene
-un marquee, el target tiene un marquee identico. Si el source tiene tabs, el
-target tiene tabs con la misma animacion de transicion.
-
-### 1.10 Narrativa de scroll (pseudo-video textual) — tramos de 5%
-
-Para CADA pagina en PAGE_MAPPING, generar narrativa textual detallada:
-
-1. Tomar screenshot MCP-REF a 0% scroll
-2. Scroll a 5%, screenshot, describir que cambio
-3. Repetir en 10%, 15%, 20%, 25%, 30%, 35%, 40%, 45%, 50%, 55%, 60%, 65%, 70%, 75%, 80%, 85%, 90%, 95%, 100%
-
-Scroll programatico para cada posicion:
-```javascript
-const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-window.scrollTo(0, maxScroll * 0.05); // 5%
-await new Promise(r => setTimeout(r, 800)); // esperar animaciones
-// tomar screenshot
-```
-
-Formato de narrativa (`docs/pds/extraction/scroll-narrative-[pagina].md`):
-
-```markdown
-# Scroll Narrative: [pagina]
-Pagina: [url]
-Altura total: [X]px
-Viewport: [Y]px
-Total secciones: [N]
-
-## 0% (0px)
-- Nav: posicion=fixed, background=transparent, logo=blanco, height=80px
-- Hero: video fullscreen pausado en frame 0 (currentTime=0.00)
-- H1: visible, opacity=1, transform=none, centrado
-- Scroll indicator: flecha abajo parpadeando, bottom=40px
-- Secciones visibles: solo hero
-
-## 5% ([X]px)
-- Nav: SIN CAMBIO
-- Hero video: currentTime=0.45s, frame muestra [descripcion]
-- H1: opacity empieza a bajar (0.95), translateY=-5px
-- Background parallax: movido 3px arriba
-
-## 10% ([X]px)
-- Nav: transicion INICIADA, background rgba(255,255,255,0.3)
-- Hero video: currentTime=0.91s
-- H1: opacity=0.7, translateY=-15px
-- Seccion 2: top edge visible en bottom del viewport
-[...]
-
-## 100% ([X]px)
-- Footer completamente visible
-- Nav: background solido, logo oscuro
-- Todas las secciones han terminado sus animaciones
-- Elementos con reveal: todos visible, opacity=1
-```
-
-Incluir para CADA posicion:
-- Estado de la nav (color, transparencia, logo, height)
-- Estado del video/canvas (currentTime, frame visual)
-- Estado de CADA seccion visible (opacity, transform, posicion)
-- Animaciones activas en ese punto (que se mueve, hacia donde)
-- Elementos que aparecen/desaparecen
-- Parallax layers (posicion relativa)
-- Pin states (que esta fijo, que no)
-
-Esta narrativa es el "video de referencia" para la reconstruccion.
-
-### 1.11 extractFullCSSRules() — TODAS las reglas CSS
-
-Extrae TODAS las reglas CSS del source (hover, focus, active, media queries,
-selectores complejos). No solo computed styles — las REGLAS reales.
-
-```javascript
-(function extractFullCSSRules() {
-  const result = { hover: [], focus: [], active: [], mediaQueries: [], transforms: [], animations: [], important: [] };
-  for (const sheet of document.styleSheets) {
-    try {
-      const processRules = (rules) => {
-        for (const rule of rules) {
-          if (rule instanceof CSSMediaRule) {
-            const mq = rule.conditionText || rule.media?.mediaText;
-            const innerRules = [];
-            for (const inner of rule.cssRules) {
-              innerRules.push({ selector: inner.selectorText, css: inner.cssText.slice(0, 400) });
-            }
-            result.mediaQueries.push({ query: mq, rules: innerRules.slice(0, 30) });
-            continue;
-          }
-          if (!rule.selectorText) continue;
-          const sel = rule.selectorText;
-          const css = rule.cssText.slice(0, 400);
-          if (sel.includes(':hover')) result.hover.push({ selector: sel, css });
-          if (sel.includes(':focus')) result.focus.push({ selector: sel, css });
-          if (sel.includes(':active')) result.active.push({ selector: sel, css });
-          if (css.includes('transform') || css.includes('translate') || css.includes('scale') || css.includes('rotate')) {
-            result.transforms.push({ selector: sel, css });
-          }
-          if (css.includes('animation') || css.includes('transition')) {
-            result.animations.push({ selector: sel, css });
-          }
-          // CSS nesting detection
-          if (css.includes('&') || css.includes('> ') || css.includes('+ ')) {
-            result.nestedRules = result.nestedRules || [];
-            result.nestedRules.push({ selector: sel, css });
-          }
-          // scroll-timeline / view-timeline / animation-timeline
-          if (css.includes('scroll-timeline') || css.includes('view-timeline') || css.includes('animation-timeline') || css.includes('animation-range')) {
-            result.scrollDrivenCSS = result.scrollDrivenCSS || [];
-            result.scrollDrivenCSS.push({ selector: sel, css });
-          }
-          // view-transition-name
-          if (css.includes('view-transition-name')) {
-            result.viewTransitionCSS = result.viewTransitionCSS || [];
-            result.viewTransitionCSS.push({ selector: sel, css });
-          }
-          // ::before / ::after / ::selection / ::placeholder / ::marker / scrollbar pseudo-elements
-          if (sel.includes('::before') || sel.includes('::after') || sel.includes('::selection') ||
-              sel.includes('::placeholder') || sel.includes('::marker') ||
-              sel.includes('::-webkit-scrollbar') || sel.includes('scrollbar')) {
-            result.pseudoElementRules = result.pseudoElementRules || [];
-            result.pseudoElementRules.push({ selector: sel, css });
-          }
-          // offset-path / offset-distance (CSS Motion Path)
-          if (css.includes('offset-path') || css.includes('offset-distance') || css.includes('offset-rotate')) {
-            result.motionPathRules = result.motionPathRules || [];
-            result.motionPathRules.push({ selector: sel, css });
-          }
-          // scroll-margin / scroll-padding (anchor scroll with sticky headers)
-          if (css.includes('scroll-margin') || css.includes('scroll-padding')) {
-            result.scrollMarginRules = result.scrollMarginRules || [];
-            result.scrollMarginRules.push({ selector: sel, css });
-          }
-        }
-      };
-      // @supports rules
-      const processSupportsRules = (rules) => {
-        for (const rule of rules) {
-          if (rule instanceof CSSSupportsRule) {
-            result.supportsRules = result.supportsRules || [];
-            const innerRules = [];
-            for (const inner of rule.cssRules) {
-              innerRules.push({ selector: inner.selectorText, css: inner.cssText.slice(0, 400) });
-            }
-            result.supportsRules.push({ condition: rule.conditionText, rules: innerRules.slice(0, 20) });
-          }
-          // @property
-          if (rule instanceof CSSPropertyRule || rule.cssText?.startsWith('@property')) {
-            result.propertyRules = result.propertyRules || [];
-            result.propertyRules.push({ css: rule.cssText.slice(0, 400) });
-          }
-        }
-      };
-      // Container queries
-      const processContainerRules = (rules) => {
-        for (const rule of rules) {
-          if (rule instanceof CSSContainerRule || rule.cssText?.startsWith('@container')) {
-            result.containerQueries = result.containerQueries || [];
-            const innerRules = [];
-            if (rule.cssRules) for (const inner of rule.cssRules) {
-              innerRules.push({ selector: inner.selectorText, css: inner.cssText.slice(0, 400) });
-            }
-            result.containerQueries.push({ name: rule.containerName, query: rule.conditionText, rules: innerRules.slice(0, 15) });
-          }
-          // @layer
-          if (rule instanceof CSSLayerBlockRule || rule.cssText?.startsWith('@layer')) {
-            result.layers = result.layers || [];
-            result.layers.push({ name: rule.name, ruleCount: rule.cssRules?.length || 0 });
-          }
-          // Recurse into nested rules
-          if (rule.cssRules) processContainerRules(rule.cssRules);
-        }
-      };
-      processRules(sheet.cssRules);
-      processContainerRules(sheet.cssRules);
-      processSupportsRules(sheet.cssRules);
-    } catch(e) {}
-  }
-  // Limitar para no sobrecargar
-  Object.keys(result).forEach(k => { if (Array.isArray(result[k])) result[k] = result[k].slice(0, 80); });
-  return result;
-})();
-```
-
-Guardar en: `docs/pds/extraction/css-rules.json`
-
-Usar estas reglas para replicar EXACTAMENTE los hover, focus y active states.
-No adivinar — copiar las reglas CSS reales del source.
-
-### 1.12 extractScrollSnapshot() — screenshot automatizado por scroll
-
-Script para capturar datos automaticamente en CADA posicion de scroll (5%):
-
-```javascript
-async function extractScrollSnapshot() {
-  const wait = (ms) => new Promise(r => setTimeout(r, ms));
-  const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-  const snapshots = [];
-
-  for (let pct = 0; pct <= 100; pct += 5) {
-    window.scrollTo(0, maxScroll * (pct / 100));
-    await wait(600);
-
-    const nav = document.querySelector('nav') || document.querySelector('header');
-    const navCS = nav ? getComputedStyle(nav) : null;
-
-    const videos = [...document.querySelectorAll('video')].map(v => ({
-      currentTime: Number(v.currentTime.toFixed(3)),
-      paused: v.paused,
-      rect: (() => { const r = v.getBoundingClientRect(); return { y: Math.round(r.y), h: Math.round(r.height) }; })()
-    }));
-
-    // Elementos visibles en viewport
-    const visibleSections = [...document.querySelectorAll('section,[class*="section"],[class*="hero"],main>div')].filter(el => {
-      const r = el.getBoundingClientRect();
-      return r.bottom > 0 && r.top < window.innerHeight;
-    }).map(el => ({
-      classes: (el.className||'').toString().slice(0,60),
-      opacity: getComputedStyle(el).opacity,
-      transform: getComputedStyle(el).transform,
-      top: Math.round(el.getBoundingClientRect().top)
-    }));
-
-    // Sticky/pinned elements
-    const pinnedEls = [...document.querySelectorAll('*')].filter(el => {
-      const cs = getComputedStyle(el);
-      return (cs.position === 'fixed' || cs.position === 'sticky') && el.offsetHeight > 0;
-    }).map(el => ({
-      tag: el.tagName, classes: (el.className||'').toString().slice(0,40),
-      top: Math.round(el.getBoundingClientRect().top)
-    })).slice(0, 10);
-
-    snapshots.push({
-      pct,
-      scrollY: Math.round(window.scrollY),
-      nav: navCS ? {
-        bg: navCS.backgroundColor, opacity: navCS.opacity,
-        backdropFilter: navCS.backdropFilter, transform: navCS.transform
-      } : null,
-      videos,
-      visibleSections,
-      pinnedEls,
-      activeAnimations: document.getAnimations ? document.getAnimations().length : null
-    });
-  }
-
-  window.scrollTo(0, 0);
-  return { url: location.href, totalSnapshots: snapshots.length, snapshots };
-}
-extractScrollSnapshot();
-```
-
-Guardar en: `docs/pds/extraction/scroll-snapshots-[pagina].json`
-
-Ejecutar TAMBIEN en MCP-TARGET despues de la reconstruccion. Comparar los
-dos JSONs: los snapshots del source y del target deben ser IDENTICOS en:
-- nav background/opacity en cada posicion
-- video currentTime en cada posicion
-- secciones visibles y sus opacity/transform
-- elementos pinned y su posicion
-- numero de animaciones activas
-
-### 1.13 ANIMATION_MANIFEST.md — BLOQUEANTE
-
-Crear en raiz del target. Una fila por efecto de animacion detectado.
-MANIFEST_TOTAL = numero total de efectos.
-
-Tipos validos (usar el que corresponda segun `detectAnimationImplementation()` §1.16):
-- Library-based: GSAP_TWEEN, GSAP_SCROLLTRIGGER, GSAP_TIMELINE, GSAP_SPLITTEXT,
-  LENIS_INIT, LENIS_CB, FRAMER_MOTION, THREE_ANIMATION, LOTTIE, LOTTIE_DOTLOTTIE,
-  RIVE_ANIMATION, SPLINE_SCENE
-- Native JS: NATIVE_RAF_VIDEO_SCRUB, NATIVE_RAF_PARALLAX, INTERSECTION_OBS,
-  RAF_LOOP, SCROLL_LISTENER, WEB_ANIMATION_API
-- CSS-only: CSS_KEYFRAME, CSS_TRANSITION, CSS_MODULE_ANIMATION, CSS_IO_REVEAL,
-  CSS_SCROLL_TIMELINE, CSS_VIEW_TIMELINE, CSS_MOTION_PATH, CSS_PROPERTY_ANIM,
-  PSEUDO_ELEMENT_ANIM, SCROLL_DRIVEN_ANIMATION
-- Pattern: VIDEO_SCRUB, CANVAS_SCROLL, MARQUEE, TAB_SWITCH, ACCORDION, CAROUSEL,
-  COUNTER_ANIM, TEXT_SPLIT, MAGNETIC_HOVER, CUSTOM_CURSOR, SCROLL_SNAP,
-  PARALLAX_LAYER, STAGGER_GROUP, PRELOADER, PAGE_TRANSITION, SCROLL_INDICATOR,
-  STICKY_ELEMENT, CLIP_PATH_ANIM, BACKDROP_BLUR, VIEW_TRANSITION,
-  NATIVE_DIALOG, POPOVER_API, ANCHOR_POSITIONING, GRID_SUBGRID,
-  CONTAINER_QUERY_ANIM, DETAILS_SUMMARY, CUSTOM_SCROLLBAR, DATA_ATTR
-
-**REGLA**: El tipo en el manifest debe reflejar COMO el source lo implementa,
-no como el target lo reimplementa. Si el source usa RAF nativo para video scrub,
-el tipo es NATIVE_RAF_VIDEO_SCRUB, no GSAP_SCROLLTRIGGER.
-
-```markdown
-| ☐ | ID | Pagina | Tipo | Valor exacto | Trigger | Comportamiento |
-|---|---|---|---|---|---|---|
-| ☐ | A001 | / | CSS_IO_REVEAL | opacity 0→1, translateY 20px→0 | IntersectionObserver threshold:0.2 | fade-up reveal on scroll |
-| ☐ | A002 | / | NATIVE_RAF_VIDEO_SCRUB | hero video 0-20.087s over 33% page | scroll 0-33% | video currentTime tracks scroll |
-| ☐ | A003 | / | CSS_MODULE_ANIMATION | fadeIn 0.6s ease | page-load | title fade in |
-```
-
-### 1.14 extractAccessibility()
-
-Ejecutar en MCP-REF. Extraer atributos de accesibilidad que deben preservarse.
-
-```javascript
-(function extractAccessibility() {
-  const result = { lang: document.documentElement.lang, dir: document.documentElement.dir || 'ltr',
-    skipLinks: [], landmarks: [], ariaLabels: [], tabOrder: [], focusTraps: [], liveRegions: [] };
-
-  // Skip links
-  document.querySelectorAll('a[href^="#"]').forEach(a => {
-    if (a.textContent?.toLowerCase().includes('skip') || a.className?.toString().includes('skip') || a.className?.toString().includes('sr-only')) {
-      result.skipLinks.push({ href: a.getAttribute('href'), text: a.textContent.trim().slice(0,60), classes: (a.className||'').toString().slice(0,80) });
-    }
-  });
-
-  // Landmarks
-  document.querySelectorAll('[role="banner"],[role="navigation"],[role="main"],[role="contentinfo"],[role="complementary"],[role="search"],[role="form"],nav,main,aside,header,footer').forEach(el => {
-    result.landmarks.push({ tag: el.tagName, role: el.getAttribute('role'), ariaLabel: el.getAttribute('aria-label')?.slice(0,60) });
-  });
-
-  // ARIA labels on interactive elements
-  document.querySelectorAll('[aria-label],[aria-labelledby],[aria-describedby],[aria-expanded],[aria-hidden],[aria-live],[aria-controls]').forEach(el => {
-    result.ariaLabels.push({
-      tag: el.tagName, classes: (el.className||'').toString().slice(0,60),
-      ariaLabel: el.getAttribute('aria-label')?.slice(0,80),
-      ariaLabelledby: el.getAttribute('aria-labelledby'),
-      ariaDescribedby: el.getAttribute('aria-describedby'),
-      ariaExpanded: el.getAttribute('aria-expanded'),
-      ariaHidden: el.getAttribute('aria-hidden'),
-      ariaLive: el.getAttribute('aria-live'),
-      ariaControls: el.getAttribute('aria-controls'),
-      role: el.getAttribute('role')
-    });
-  });
-
-  // Tab order
-  document.querySelectorAll('[tabindex]').forEach(el => {
-    result.tabOrder.push({ tag: el.tagName, tabindex: el.tabIndex, classes: (el.className||'').toString().slice(0,60) });
-  });
-
-  // Focus traps (elements with tabindex and aria attributes suggesting modal/dialog)
-  document.querySelectorAll('[role="dialog"],[role="alertdialog"],dialog,[aria-modal="true"]').forEach(el => {
-    result.focusTraps.push({ tag: el.tagName, role: el.getAttribute('role'), classes: (el.className||'').toString().slice(0,60) });
-  });
-
-  // Live regions
-  document.querySelectorAll('[aria-live],[role="alert"],[role="status"],[role="log"],[role="timer"]').forEach(el => {
-    result.liveRegions.push({ tag: el.tagName, ariaLive: el.getAttribute('aria-live'), role: el.getAttribute('role') });
-  });
-
-  // prefers-reduced-motion: check if source respects it
-  result.reducedMotionSupport = false;
-  for (const sheet of document.styleSheets) {
-    try {
-      for (const rule of sheet.cssRules) {
-        if (rule instanceof CSSMediaRule && (rule.conditionText || '').includes('prefers-reduced-motion')) {
-          result.reducedMotionSupport = true;
-          break;
-        }
-      }
-    } catch(e) {}
-  }
-
-  return result;
-})();
-```
-
-Guardar en: `docs/pds/extraction/accessibility.json`
-
-Reglas de accesibilidad:
-- Si el source tiene `prefers-reduced-motion` media queries, REPLICAR en target
-- Si el source tiene skip links, INCLUIR en target
-- ARIA labels del source se preservan, adaptando texto al target
-- `lang` y `dir` se copian del source al root del target
-- Si el source tiene focus traps en modales, REPLICAR la misma logica
-
-### 1.15 recordScrollBehavior() — GRABACION DE COMPORTAMIENTO EN TIEMPO REAL — BLOQUEANTE
-
-Este es el script MAS IMPORTANTE de toda la extraccion. NO se basa en screenshots.
-Graba programaticamente el estado computado REAL de CADA elemento en CADA posicion
-de scroll. Es la fuente de verdad contra la que el target se verifica.
-
-Ejecutar en MCP-REF para CADA pagina:
-
-```javascript
-async function recordScrollBehavior() {
-  const wait = ms => new Promise(r => setTimeout(r, ms));
-  const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-  const recording = { url: location.href, totalHeight: document.documentElement.scrollHeight,
-    viewportHeight: window.innerHeight, viewportWidth: window.innerWidth, frames: [] };
-
-  // Selectors for ALL elements we need to track
-  const trackedSelectors = 'nav,header,footer,section,[class*="section"],[class*="Section"],'+
-    '[class*="hero"],[class*="Hero"],video,canvas,h1,h2,h3,'+
-    '[class*="card"],[class*="Card"],[class*="partner"],[class*="Partner"],'+
-    '[class*="news"],[class*="News"],[class*="footer"],[class*="Footer"],'+
-    '[class*="nav"],[class*="Nav"],[class*="logo"],[class*="Logo"],'+
-    '[class*="btn"],[class*="button"],[class*="cta"],'+
-    '[class*="reveal"],[class*="fade"],[class*="animate"],'+
-    '[class*="scroll"],[class*="Scroll"],[class*="sticky"],[class*="pin"],'+
-    '[class*="parallax"],[class*="wrapper"],[class*="Wrapper"],'+
-    'img[class],svg[class],a[class],button';
-
-  for (let pct = 0; pct <= 100; pct += 5) {
-    window.scrollTo(0, maxScroll * (pct / 100));
-    await wait(500); // let animations settle
-
-    const frame = { pct, scrollY: Math.round(window.scrollY), elements: [] };
-
-    // Capture state of ALL tracked elements
-    document.querySelectorAll(trackedSelectors).forEach((el, i) => {
-      if (i > 200) return;
-      const rect = el.getBoundingClientRect();
-      // Skip elements completely above or far below viewport
-      if (rect.bottom < -500 || rect.top > window.innerHeight + 500) return;
-      const cs = getComputedStyle(el);
-      const state = {
-        index: i,
-        tag: el.tagName,
-        classes: (el.className || '').toString().slice(0, 100),
-        // Position in viewport (critical for comparison)
-        rect: { x: Math.round(rect.x), y: Math.round(rect.y),
-                w: Math.round(rect.width), h: Math.round(rect.height) },
-        // Visual state
-        opacity: cs.opacity,
-        transform: cs.transform,
-        backgroundColor: cs.backgroundColor,
-        color: cs.color,
-        position: cs.position,
-        zIndex: cs.zIndex,
-        // Visibility
-        visibility: cs.visibility,
-        display: cs.display,
-        clipPath: cs.clipPath !== 'none' ? cs.clipPath : null,
-        overflow: cs.overflow,
-        // For sticky/fixed elements
-        top: cs.position === 'fixed' || cs.position === 'sticky' ? cs.top : null,
-        // Backdrop
-        backdropFilter: cs.backdropFilter !== 'none' ? cs.backdropFilter : null,
-        // Transition in progress
-        willChange: cs.willChange !== 'auto' ? cs.willChange : null
-      };
-
-      // Special: video state
-      if (el.tagName === 'VIDEO') {
-        state.videoCurrentTime = Number(el.currentTime.toFixed(3));
-        state.videoPaused = el.paused;
-        state.videoDuration = Number((el.duration || 0).toFixed(3));
-      }
-
-      // Special: canvas
-      if (el.tagName === 'CANVAS') {
-        state.canvasWidth = el.width;
-        state.canvasHeight = el.height;
-      }
-
-      frame.elements.push(state);
-    });
-
-    // Capture active CSS/Web animations
-    frame.activeAnimations = (document.getAnimations?.() || []).filter(a =>
-      a.playState === 'running' || a.playState === 'paused'
-    ).length;
-
-    // Capture pinned elements specifically
-    frame.pinnedElements = [...document.querySelectorAll('*')].filter(el => {
-      const cs = getComputedStyle(el);
-      return (cs.position === 'fixed' || cs.position === 'sticky') &&
-             el.offsetHeight > 20 && el.offsetWidth > 20;
-    }).map(el => ({
-      tag: el.tagName,
-      classes: (el.className||'').toString().slice(0,60),
-      rect: { y: Math.round(el.getBoundingClientRect().y), h: el.offsetHeight }
-    })).slice(0, 15);
-
-    recording.frames.push(frame);
-  }
-
-  // ALSO record scroll from 100% back to 0% (detect hysteresis in animations)
-  recording.returnFrames = [];
-  for (let pct = 95; pct >= 0; pct -= 5) {
-    window.scrollTo(0, maxScroll * (pct / 100));
-    await wait(400);
-    const video = document.querySelector('video');
-    recording.returnFrames.push({
-      pct,
-      scrollY: Math.round(window.scrollY),
-      videoTime: video ? Number(video.currentTime.toFixed(3)) : null,
-      activeAnimations: (document.getAnimations?.() || []).filter(a => a.playState === 'running').length
-    });
-  }
-
-  window.scrollTo(0, 0);
-  return recording;
-}
-recordScrollBehavior();
-```
-
-Guardar en: `docs/pds/extraction/scroll-behavior-[pagina].json`
-
-Este recording se ejecuta TAMBIEN en MCP-TARGET despues de la reconstruccion,
-y se compara con `compareScrollBehavior()` (§4.4.6). AMBOS deben coincidir.
-
-STOP CONDITION: Si este script no se ejecuto para una pagina, esa pagina
-NO puede marcarse como completa.
-
-### 1.16 detectAnimationImplementation() — COMO lo hace el source — BLOQUEANTE
-
-Este script detecta la IMPLEMENTACION real de las animaciones, no solo su existencia.
-Es critico para saber SI debemos usar GSAP, Lenis, CSS puro, o RAF manual.
-
-```javascript
-(function detectAnimationImplementation() {
-  const result = {
-    implementation: {
-      scrollHandler: 'NONE', // 'GSAP_SCROLLTRIGGER' | 'LENIS' | 'NATIVE_RAF' | 'NATIVE_SCROLL_LISTENER' | 'CSS_SCROLL_TIMELINE' | 'NONE'
-      revealSystem: 'NONE',  // 'GSAP_TWEEN' | 'FRAMER_MOTION' | 'CSS_IO' | 'AOS' | 'LOCOMOTIVE' | 'NONE'
-      smoothScroll: 'NONE',  // 'LENIS' | 'LOCOMOTIVE' | 'NATIVE_SCROLL_BEHAVIOR' | 'NONE'
-      videoScrub: 'NONE',    // 'GSAP_SCROLLTRIGGER' | 'NATIVE_RAF' | 'NATIVE_SCROLL' | 'NONE'
-      pageTransition: 'NONE' // 'BARBA' | 'SWUP' | 'VIEW_TRANSITIONS' | 'FRAMER_MOTION' | 'NONE'
-    },
-    evidence: {}
-  };
-
-  // 1. Detect scroll handler implementation
-  if (window.ScrollTrigger && ScrollTrigger.getAll().length > 0) {
-    result.implementation.scrollHandler = 'GSAP_SCROLLTRIGGER';
-    result.evidence.scrollHandler = 'ScrollTrigger.getAll() returned ' + ScrollTrigger.getAll().length + ' instances';
-  } else if (window.__lenis || window.lenis) {
-    result.implementation.scrollHandler = 'LENIS';
-    result.evidence.scrollHandler = 'Lenis instance detected on window';
-  } else {
-    // Check for CSS scroll-timeline
-    let hasScrollTimeline = false;
-    document.querySelectorAll('*').forEach(el => {
-      const cs = getComputedStyle(el);
-      if ((cs.animationTimeline && cs.animationTimeline !== 'auto') ||
-          (cs.scrollTimeline && cs.scrollTimeline !== 'none')) {
-        hasScrollTimeline = true;
-      }
-    });
-    if (hasScrollTimeline) {
-      result.implementation.scrollHandler = 'CSS_SCROLL_TIMELINE';
-      result.evidence.scrollHandler = 'CSS scroll-timeline detected on elements';
-    } else {
-      // It's either native RAF or scroll listener - both are "native"
-      result.implementation.scrollHandler = 'NATIVE_SCROLL_OR_RAF';
-      result.evidence.scrollHandler = 'No external library detected; source uses native scroll/RAF handlers';
-    }
-  }
-
-  // 2. Detect reveal system
-  if (window.gsap && window.ScrollTrigger) {
-    result.implementation.revealSystem = 'GSAP_SCROLLTRIGGER';
-  } else if (document.querySelector('[data-framer-appear-id]')) {
-    result.implementation.revealSystem = 'FRAMER_MOTION';
-  } else if (document.querySelector('[data-aos]')) {
-    result.implementation.revealSystem = 'AOS';
-  } else if (document.querySelector('[data-scroll]')) {
-    result.implementation.revealSystem = 'LOCOMOTIVE';
-  } else {
-    // Check for CSS class-based reveals (most common pattern)
-    const hasRevealClasses = document.querySelectorAll('[class*="reveal"],[class*="fade"],[class*="animate"],[class*="Entry"],[class*="appear"],[class*="visible"]').length;
-    if (hasRevealClasses > 0) {
-      result.implementation.revealSystem = 'CSS_INTERSECTION_OBSERVER';
-      result.evidence.revealSystem = hasRevealClasses + ' elements with reveal/fade/animate classes (CSS + IntersectionObserver pattern)';
-    }
-  }
-
-  // 3. Detect smooth scroll
-  if (window.__lenis || window.lenis) {
-    result.implementation.smoothScroll = 'LENIS';
-  } else if (document.querySelector('[data-scroll-container]')) {
-    result.implementation.smoothScroll = 'LOCOMOTIVE';
-  } else if (getComputedStyle(document.documentElement).scrollBehavior === 'smooth') {
-    result.implementation.smoothScroll = 'NATIVE_SCROLL_BEHAVIOR';
-  }
-
-  // 4. Detect video scrub implementation
-  const videos = document.querySelectorAll('video');
-  if (videos.length > 0) {
-    const hasGSAPVideoScrub = window.ScrollTrigger && ScrollTrigger.getAll().some(st => {
-      return st.animation?._targets?.some(t => t instanceof HTMLVideoElement);
-    });
-    if (hasGSAPVideoScrub) {
-      result.implementation.videoScrub = 'GSAP_SCROLLTRIGGER';
-    } else {
-      // Default: the source is using native RAF or scroll listener for video scrub
-      result.implementation.videoScrub = 'NATIVE_RAF_OR_SCROLL';
-      result.evidence.videoScrub = 'Video detected but no GSAP ScrollTrigger targets video; source uses native scroll/RAF handler';
-    }
-  }
-
-  // 5. Page transitions
-  if (window.barba) result.implementation.pageTransition = 'BARBA';
-  else if (window.swup) result.implementation.pageTransition = 'SWUP';
-  else if (document.startViewTransition) result.implementation.pageTransition = 'VIEW_TRANSITIONS';
-
-  // 6. CSS Module detection (hashed class names)
-  result.usesCSSModules = false;
-  result.cssModulePatterns = [];
-  document.querySelectorAll('[class]').forEach((el, i) => {
-    if (i > 50) return;
-    const classes = (el.className || '').toString();
-    // CSS Modules pattern: __hash (e.g., "module-scss-module__hash__className")
-    if (classes.match(/__[A-Za-z0-9]{5,}/)) {
-      result.usesCSSModules = true;
-      if (result.cssModulePatterns.length < 5) {
-        result.cssModulePatterns.push(classes.slice(0, 80));
-      }
-    }
-  });
-
-  // 7. Summary: what the target should use
-  result.targetShouldUse = {
-    gsap: result.implementation.scrollHandler === 'GSAP_SCROLLTRIGGER' ||
-          result.implementation.revealSystem === 'GSAP_SCROLLTRIGGER',
-    lenis: result.implementation.smoothScroll === 'LENIS',
-    framerMotion: result.implementation.revealSystem === 'FRAMER_MOTION',
-    nativeScrollHandler: result.implementation.scrollHandler === 'NATIVE_SCROLL_OR_RAF',
-    cssKeyframesForReveals: result.implementation.revealSystem === 'CSS_INTERSECTION_OBSERVER',
-    nativeVideoScrub: result.implementation.videoScrub === 'NATIVE_RAF_OR_SCROLL'
-  };
-
-  return result;
-})();
-```
-
-Guardar en: `docs/pds/extraction/animation-implementation.json`
-
-**REGLA CRITICA**: El resultado de este script DECIDE que librerias instalar y
-que patrones usar en FASE 3. Si `targetShouldUse.gsap === false`, NO instalar
-GSAP. Si `targetShouldUse.nativeScrollHandler === true`, implementar con
-`addEventListener('scroll')` + RAF, NO con ScrollTrigger.
-
-STOP CONDITION: Si `targetShouldUse.gsap === false` y el target tiene GSAP
-instalado y usado para scroll animations, REHACER con el patron correcto.
-
-### 1.17 extractElementStyleMap() — MAPA COMPLETO DE ESTILOS POR ELEMENTO
-
-Este script crea un mapa 1:1 de CADA elemento visible con TODAS sus computed
-styles, hover rules, y pseudo-elements. Es la referencia para reconstruir
-cada elemento con estilos IDENTICOS.
-
-```javascript
-(function extractElementStyleMap() {
-  const map = [];
-  const allEls = document.querySelectorAll(
-    'nav,nav *,header,header *,footer,footer *,section,section *,'+
-    '[class*="section"] *,[class*="Section"] *,[class*="hero"] *,[class*="Hero"] *,'+
-    'main>div,main>div *,h1,h2,h3,h4,p,a,button,img,video,svg,input,textarea'
-  );
-
-  // Also collect ALL :hover rules from stylesheets, indexed by selector
-  const hoverRuleMap = {};
-  for (const sheet of document.styleSheets) {
-    try {
-      for (const rule of sheet.cssRules) {
-        if (rule.selectorText && rule.selectorText.includes(':hover')) {
-          // Try to match this rule to real elements
-          const baseSel = rule.selectorText.replace(/:hover/g, '').trim();
-          try {
-            const matches = document.querySelectorAll(baseSel);
-            matches.forEach(el => {
-              const key = el.tagName + '#' + (el.id || '') + '.' + (el.className||'').toString().slice(0,60);
-              hoverRuleMap[key] = hoverRuleMap[key] || [];
-              hoverRuleMap[key].push(rule.cssText.slice(0, 400));
-            });
-          } catch(e) {}
-        }
-      }
-    } catch(e) {}
-  }
-
-  allEls.forEach((el, i) => {
-    if (i > 300) return;
-    const rect = el.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) return;
-    if (rect.top > window.innerHeight * 4) return;
-
-    const cs = getComputedStyle(el);
-    const key = el.tagName + '#' + (el.id || '') + '.' + (el.className||'').toString().slice(0,60);
-
-    const entry = {
-      index: i, tag: el.tagName, id: el.id || null,
-      classes: (el.className||'').toString().slice(0,100),
-      text: el.textContent?.trim().slice(0, 80) || null,
-      rect: { x: Math.round(rect.x), y: Math.round(rect.y), w: Math.round(rect.width), h: Math.round(rect.height) },
-      // Complete computed styles
-      styles: {
-        fontFamily: cs.fontFamily, fontSize: cs.fontSize, fontWeight: cs.fontWeight,
-        lineHeight: cs.lineHeight, letterSpacing: cs.letterSpacing, color: cs.color,
-        textTransform: cs.textTransform, textDecoration: cs.textDecoration,
-        backgroundColor: cs.backgroundColor, backgroundImage: cs.backgroundImage !== 'none' ? cs.backgroundImage.slice(0,100) : null,
-        padding: cs.padding, margin: cs.margin, borderRadius: cs.borderRadius,
-        border: cs.border, boxShadow: cs.boxShadow !== 'none' ? cs.boxShadow : null,
-        display: cs.display, position: cs.position, top: cs.top, left: cs.left,
-        width: cs.width, height: cs.height, maxWidth: cs.maxWidth, minHeight: cs.minHeight,
-        gap: cs.gap, flexDirection: cs.flexDirection, justifyContent: cs.justifyContent,
-        alignItems: cs.alignItems, gridTemplateColumns: cs.gridTemplateColumns !== 'none' ? cs.gridTemplateColumns : null,
-        opacity: cs.opacity, overflow: cs.overflow, zIndex: cs.zIndex,
-        transform: cs.transform !== 'none' ? cs.transform : null,
-        transition: cs.transition !== 'all 0s ease 0s' ? cs.transition : null,
-        cursor: cs.cursor !== 'auto' ? cs.cursor : null,
-        backdropFilter: cs.backdropFilter !== 'none' ? cs.backdropFilter : null,
-        clipPath: cs.clipPath !== 'none' ? cs.clipPath : null,
-        objectFit: cs.objectFit, objectPosition: cs.objectPosition
-      },
-      // Hover rules that apply to this element
-      hoverRules: hoverRuleMap[key] || [],
-      // Pseudo-elements
-      pseudoBefore: null, pseudoAfter: null
-    };
-
-    // ::before
-    const beforeCs = getComputedStyle(el, '::before');
-    if (beforeCs.content && beforeCs.content !== 'none' && beforeCs.content !== 'normal') {
-      entry.pseudoBefore = { content: beforeCs.content.slice(0,50), width: beforeCs.width, height: beforeCs.height,
-        bg: beforeCs.backgroundColor, position: beforeCs.position, transform: beforeCs.transform };
-    }
-    // ::after
-    const afterCs = getComputedStyle(el, '::after');
-    if (afterCs.content && afterCs.content !== 'none' && afterCs.content !== 'normal') {
-      entry.pseudoAfter = { content: afterCs.content.slice(0,50), width: afterCs.width, height: afterCs.height,
-        bg: afterCs.backgroundColor, position: afterCs.position, transform: afterCs.transform };
-    }
-
-    map.push(entry);
-  });
-
-  return { totalElements: map.length, map };
-})();
-```
-
-Guardar en: `docs/pds/extraction/element-style-map-[pagina].json`
-
-Este mapa se usa en FASE 3 para reconstruir CADA elemento con estilos IDENTICOS,
-y en FASE 4 para verificar que los computed styles del target coinciden.
-
-### 1.18 extractNetworkProfile() — QUE CARGA REALMENTE EL SITE
-
-Emulacion programatica de DevTools Network tab. Captura TODOS los recursos
-que el site carga en runtime, incluyendo librerias via CDN que no exponen
-globales en `window`. Este script complementa `detectAnimationImplementation()`
-(§1.16) que solo detecta librerias con globales.
-
-```javascript
-(function extractNetworkProfile() {
-  const entries = performance.getEntriesByType('resource');
-  const result = {
-    scripts: [], stylesheets: [], fonts: [], images: [], videos: [],
-    iframes: [], other: [], summary: {}
-  };
-
-  entries.forEach(e => {
-    const entry = {
-      url: e.name.slice(0, 300),
-      type: e.initiatorType,
-      size: e.transferSize || e.encodedBodySize || 0,
-      duration: Math.round(e.duration),
-    };
-
-    // Classify
-    if (e.name.match(/\.(js|mjs)(\?|$)/i) || e.initiatorType === 'script') {
-      // Detect known libraries in script URLs
-      const lib = e.name.match(/(gsap|scrolltrigger|scrollsmoother|split-?text|lenis|locomotive|framer-motion|three|lottie|rive|spline|swiper|barba|anime|popmotion|motion-one|scroll-timeline|webgl|pixi|p5)/i);
-      entry.detectedLibrary = lib ? lib[1].toLowerCase() : null;
-      result.scripts.push(entry);
-    } else if (e.name.match(/\.css(\?|$)/i) || e.initiatorType === 'css' || e.initiatorType === 'link') {
-      result.stylesheets.push(entry);
-    } else if (e.name.match(/\.(woff2?|ttf|otf|eot)(\?|$)/i) || e.initiatorType === 'css') {
-      result.fonts.push(entry);
-    } else if (e.name.match(/\.(png|jpg|jpeg|webp|avif|gif|svg|ico)(\?|$)/i)) {
-      result.images.push(entry);
-    } else if (e.name.match(/\.(mp4|webm|ogv|m3u8)(\?|$)/i)) {
-      result.videos.push(entry);
-    } else {
-      result.other.push(entry);
-    }
-  });
-
-  // Console error/warning detection
-  result.consoleState = {
-    performanceEntries: entries.length,
-    // Check for common error indicators
-    hasServiceWorker: !!navigator.serviceWorker?.controller,
-    connectionType: navigator.connection?.effectiveType || 'unknown'
-  };
-
-  // Summary of detected libraries (from ALL sources: network + global)
-  const detectedLibs = new Set();
-  result.scripts.forEach(s => { if (s.detectedLibrary) detectedLibs.add(s.detectedLibrary); });
-  // Also check globals that might not be in network (bundled)
-  ['gsap','ScrollTrigger','ScrollSmoother','Lenis','lenis','THREE',
-   'lottie','bodymovin','rive','PIXI','anime','barba'].forEach(g => {
-    if (window[g]) detectedLibs.add(g.toLowerCase());
-  });
-  result.summary = {
-    totalResources: entries.length,
-    totalScripts: result.scripts.length,
-    totalStylesheets: result.stylesheets.length,
-    totalFonts: result.fonts.length,
-    detectedLibraries: [...detectedLibs],
-    totalTransferSize: entries.reduce((sum, e) => sum + (e.transferSize || 0), 0)
-  };
-
-  return result;
-})();
-```
-
-Guardar en: `docs/pds/extraction/network-profile.json`
-
-Este perfil de red permite detectar librerias que se cargan via CDN sin exponer
-globales (ej: `<script src="cdn.jsdelivr.net/gsap">`), cuyo uso no se puede
-detectar solo con `window.gsap`. Tambien sirve para verificar que el target
-carga los mismos tipos de recursos que el source.
-
-### 1.19 Section Inventory Extraction — BLOQUEANTE
-
-Extraer el inventario completo de secciones del source para la regla de
-paridad estructural 1:1. Sin este inventario, no se puede verificar que
-el target tiene el mismo numero y tipo de secciones.
-
-```javascript
-(function extractSectionInventory() {
-  const sections = [];
-  // Detect sections using multiple strategies
-  const sectionEls = document.querySelectorAll(
-    'section, [class*="section"], [class*="Section"], [data-section], ' +
-    'main > div, main > article, [role="region"]'
-  );
-
-  // Fallback: if few sections found, use direct children of main/body
-  const candidates = sectionEls.length >= 3 ? sectionEls :
-    document.querySelectorAll('main > *, body > main > *, body > div > *');
-
-  candidates.forEach((el, i) => {
-    const cs = getComputedStyle(el);
-    const rect = el.getBoundingClientRect();
-    // Skip invisible or tiny elements
-    if (rect.height < 50) return;
-
-    sections.push({
-      index: i,
-      tag: el.tagName,
-      classes: (el.className || '').toString().slice(0, 120),
-      id: el.id || null,
-      rect: { width: Math.round(rect.width), height: Math.round(rect.height) },
-      heightPct: Math.round((rect.height / document.documentElement.scrollHeight) * 100),
-      backgroundColor: cs.backgroundColor,
-      backgroundImage: cs.backgroundImage !== 'none' ? cs.backgroundImage.slice(0, 100) : null,
-      display: cs.display,
-      position: cs.position,
-      flexDirection: cs.flexDirection !== 'row' ? cs.flexDirection : null,
-      gridTemplateColumns: cs.gridTemplateColumns !== 'none' ? cs.gridTemplateColumns : null,
-      layoutType: cs.display.includes('grid') ? 'grid' : cs.display.includes('flex') ? 'flex' : 'block',
-      childCount: el.children.length,
-      hasVideo: el.querySelector('video') !== null,
-      hasCanvas: el.querySelector('canvas') !== null,
-      hasIframe: el.querySelector('iframe') !== null,
-      firstHeading: el.querySelector('h1,h2,h3')?.tagName || null,
-      textPreview: el.textContent?.trim().slice(0, 100) || null
-    });
-  });
-
-  return {
-    totalSections: sections.length,
-    totalPageHeight: document.documentElement.scrollHeight,
-    sections
-  };
-})();
-```
-
-Guardar en: `docs/pds/extraction/section-inventory-[pagina].json`
-
-Este inventario se usa para:
-- Verificar paridad 1:1 (target DEBE tener el mismo numero de secciones)
-- Comparar backgroundColor por seccion
-- Verificar layoutType por seccion (grid/flex/block)
-- Calcular ratio de alturas (debe estar dentro del 20%)
-
-STOP CONDITION: Si el target tiene diferente numero de secciones que el source,
-STOP + ajustar antes de continuar.
-
-## FASE 2: Analisis del target
-
-### 2.1 Baseline del target
-
-```bash
-cd "$TARGET_PATH"
-npm run build 2>&1 | tee docs/pds/build-baseline.txt
-```
-
-### 2.2 Extraccion de texto
-
-```bash
-grep -rhoE '"[A-Za-záéíóúÁÉÍÓÚñÑüÜ¿¡][^"]{4,}"' "$TARGET_PATH/src" | sort -u > docs/pds/original-target-strings.txt
-grep -rhoE "'[A-Za-záéíóúÁÉÍÓÚñÑüÜ¿¡][^']{4,}'" "$TARGET_PATH/src" | sort -u >> docs/pds/original-target-strings.txt
-```
-
-### 2.3 Deteccion de dependencias del source
-
-Ejecutar en MCP-REF:
-
-```javascript
-(function detectDependencies() {
-  const deps = { detected: [], confidence: {} };
-  // GSAP
-  if (window.gsap) { deps.detected.push('gsap'); deps.confidence.gsap = 'high'; }
-  if (window.ScrollTrigger) deps.detected.push('@gsap/scroll-trigger');
-  if (window.SplitText) deps.detected.push('@gsap/split-text');
-  // Lenis
-  if (window.__lenis || window.lenis) { deps.detected.push('@studio-freight/lenis'); deps.confidence.lenis = 'high'; }
-  // Three.js
-  if (window.THREE) { deps.detected.push('three'); deps.confidence.three = 'high'; }
-  // React Three Fiber
-  if (document.querySelector('canvas')?.__r$) deps.detected.push('@react-three/fiber');
-  // Framer Motion
-  if (document.querySelector('[data-framer-appear-id]')) deps.detected.push('framer-motion');
-  // Swiper
-  if (document.querySelector('.swiper')) deps.detected.push('swiper');
-  // AOS
-  if (document.querySelector('[data-aos]')) deps.detected.push('aos');
-  // Locomotive
-  if (document.querySelector('[data-scroll]')) deps.detected.push('locomotive-scroll');
-  // Barba.js
-  if (window.barba) deps.detected.push('@barba/core');
-  return deps;
-})();
-```
-
-Instalar dependencias detectadas en el target:
-```bash
-cd "$TARGET_PATH"
-npm install gsap @studio-freight/lenis  # segun lo detectado
-```
-
-NOTA: Expandir deteccion a Lottie, Rive, Spline:
-```javascript
-// Anadir al script de deteccion:
-if (window.lottie || window.bodymovin || document.querySelector('lottie-player')) deps.detected.push('lottie-web');
-if (document.querySelector('dotlottie-player')) deps.detected.push('@dotlottie/player-component');
-if (document.querySelector('spline-viewer')) deps.detected.push('@splinetool/react-spline');
-if (window.rive || document.querySelector('[data-rive]')) deps.detected.push('@rive-app/react-canvas');
-if (document.querySelector('.swiper-container,.swiper')) deps.detected.push('swiper');
-if (window.Flickity) deps.detected.push('flickity');
-if (window.Splide) deps.detected.push('@splidejs/react-splide');
-```
-
-**REGLA CRITICA**: Solo instalar dependencias que el source REALMENTE usa.
-Si `detectAnimationImplementation()` (§1.16) dice `targetShouldUse.gsap === false`,
-NO instalar GSAP aunque se detectara en algun otro script. La implementacion
-real del source es lo que manda.
-
-### 2.4 Deteccion de arquitectura del target — ADAPTACION OBLIGATORIA
-
-Antes de escribir CUALQUIER componente, detectar la arquitectura real del target:
-
-```bash
-# 1. Detectar estructura de carpetas
-# ¿Es monorepo (frontend/ + backend/)?
-ls -la "$TARGET_PATH/frontend" 2>/dev/null && echo "MONOREPO: frontend/"
-ls -la "$TARGET_PATH/src" 2>/dev/null && echo "STANDARD: src/"
-
-# 2. Detectar i18n
-grep -r "next-intl\|next-i18next\|@formatjs\|react-intl" "$TARGET_PATH/package.json" "$TARGET_PATH/frontend/package.json" 2>/dev/null
-# Si existe [locale] folder → usar esa ruta para paginas
-
-# 3. Detectar Tailwind version
-grep '"tailwindcss"' "$TARGET_PATH/package.json" "$TARGET_PATH/frontend/package.json" 2>/dev/null
-# Si v3.x → usar tailwind.config.ts, NO @theme directive
-# Si v4.x → usar @theme en globals.css
-
-# 4. Detectar sistema de componentes
-ls "$TARGET_PATH/src/components/ui" "$TARGET_PATH/frontend/components/ui" 2>/dev/null
-# Si shadcn/radix → preservar, no sobreescribir
-```
-
-Guardar en: `docs/pds/target-architecture.json`
-
-```json
-{
-  "rootPath": "frontend/",
-  "appPath": "frontend/app/[locale]/",
-  "componentsPath": "frontend/components/",
-  "hasI18n": true,
-  "i18nLib": "next-intl",
-  "localeRouting": "[locale]",
-  "tailwindVersion": "3.x",
-  "tailwindConfig": "tailwind.config.ts",
-  "useThemeDirective": false,
-  "hasUILibrary": "shadcn/radix-ui",
-  "packageManager": "npm",
-  "nextVersion": "14.x"
-}
-```
-
-**REGLA**: Toda ruta de archivo en FASE 3 DEBE usar la estructura detectada aqui.
-Si el target usa `frontend/app/[locale]/page.tsx`, NO crear `src/app/page.tsx`.
-Si el target usa Tailwind v3, NO usar `@theme` — usar `tailwind.config.ts`.
-Si el target usa next-intl, preservar el wrapper de traducciones y usar
-`useTranslations()` para los textos del target.
-
-### 2.5 Deteccion de fonts existentes en target — renombrar obligatorio
-
-Verificar que NO se usan nombres de fuente del source en el target:
-
-```bash
-grep -rn "joby\|font.*source-name" "$TARGET_PATH/frontend" --include="*.tsx" --include="*.ts" --include="*.css" 2>/dev/null
-```
-
-Si se encuentran nombres de fuente del source (ej: `jobyText`, `jobyDisplay`):
-1. Renombrar a nombres neutrales o del target (ej: `displayFont`, `bodyFont`)
-2. Actualizar todas las referencias en CSS y componentes
-3. Verificar que next/font usa los nuevos nombres
-
-STOP CONDITION: Nombres de fuente del source brand en archivos del target.
-
-## FASE 3: Reconstruccion
-
-### 3.0 Reglas Next.js App Router — OBLIGATORIAS
-
-Estas reglas previenen el 90% de errores de build e hidratacion que surgen
-al implementar animaciones avanzadas en Next.js App Router.
-
-#### 3.0.1 `'use client'` — cuando es obligatorio
-
-OBLIGATORIO poner `'use client'` en la PRIMERA linea del archivo si contiene:
-- `useEffect`, `useLayoutEffect`, `useState`, `useRef`, `useCallback`, `useMemo`
-- Event handlers: `onClick`, `onMouseEnter`, `onScroll`, `onChange`
-- `window`, `document`, `navigator`, `localStorage`, `sessionStorage`
-- Cualquier import de: gsap, lenis, framer-motion, swiper, three, lottie, rive, spline
-- `dynamic()` con `{ ssr: false }` (el componente padre necesita 'use client')
-- `IntersectionObserver`, `ResizeObserver`, `MutationObserver`
-- `requestAnimationFrame`, `requestIdleCallback`
-
-NO poner `'use client'` en:
-- `layout.tsx` raiz (mantener RSC para metadata/SEO)
-- Componentes que solo renderizan HTML estatico sin interactividad
-- Server Components que hacen data fetching
-
-```tsx
-// CORRECTO — componente con animaciones
-'use client';
-
-import { useEffect, useRef } from 'react';
-import gsap from 'gsap';
-
-export function AnimatedSection() { /* ... */ }
-```
-
-#### 3.0.2 Dynamic imports para libraries pesadas
-
-GSAP, Three.js, Lenis, Swiper, Lottie, Rive, Spline DEBEN usar dynamic import
-o lazy loading para evitar errores SSR y reducir bundle:
-
-```tsx
-// PATRON 1: Dynamic component (preferido para componentes completos)
-import dynamic from 'next/dynamic';
-const HeroVideo = dynamic(() => import('@/components/HeroVideo'), { ssr: false });
-
-// PATRON 2: Lazy import en useEffect (para libraries)
-'use client';
-import { useEffect, useRef } from 'react';
-
-export function GSAPSection() {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    let ctx: any;
-    (async () => {
-      const { gsap } = await import('gsap');
-      const { ScrollTrigger } = await import('gsap/ScrollTrigger');
-      gsap.registerPlugin(ScrollTrigger);
-      ctx = gsap.context(() => {
-        // animaciones aqui
-      }, ref);
-    })();
-    return () => ctx?.revert();
-  }, []);
-  return <div ref={ref}>...</div>;
-}
-
-// PATRON 3: Provider en layout (para Lenis global)
-import dynamic from 'next/dynamic';
-const LenisProvider = dynamic(() => import('@/components/LenisProvider'), { ssr: false });
-
-export default function Layout({ children }) {
-  return <LenisProvider>{children}</LenisProvider>;
-}
-```
-
-#### 3.0.3 next/font — mapeo de fuentes del source
-
-Mapear CADA fuente del source a `next/font/google` o `next/font/local`:
-
-```tsx
-// Si el source usa Google Fonts:
-import { Inter, Playfair_Display } from 'next/font/google';
-
-const inter = Inter({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'], // pesos detectados en design-tokens
-  variable: '--font-inter',
-  display: 'swap', // copiar display strategy del source
-});
-
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  weight: ['400', '700'],
-  variable: '--font-playfair',
-  display: 'swap',
-});
-
-// En layout.tsx <body>:
-<body className={`${inter.variable} ${playfair.variable}`}>
-
-// Si el source usa variable fonts con axes:
-const inter = Inter({
-  subsets: ['latin'],
-  axes: ['slnt'], // ejes variables detectados
-  variable: '--font-inter',
-});
-```
-
-Si el source usa fuentes self-hosted (no Google):
-```tsx
-import localFont from 'next/font/local';
-
-const customFont = localFont({
-  src: [
-    { path: '../public/fonts/Custom-Regular.woff2', weight: '400', style: 'normal' },
-    { path: '../public/fonts/Custom-Bold.woff2', weight: '700', style: 'normal' },
-  ],
-  variable: '--font-custom',
-  display: 'swap',
-});
-```
-
-REGLA: Las variables CSS (`--font-xxx`) deben coincidir con las que usa el
-source en sus custom properties o computed styles.
-
-#### 3.0.4 next/image — cuando y como usar
-
-USAR `next/image` para:
-- Imagenes decorativas del source (heros, backgrounds, cards)
-- Imagenes responsive que necesitan srcset
-
-```tsx
-import Image from 'next/image';
-
-// Imagenes de public/
-<Image src="/images/hero.jpg" alt="Hero" width={1440} height={800} priority />
-
-// Imagenes remotas (configurar en next.config.ts):
-// next.config.ts:
-const nextConfig = {
-  images: {
-    remotePatterns: [
-      { protocol: 'https', hostname: '**.ejemplo.com' },
-      { protocol: 'https', hostname: 'images.unsplash.com' },
-    ],
-  },
-};
-```
-
-NO usar `next/image` para:
-- SVGs (usar `<img>` o inline SVG)
-- Imagenes tiny (< 1KB)
-- Background images (usar CSS)
-- Imagenes que requieren `object-fit` complejo con animacion
-
-#### 3.0.5 Hidracion — evitar mismatches
-
-Animaciones que modifican el DOM en mount causan hydration mismatches.
-
-```tsx
-// PATRON: useIsClient hook
-'use client';
-import { useState, useEffect } from 'react';
-
-function useIsClient() {
-  const [isClient, setIsClient] = useState(false);
-  useEffect(() => setIsClient(true), []);
-  return isClient;
-}
-
-// Uso: solo renderizar contenido dinamico en cliente
-export function AnimatedCounter({ end }: { end: number }) {
-  const isClient = useIsClient();
-  if (!isClient) return <span>{end}</span>; // SSR fallback
-  return <CounterAnimation end={end} />;
-}
-
-// PATRON: suppressHydrationWarning para elementos con contenido dinamico
-<time suppressHydrationWarning>{new Date().toLocaleDateString()}</time>
-```
-
-NUNCA: acceder a `window`/`document` fuera de `useEffect`/`useLayoutEffect`.
-NUNCA: usar `Math.random()` o `Date.now()` durante render sin `useIsClient`.
-
-#### 3.0.6 Code splitting de animaciones
-
-Cada pagina solo debe cargar las animaciones que necesita. NO cargar GSAP en
-paginas que no tienen ScrollTrigger. NO cargar Three.js si solo una pagina lo usa.
-
-```tsx
-// POR PAGINA: solo importar lo necesario
-// /app/page.tsx (home con video scrub + GSAP)
-const HeroVideoScrub = dynamic(() => import('@/components/HeroVideoScrub'), { ssr: false });
-const GSAPSections = dynamic(() => import('@/components/GSAPSections'), { ssr: false });
-
-// /app/about/page.tsx (solo fade-in simples)
-// NO importar GSAP si solo se usan CSS transitions
-```
-
-### 3.0.7 Orden de reconstruccion obligatorio
-
-1. `globals.css` / design tokens / CSS custom properties (incluir `@theme` si Tailwind v4)
-2. `tailwind.config` (v3) o CSS `@theme` block (v4)
-3. Fuentes (next/font con variables CSS del source)
-4. Inicializacion Lenis + GSAP (provider global con dynamic import)
-5. Navbar
-6. Footer
-7. Paginas segun PAGE_MAPPING (home primero, luego el resto)
-8. Componentes compartidos (cards, buttons, forms)
-
-### 3.1 Protocolo por seccion
-
-Para CADA seccion de cada pagina:
-
-**INSPECT** en MCP-REF:
-1. Ejecutar extractStyles() en la seccion especifica
-2. Capturar className exacto de cada elemento clave
-3. Cross-reference con animations.json para animaciones de esa seccion
-4. Screenshot a 0%, 50%, 100% de la seccion
-
-**BUILD** en target:
-1. Crear componente React .tsx reproduciendo estructura extraida
-2. Aplicar Tailwind classes equivalentes a computed styles
-3. Implementar animaciones con valores exactos del manifest
-
-**SWAP** solo texto:
-1. Reemplazar texto visible del source con texto del target
-2. No tocar ninguna clase, valor CSS, o config de animacion
-
-**BUILD**: `npm run build` — fix si falla — no avanzar hasta PASS
-
-**VERIFY**: dual MCP, screenshot REF vs TARGET
-
-### 3.2 Patrones de implementacion
-
-VIDEO_SCRUB:
-```javascript
-useEffect(() => {
-  const video = videoRef.current;
-  const section = sectionRef.current;
-  if (!video || !section) return;
-  video.preload = 'auto';
-  video.muted = true;
-  video.playsInline = true;
-  video.pause();
-  let raf = 0;
-  const update = () => {
-    raf = 0;
-    const rect = section.getBoundingClientRect();
-    const progress = Math.max(0, Math.min(1,
-      -rect.top / (rect.height - window.innerHeight)
-    ));
-    if (video.duration && Number.isFinite(video.duration)) {
-      video.currentTime = progress * video.duration;
-    }
-  };
-  const onScroll = () => {
-    if (!raf) raf = requestAnimationFrame(update);
-  };
-  window.addEventListener('scroll', onScroll, { passive: true });
-  video.addEventListener('loadedmetadata', update);
-  update();
-  return () => {
-    window.removeEventListener('scroll', onScroll);
-    video.removeEventListener('loadedmetadata', update);
-    if (raf) cancelAnimationFrame(raf);
-  };
-}, []);
-```
-
-Reglas VIDEO_SCRUB:
-- La seccion debe tener altura/pinning equivalente al source, normalmente mayor
-  que 100vh si el source usa una narrativa scroll.
-- El video no puede depender de autoplay para el efecto principal.
-- `currentTime` debe cambiar con el scroll en REF y TARGET.
-- Si el source usa GSAP ScrollTrigger para el scrub, implementar con
-  ScrollTrigger y copiar `start`, `end`, `scrub`, `pin` y callbacks; no usar el
-  fallback manual salvo que el source tambien sea manual.
-
-LENIS_INIT (usar valores exactos de extraction):
-```javascript
-useEffect(() => {
-  const lenis = new Lenis({
-    duration: /* valor de animations.json */,
-    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-    orientation: 'vertical',
-    smoothWheel: true,
-    lerp: /* valor de animations.json */,
-    wheelMultiplier: /* valor de animations.json */,
-  });
-  function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
-  requestAnimationFrame(raf);
-  return () => lenis.destroy();
-}, []);
-```
-
-GSAP_SCROLLTRIGGER (usar valores exactos del manifest):
-```javascript
-useLayoutEffect(() => {
-  gsap.registerPlugin(ScrollTrigger);
-  const tl = gsap.timeline({
-    scrollTrigger: {
-      trigger: sectionRef.current,
-      start: /* valor del manifest */,
-      end: /* valor del manifest */,
-      scrub: /* valor del manifest */,
-      pin: /* valor del manifest */,
-    }
-  });
-  tl.fromTo(targetRef.current, { /* from values */ }, { /* to values */ });
-  return () => { ScrollTrigger.getAll().forEach(st => st.kill()); };
-}, []);
-```
-
-THREE.JS_SCENE (si aplica):
-```javascript
-// Usar datos de three-scene.json para replicar:
-// - Camera: type, fov, position, near, far
-// - Lights: type, color, intensity, position
-// - Meshes: geometry, material, position, scale
-// - Animation loop con valores extraidos
-```
-
-### 3.3 Computed style a Tailwind mapping
-
-Referencia rapida para traducir computed styles a Tailwind.
-
-**IMPORTANTE**: Usar la version de Tailwind que el TARGET ya tiene instalada
-(detectada en §2.4). NO cambiar la version de Tailwind del target.
-
-**Si target usa Tailwind v3** (tiene `tailwind.config.ts`/`.js`):
-- Anadir tokens del source al `theme.extend` del config existente
-- Usar `hsl(var(--variable))` pattern si ya esta en uso
-- NO crear `@theme` block — no existe en v3
-
-**Si target usa Tailwind v4** (tiene `@import "tailwindcss"` en CSS):
-- Usar `@theme` directive en globals.css
-- NO crear tailwind.config.js
-
-⚠️ **ATENCION CRITICA**: El bloque `@theme` y `:root` a continuacion son EJEMPLOS
-de estructura. TODOS los valores (colores, fuentes, spacing, radii, shadows,
-breakpoints) DEBEN venir de `design-tokens.json` extraido en §1.1. NUNCA
-copiar los valores hexadecimales, nombres o numeros de este ejemplo.
-Cada linea del `@theme` REAL se genera asi:
-- Colores: `result.colors` y `result.cssVars` del JSON extraido
-- Fuentes: `result.fontFaces` y `result.googleFonts` del JSON
-- Spacing: `result.spacing` del JSON
-- Shadows: `result.shadows` del JSON
-- Radii: `result.radii` del JSON
-- Breakpoints: `result.breakpoints` del JSON
-Si un valor no esta en el JSON de extraccion, NO se incluye. CERO invenciones.
-
-```css
-/* globals.css — Tailwind v4 */
-@import "tailwindcss";
-
-@theme {
-  /* ⚠️ ESTOS SON EJEMPLOS — reemplazar con valores de design-tokens.json */
-  /* Copiar TODOS los tokens del source como variables CSS */
-  --color-primary: /* valor de design-tokens.json cssVars o colors */;
-  --color-secondary: /* valor de design-tokens.json */;
-  --color-accent: /* valor de design-tokens.json */;
-  --color-surface: /* valor de design-tokens.json */;
-
-  /* Fuentes (deben coincidir con variables de next/font) */
-  --font-sans: var(--font-inter), system-ui, sans-serif; /* familia de design-tokens.json */
-  --font-display: var(--font-playfair), serif; /* familia de design-tokens.json */
-
-  /* Spacing custom del source — de design-tokens.json spacing */
-  --spacing-section: /* valor extraido */;
-  --spacing-container: /* valor extraido */;
-
-  /* Radius custom — de design-tokens.json radii */
-  --radius-card: /* valor extraido */;
-  --radius-button: /* valor extraido */;
-
-  /* Shadows custom — de design-tokens.json shadows */
-  --shadow-card: /* valor extraido */;
-  --shadow-elevated: /* valor extraido */;
-
-  /* Breakpoints del source — de design-tokens.json breakpoints */
-  --breakpoint-sm: /* valor extraido */;
-  --breakpoint-md: /* valor extraido */;
-  --breakpoint-lg: /* valor extraido */;
-  --breakpoint-xl: /* valor extraido */;
-  --breakpoint-2xl: /* valor extraido */;
-}
-```
-
-Despues de `@theme`, incluir custom properties del source que NO son tokens de Tailwind:
-```css
-:root {
-  /* ⚠️ TODOS estos valores vienen de design-tokens.json cssVars — NUNCA inventar */
-  /* Variables CSS del source que se usan directamente en componentes */
-  /* Copiar CADA variable de design-tokens.json cssVars aqui */
-}
-```
-
-| Computed | Tailwind v4 |
-|---|---|
-| font-size: 48px | text-5xl o text-[48px] |
-| font-weight: 600 | font-semibold |
-| letter-spacing: -0.05em | tracking-tight o tracking-[-0.05em] |
-| line-height: 1.2 | leading-tight o leading-[1.2] |
-| padding: 24px | p-6 o p-[24px] |
-| border-radius: 16px | rounded-2xl o rounded-[16px] |
-| gap: 32px | gap-8 o gap-[32px] |
-| max-width: 1280px | max-w-7xl o max-w-[1280px] |
-| background-color: rgb(0,0,0) | bg-black o bg-[rgb(0,0,0)] |
-| container-type: inline-size | @container (inline-size) |
-| scroll-snap-type: y mandatory | snap-y snap-mandatory |
-| backdrop-filter: blur(12px) | backdrop-blur-md o backdrop-blur-[12px] |
-| aspect-ratio: 16/9 | aspect-video o aspect-[16/9] |
-| object-fit: cover | object-cover |
-| grid-template-columns: repeat(3, 1fr) | grid-cols-3 |
-| color-scheme: dark light | dark:bg-... |
-
-Regla: si el valor coincide exactamente con un preset de Tailwind, usar el preset.
-Si no, usar valor arbitrario con `[valor]`. NUNCA aproximar — usar el valor EXACTO.
-
-### 3.4 Patrones de reconstruccion avanzados
-
-Si `extractAdvancedPatterns()` detecto alguno de estos componentes, implementar
-usando el patron correspondiente. Copiar valores EXACTOS del extraction JSON.
-
-#### MARQUEE / TICKER
-
-```tsx
-function Marquee({ children, speed = 40, direction = 'left' }: { children: React.ReactNode; speed?: number; direction?: 'left' | 'right' }) {
-  return (
-    <div className="overflow-hidden whitespace-nowrap">
-      <div
-        className="inline-flex animate-marquee"
-        style={{ animationDuration: `${speed}s`, animationDirection: direction === 'right' ? 'reverse' : 'normal' }}
-      >
-        {children}
-        {children} {/* duplicado para loop continuo */}
-      </div>
-    </div>
-  );
-}
-```
-
-CSS necesario en globals.css:
-```css
-@keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-.animate-marquee {
-  animation: marquee linear infinite;
-}
-```
-
-Reglas MARQUEE:
-- Velocidad (`animationDuration`) IDENTICA al source
-- Contenido duplicado para loop continuo sin saltos
-- Si el source pausa en hover, anadir: `.animate-marquee:hover { animation-play-state: paused; }`
-- Direccion (left/right) IDENTICA al source
-- Si el source tiene multiples filas con direcciones opuestas, replicar cada fila
-
-#### TABS
-
-```tsx
-function Tabs({ tabs, defaultIndex = 0 }: { tabs: { label: string; content: React.ReactNode }[]; defaultIndex?: number }) {
-  const [active, setActive] = useState(defaultIndex);
-  return (
-    <div>
-      <div role="tablist" className={/* clases del source */}>
-        {tabs.map((tab, i) => (
-          <button
-            key={i}
-            role="tab"
-            aria-selected={active === i}
-            onClick={() => setActive(i)}
-            className={/* clases del source, incluyendo estado activo */}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-      <div role="tabpanel">
-        {tabs[active].content}
-      </div>
-    </div>
-  );
-}
-```
-
-Reglas TABS:
-- Transicion del indicador activo (underline, background, color) IDENTICA al source
-- Si el source usa animacion de slide para el indicador, usar `transform` con `transition`
-- Si el source anima el contenido al cambiar (fade, slide), replicar la misma animacion
-- ARIA attributes (`role="tablist"`, `role="tab"`, `aria-selected`) obligatorios
-
-#### ACCORDION / FAQ
-
-```tsx
-function Accordion({ items }: { items: { title: string; content: React.ReactNode }[] }) {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
-  return (
-    <div className={/* clases del source */}>
-      {items.map((item, i) => (
-        <div key={i} className={/* clases de item del source */}>
-          <button
-            onClick={() => setOpenIndex(openIndex === i ? null : i)}
-            aria-expanded={openIndex === i}
-            className={/* clases de header del source */}
-          >
-            {item.title}
-            <span className={`transition-transform duration-300 ${openIndex === i ? 'rotate-180' : ''}`}>
-              {/* icono chevron/plus del source */}
-            </span>
-          </button>
-          <div
-            className="overflow-hidden transition-all duration-300"
-            style={{ maxHeight: openIndex === i ? '500px' : '0', opacity: openIndex === i ? 1 : 0 }}
-          >
-            <div className={/* clases de contenido del source */}>
-              {item.content}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-```
-
-Reglas ACCORDION:
-- Transicion de apertura/cierre (duration, easing) IDENTICA al source
-- Si el source permite multiples abiertos simultaneamente, implementar con Set en vez de single index
-- Icono de rotacion (chevron, plus/minus) IDENTICO al source
-- Borde/separador entre items IDENTICO al source
-
-#### CAROUSEL / SLIDER
-
-Si el source usa Swiper:
-```bash
-npm install swiper
-```
-
-```tsx
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Autoplay } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
-
-<Swiper
-  modules={[Navigation, Pagination, Autoplay]}
-  slidesPerView={/* valor del source */}
-  spaceBetween={/* valor del source */}
-  loop={/* valor del source */}
-  autoplay={/* config del source: { delay, disableOnInteraction } */}
-  navigation={/* true si source tiene flechas */}
-  pagination={/* { clickable: true } si source tiene dots */}
-  breakpoints={/* breakpoints del source */}
->
-  {slides.map((slide, i) => (
-    <SwiperSlide key={i}>{slide}</SwiperSlide>
-  ))}
-</Swiper>
-```
-
-Reglas CAROUSEL:
-- Si source usa Swiper, usar Swiper. Si usa otro library, usar el mismo.
-- slidesPerView, spaceBetween, loop, autoplay delay IDENTICOS al source
-- Estilo de dots/pagination IDENTICO (tamaño, color activo/inactivo, posicion)
-- Estilo de flechas IDENTICO (tamaño, color, posicion, hover effect)
-- Breakpoints responsive IDENTICOS al source
-
-#### COUNTER / ANIMATED NUMBER
-
-```tsx
-function AnimatedCounter({ end, duration = 2000, suffix = '' }: { end: number; duration?: number; suffix?: string }) {
-  const [count, setCount] = useState(0);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          const start = performance.now();
-          const animate = (now: number) => {
-            const progress = Math.min((now - start) / duration, 1);
-            const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic — usar easing del source
-            setCount(Math.floor(eased * end));
-            if (progress < 1) requestAnimationFrame(animate);
-          };
-          requestAnimationFrame(animate);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.5 }
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [end, duration]);
-
-  return <div ref={ref}>{count.toLocaleString()}{suffix}</div>;
-}
-```
-
-Reglas COUNTER:
-- Duration de la animacion IDENTICA al source
-- Easing IDENTICO al source (no usar linear si el source usa easeOut)
-- Formato del numero (separadores de miles, decimales, sufijo) IDENTICO al source
-- Trigger (scroll into view threshold) IDENTICO al source
-
-#### TEXT SPLIT (letra a letra / palabra a palabra)
-
-Si el source usa GSAP SplitText:
-```tsx
-useLayoutEffect(() => {
-  gsap.registerPlugin(SplitText);
-  const split = new SplitText(textRef.current, { type: /* 'chars' | 'words' | 'lines' — del source */ });
-  gsap.from(split.chars, {
-    opacity: 0,
-    y: /* valor del source */,
-    stagger: /* valor del source */,
-    duration: /* valor del source */,
-    ease: /* valor del source */,
-    scrollTrigger: {
-      trigger: textRef.current,
-      start: /* valor del source */,
-    }
-  });
-  return () => split.revert();
-}, []);
-```
-
-Si el source NO usa GSAP SplitText sino CSS/JS manual:
-```tsx
-function SplitText({ text, className }: { text: string; className?: string }) {
-  return (
-    <span className={className} aria-label={text}>
-      {text.split('').map((char, i) => (
-        <span
-          key={i}
-          className="inline-block opacity-0 translate-y-4 animate-char-reveal"
-          style={{ animationDelay: `${i * 0.03}s` /* delay del source */ }}
-          aria-hidden="true"
-        >
-          {char === ' ' ? '\u00A0' : char}
-        </span>
-      ))}
-    </span>
-  );
-}
-```
-
-#### MAGNETIC HOVER (elemento sigue el cursor)
-
-```tsx
-function MagneticElement({ children, strength = 0.3 }: { children: React.ReactNode; strength?: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    const el = ref.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const x = (e.clientX - rect.left - rect.width / 2) * strength;
-    const y = (e.clientY - rect.top - rect.height / 2) * strength;
-    el.style.transform = `translate(${x}px, ${y}px)`;
-  };
-
-  const handleMouseLeave = () => {
-    if (ref.current) ref.current.style.transform = 'translate(0, 0)';
-  };
-
-  return (
-    <div
-      ref={ref}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className="transition-transform duration-300 ease-out"
-    >
-      {children}
-    </div>
-  );
-}
-```
-
-Reglas MAGNETIC:
-- Strength (cuanto se mueve) IDENTICO al source
-- Transition de retorno (duration, easing) IDENTICA al source
-- Aplicar solo a los mismos elementos que el source (generalmente botones CTA o nav links)
-
-#### CUSTOM CURSOR
-
-```tsx
-function CustomCursor() {
-  const cursorRef = useRef<HTMLDivElement>(null);
-  const followerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const move = (e: MouseEvent) => {
-      if (cursorRef.current) {
-        cursorRef.current.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
-      }
-      if (followerRef.current) {
-        // Follower con delay — usar requestAnimationFrame con lerp del source
-        followerRef.current.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
-      }
-    };
-    window.addEventListener('mousemove', move);
-    return () => window.removeEventListener('mousemove', move);
-  }, []);
-
-  return (
-    <>
-      <div ref={cursorRef} className={/* estilos del cursor del source: tamaño, color, border-radius, mix-blend-mode */}
-        style={{ position: 'fixed', top: 0, left: 0, pointerEvents: 'none', zIndex: 9999 }} />
-      <div ref={followerRef} className={/* estilos del follower del source */}
-        style={{ position: 'fixed', top: 0, left: 0, pointerEvents: 'none', zIndex: 9998, transition: 'transform 0.15s ease-out' }} />
-    </>
-  );
-}
-```
-
-Reglas CUSTOM CURSOR:
-- Tamaño, color, forma del cursor IDENTICOS al source
-- Si el source tiene cursor que cambia al hover sobre links (grow, color change), replicar
-- mix-blend-mode IDENTICO al source (generalmente `difference` o `exclusion`)
-- Lerp/delay del follower IDENTICO al source
-
-#### PRELOADER / SPLASH SCREEN
-
-```tsx
-function Preloader() {
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    // Esperar a que todos los assets carguen
-    const onLoad = () => {
-      setTimeout(() => setLoaded(true), /* delay del source */);
-    };
-    if (document.readyState === 'complete') onLoad();
-    else window.addEventListener('load', onLoad);
-    return () => window.removeEventListener('load', onLoad);
-  }, []);
-
-  return (
-    <div
-      className={`fixed inset-0 z-[9999] flex items-center justify-center transition-opacity duration-${/* valor del source */}`}
-      style={{
-        opacity: loaded ? 0 : 1,
-        pointerEvents: loaded ? 'none' : 'all',
-        backgroundColor: /* color del source */,
-      }}
-    >
-      {/* Logo/spinner/animacion del source */}
-    </div>
-  );
-}
-```
-
-Reglas PRELOADER:
-- Animacion de salida (fade, slide, clip-path) IDENTICA al source
-- Duration de la animacion de salida IDENTICA al source
-- Color de fondo IDENTICO al source
-- Contenido del preloader (logo, spinner, barra de progreso) IDENTICO al source
-- Delay antes de desaparecer IDENTICO al source
-
-#### SCROLL SNAP
-
-```tsx
-// Container con scroll snap
-<div className="h-screen overflow-y-auto snap-y snap-mandatory">
-  {sections.map((section, i) => (
-    <section key={i} className="h-screen snap-start">
-      {section.content}
-    </section>
-  ))}
-</div>
-```
-
-Reglas SCROLL SNAP:
-- snap-type (mandatory vs proximity) IDENTICO al source
-- snap-align (start, center, end) IDENTICO al source por seccion
-- Si el source desactiva scroll snap en mobile, usar media query identica
-
-#### PARALLAX LAYERS
-
-```tsx
-useEffect(() => {
-  const handleScroll = () => {
-    const scrollY = window.scrollY;
-    layers.forEach((layer) => {
-      const el = document.querySelector(layer.selector);
-      if (el instanceof HTMLElement) {
-        el.style.transform = `translateY(${scrollY * layer.speed}px)`;
-      }
-    });
-  };
-  window.addEventListener('scroll', handleScroll, { passive: true });
-  return () => window.removeEventListener('scroll', handleScroll);
-}, []);
-```
-
-Si el source usa GSAP ScrollTrigger para parallax:
-```tsx
-useLayoutEffect(() => {
-  gsap.registerPlugin(ScrollTrigger);
-  gsap.to(layerRef.current, {
-    yPercent: /* valor del source */,
-    ease: 'none',
-    scrollTrigger: {
-      trigger: sectionRef.current,
-      start: 'top bottom',
-      end: 'bottom top',
-      scrub: /* valor del source (true, 0.5, 1, etc.) */,
-    }
-  });
-}, []);
-```
-
-Reglas PARALLAX:
-- Speed/ratio de cada layer IDENTICO al source
-- Si el source usa GSAP, usar GSAP. Si usa CSS/JS manual, usar manual.
-- Numero de layers y su orden z IDENTICOS al source
-
-#### STAGGER GROUPS (animaciones escalonadas)
-
-```tsx
-useLayoutEffect(() => {
-  gsap.registerPlugin(ScrollTrigger);
-  gsap.from(containerRef.current.children, {
-    opacity: 0,
-    y: /* valor del source */,
-    duration: /* valor del source */,
-    stagger: /* valor del source (ej: 0.1, 0.15) */,
-    ease: /* valor del source */,
-    scrollTrigger: {
-      trigger: containerRef.current,
-      start: /* valor del source */,
-    }
-  });
-}, []);
-```
-
-Reglas STAGGER:
-- Delay entre elementos (stagger value) IDENTICO al source
-- Propiedades animadas (opacity, y, scale, etc.) IDENTICAS al source
-- Duration por elemento IDENTICA al source
-- Easing IDENTICO al source
-
-#### PAGE TRANSITIONS
-
-Si el source usa transiciones entre paginas (Barba.js, Swup, o custom):
-```tsx
-// En layout.tsx — wrapper de transicion
-function PageTransition({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  return (
-    <div key={pathname} className="animate-page-enter">
-      {children}
-    </div>
-  );
-}
-```
-
-CSS en globals.css:
-```css
-@keyframes page-enter {
-  from { opacity: 0; transform: translateY(/* valor del source */); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.animate-page-enter {
-  animation: page-enter /* duration del source */ /* easing del source */ forwards;
-}
-```
-
-Reglas PAGE TRANSITIONS:
-- Tipo de transicion (fade, slide, clip-path, wipe) IDENTICO al source
-- Duration IDENTICA al source
-- Easing IDENTICO al source
-- Si el source tiene transicion de salida, implementar con `useEffect` cleanup
-
-#### CLIP-PATH ANIMATIONS
-
-```tsx
-// Reveal con clip-path (comun en scroll animations)
-useLayoutEffect(() => {
-  gsap.fromTo(elementRef.current,
-    { clipPath: /* valor inicial del source, ej: 'inset(100% 0 0 0)' */ },
-    {
-      clipPath: /* valor final del source, ej: 'inset(0% 0 0 0)' */,
-      duration: /* valor del source */,
-      ease: /* valor del source */,
-      scrollTrigger: {
-        trigger: elementRef.current,
-        start: /* valor del source */,
-      }
-    }
-  );
-}, []);
-```
-
-#### BACKDROP BLUR (nav, modals, overlays)
-
-```tsx
-// Nav con backdrop blur — valores exactos del source
-<nav className="fixed top-0 w-full z-50 transition-all duration-300"
-  style={{
-    backdropFilter: /* valor del source, ej: 'blur(12px) saturate(180%)' */,
-    WebkitBackdropFilter: /* mismo valor */,
-    backgroundColor: /* valor del source, ej: 'rgba(255,255,255,0.72)' */,
-  }}
->
-```
-
-Reglas BACKDROP:
-- blur radius IDENTICO al source
-- saturate/brightness IDENTICOS al source
-- backgroundColor (con alpha) IDENTICA al source
-- Transicion (cuando aparece al scroll) IDENTICA al source
-
-#### LOTTIE / DOTLOTTIE
-
-Si el source usa lottie-web o dotlottie:
-
-```bash
-npm install lottie-react
-# o para dotlottie:
-npm install @dotlottie/react-player
-```
-
-```tsx
-'use client';
-import dynamic from 'next/dynamic';
-const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
-
-// Importar el JSON descargado en §1.5.1
-import animationData from '@/public/animations/hero-animation.json';
-
-function LottieAnimation() {
-  return (
-    <Lottie
-      animationData={animationData}
-      loop={/* valor del source */}
-      autoplay={/* valor del source */}
-      style={{ width: /* ancho del source */, height: /* alto del source */ }}
-    />
-  );
-}
-```
-
-Reglas LOTTIE:
-- loop, autoplay, speed, direction IDENTICOS al source
-- Si la animación se dispara con scroll (no autoplay), usar IntersectionObserver
-  para play/pause con los mismos threshold/rootMargin del source
-- Tamaño y posición IDENTICOS al source
-- Si el source usa dotlottie, usar `@dotlottie/react-player`, no lottie-web
-
-#### RIVE
-
-```bash
-npm install @rive-app/react-canvas
-```
-
-```tsx
-'use client';
-import dynamic from 'next/dynamic';
-const RiveComponent = dynamic(
-  () => import('@rive-app/react-canvas').then(m => ({ default: m.default })),
-  { ssr: false }
-);
-
-function RiveAnimation() {
-  return (
-    <RiveComponent
-      src="/animations/animation.riv"
-      stateMachines={/* state machine name del source */}
-      style={{ width: /* valor */, height: /* valor */ }}
-    />
-  );
-}
-```
-
-#### SPLINE 3D
-
-```bash
-npm install @splinetool/react-spline
-```
-
-```tsx
-'use client';
-import dynamic from 'next/dynamic';
-const Spline = dynamic(() => import('@splinetool/react-spline'), { ssr: false });
-
-function SplineScene() {
-  return <Spline scene="https://prod.spline.design/..." /* URL del source */ />;
-}
-```
-
-#### SCROLL-TIMELINE / VIEW-TIMELINE CSS (animaciones scroll nativas)
-
-Si el source usa CSS scroll-driven animations:
-
-```css
-/* En globals.css — copiar las reglas del source */
-@keyframes reveal {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.scroll-animated {
-  animation: reveal linear both;
-  animation-timeline: view();
-  animation-range: entry 0% entry 100%;
-}
-
-/* Si usa named scroll-timeline: */
-.scroller {
-  scroll-timeline: --my-scroller block;
-}
-.animated {
-  animation: reveal linear both;
-  animation-timeline: --my-scroller;
-}
-```
-
-REGLA: Si el source usa scroll-timeline CSS nativo, NO sustituir por GSAP.
-El comportamiento nativo es different (más fluido, sin JS). Copiar las reglas
-CSS exactas. Solo usar GSAP como fallback si el browser no soporta.
-
-#### VIEW TRANSITIONS API
-
-Si el source usa View Transitions para navegación entre páginas:
-
-```tsx
-// En layout.tsx con Next.js App Router
-'use client';
-import { useRouter } from 'next/navigation';
-
-function ViewTransitionLink({ href, children }: { href: string; children: React.ReactNode }) {
-  const router = useRouter();
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (document.startViewTransition) {
-      document.startViewTransition(() => router.push(href));
-    } else {
-      router.push(href);
-    }
-  };
-  return <a href={href} onClick={handleClick}>{children}</a>;
-}
-```
-
-CSS para view transitions:
-```css
-/* Copiar view-transition-name del source */
-::view-transition-old(root) { animation: /* valor del source */ }
-::view-transition-new(root) { animation: /* valor del source */ }
-
-/* Elementos con view-transition-name específico */
-.hero-image { view-transition-name: hero; }
-```
-
-#### NATIVE DIALOG / MODAL
-
-Si el source usa `<dialog>`:
-
-```tsx
-'use client';
-import { useRef } from 'react';
-
-function Modal({ children, trigger }: { children: React.ReactNode; trigger: React.ReactNode }) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  return (
-    <>
-      <span onClick={() => dialogRef.current?.showModal()}>{trigger}</span>
-      <dialog ref={dialogRef} className={/* clases del source para dialog */}
-        onClick={(e) => { if (e.target === dialogRef.current) dialogRef.current.close(); }}>
-        <div className={/* clases del contenedor interior del source */}>
-          <button onClick={() => dialogRef.current?.close()} className={/* clases close btn */}>✕</button>
-          {children}
-        </div>
-      </dialog>
-    </>
-  );
-}
-```
-
-CSS para `::backdrop`:
-```css
-dialog::backdrop {
-  background: /* valor del source, ej: rgba(0,0,0,0.5) */;
-  backdrop-filter: /* valor del source, ej: blur(4px) */;
-}
-```
-
-#### PREFERS-REDUCED-MOTION
-
-Si `extractAccessibility()` detecto `reducedMotionSupport: true` en el source:
-
-```css
-/* En globals.css */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-```
-
-Y en los componentes con GSAP:
-```tsx
-useEffect(() => {
-  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (prefersReduced) return; // no animar
-  // ... animaciones GSAP
-}, []);
-```
-
-### 3.2.1 Patrones de reconstruccion NATIVOS (sin GSAP/Lenis)
-
-Si `detectAnimationImplementation()` (§1.16) determina que el source NO usa
-GSAP ni Lenis, NO se deben instalar. Usar estos patrones nativos.
-
-#### VIDEO_SCRUB_NATIVE (RAF + scroll listener)
-
-Cuando el source usa un video scroll-scrubbed via native JS (NO GSAP):
-
-```tsx
-'use client';
-import { useRef, useEffect, useCallback } from 'react';
-
-function ScrollVideo({ src, poster }: { src: string; poster?: string }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const handleScroll = useCallback(() => {
-    const video = videoRef.current;
-    const container = containerRef.current;
-    if (!video || !container || !video.duration) return;
-
-    const rect = container.getBoundingClientRect();
-    const containerH = container.offsetHeight;
-    // Calcular progreso: 0 cuando top del container entra al viewport,
-    // 1 cuando bottom del container sale del viewport
-    const scrollProgress = Math.max(0, Math.min(1,
-      -rect.top / (containerH - window.innerHeight)
-    ));
-    video.currentTime = scrollProgress * video.duration;
-  }, []);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    // Precargar video
-    video.preload = 'auto';
-
-    const onScroll = () => requestAnimationFrame(handleScroll);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    // Ejecutar una vez para posicion inicial
-    handleScroll();
-
-    return () => window.removeEventListener('scroll', onScroll);
-  }, [handleScroll]);
-
-  return (
-    <div ref={containerRef} style={{ height: /* altura del source section */ }}>
-      <video
-        ref={videoRef}
-        src={src}
-        poster={poster}
-        muted
-        playsInline
-        preload="auto"
-        style={{
-          width: '100%',
-          height: '100vh',
-          objectFit: 'cover',
-          position: 'sticky',
-          top: 0,
-        }}
-      />
-    </div>
-  );
-}
-```
-
-Reglas VIDEO_SCRUB_NATIVE:
-- El calculo de scrollProgress DEBE producir los mismos currentTime que el source
-  en cada posicion de scroll (verificar con recordScrollBehavior §1.15)
-- La altura del container wrapper DEBE ser identica al source
-- position: sticky vs fixed segun lo que el source use
-- objectFit IDENTICO al source (cover vs contain)
-- NO agregar autoplay ni loop — el video se controla SOLO via scroll
-
-#### CSS_IO_REVEAL (IntersectionObserver + CSS class toggle)
-
-Cuando el source usa IntersectionObserver para reveals de entrada:
-
-```tsx
-'use client';
-import { useEffect, useRef } from 'react';
-
-function useIntersectionReveal(options?: IntersectionObserverInit) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        el.classList.add('is-visible');
-        observer.unobserve(el); // Una vez revelado, no volver a ocultar
-      }
-    }, {
-      threshold: options?.threshold ?? /* valor del source (§1.5) */,
-      rootMargin: options?.rootMargin ?? /* valor del source (§1.5) */,
-    });
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  return ref;
-}
-```
-
-CSS para los reveals (en globals.css o CSS module):
-```css
-/* Estado inicial: oculto */
-.reveal-element {
-  opacity: 0;
-  transform: translateY(/* valor del source, ej: 20px */);
-  transition:
-    opacity /* duration del source */s /* easing del source */,
-    transform /* duration del source */s /* easing del source */;
-}
-
-/* Estado visible */
-.reveal-element.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-```
-
-Reglas CSS_IO_REVEAL:
-- threshold y rootMargin IDENTICOS a los del source (capturados en §1.5)
-- Las propiedades animadas (opacity, transform, clip-path) IDENTICAS al source
-- Duration y easing de la transition IDENTICOS al source
-- Clase CSS toggle ('is-visible', 'in-view', etc.) puede ser cualquiera,
-  lo que importa son los estilos que aplica
-
-#### CSS_MODULE_ANIMATION (CSS Modules con keyframes)
-
-Cuando el source usa CSS Modules (SCSS) con keyframes per-component:
-
-```tsx
-// Usar CSS Modules nativo de Next.js
-import styles from './HeroSection.module.css';
-
-function HeroSection() {
-  return (
-    <section className={styles.hero}>
-      <h1 className={styles.title}>Texto del target</h1>
-    </section>
-  );
-}
-```
-
-```css
-/* HeroSection.module.css */
-/* Copiar los keyframes EXACTOS del source (de extractFullCSSRules §1.12) */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes translateOutInX {
-  from { transform: translateX(/* valor del source */); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
-.hero {
-  /* computed styles del source */
-}
-
-.title {
-  animation: fadeIn /* duration */s /* easing */ /* delay */s both;
-}
-```
-
-Reglas CSS_MODULE_ANIMATION:
-- Cada componente source con CSS Module → componente target con CSS Module
-- @keyframes copiados EXACTOS (nombre puede diferir, valores NO)
-- animation shorthand (duration, easing, delay, fill-mode) IDENTICO
-- Si el source tiene keyframes per-component (no globales), mantener per-component
-
-#### NATIVE_SMOOTH_SCROLL (sin Lenis)
-
-Cuando el source NO usa Lenis para smooth scroll:
-
-```css
-/* En globals.css */
-html {
-  scroll-behavior: smooth;
-}
-
-/* O si el source NO tiene smooth scroll (scroll nativo del browser): */
-/* NO agregar scroll-behavior: smooth */
-/* NO instalar Lenis */
-/* El scroll del browser por defecto es suficiente */
-```
-
-Regla: Si `detectAnimationImplementation().scrollSmooth` dice `'native-css'`
-o `'none'`, NO instalar Lenis. Si dice `'lenis'`, instalar Lenis.
-
-#### NATIVE_RAF_PARALLAX (parallax sin GSAP)
-
-```tsx
-'use client';
-import { useEffect, useRef } from 'react';
-
-function ParallaxLayer({ speed, children }: { speed: number; children: React.ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    let rafId: number;
-    const update = () => {
-      if (!ref.current) return;
-      const rect = ref.current.parentElement?.getBoundingClientRect();
-      if (!rect) return;
-      const progress = -rect.top * speed;
-      ref.current.style.transform = `translateY(${progress}px)`;
-      rafId = requestAnimationFrame(update);
-    };
-    rafId = requestAnimationFrame(update);
-    return () => cancelAnimationFrame(rafId);
-  }, [speed]);
-
-  return <div ref={ref}>{children}</div>;
-}
-```
-
-Regla: speed value IDENTICO al source. Calcular del difference recording.
-
-### 3.5 Patrones de CSS moderno
-
-#### DVH / SVH / LVH — viewport units para mobile
-
-Si `extractFullDesignSystem()` detecto `modernViewportUnits.dvh: true`:
-
-```css
-/* En globals.css — usar dvh donde el source lo usa */
-.hero-section {
-  height: 100dvh; /* dynamic viewport height — ajusta en iOS con address bar */
-  /* Fallback para navegadores sin soporte: */
-  height: 100vh;
-  height: 100dvh;
-}
-
-/* svh = smallest viewport height (address bar visible) */
-/* lvh = largest viewport height (address bar oculta) */
-```
-
-REGLA: Si el source usa `100dvh`, NO sustituir por `100vh`. En iOS/Android
-el resultado visual es DIFERENTE porque `vh` no descuenta la address bar
-dinamica pero `dvh` si. Copiar las unidades EXACTAS del source.
-
-#### @STARTING-STYLE — transiciones de entrada al DOM
-
-Si `extractFullDesignSystem()` detecto `startingStyle` entries:
-
-```css
-/* Permite animar la entrada de un elemento al DOM (ej: dialog, popover) */
-dialog[open] {
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 0.3s, transform 0.3s;
-}
-
-@starting-style {
-  dialog[open] {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-}
-```
-
-REGLA: Si el source usa `@starting-style`, NO sustituir por JavaScript
-`requestAnimationFrame(() => el.classList.add('visible'))`. El resultado visual
-es diferente (CSS @starting-style es sincrono con el renderizado del browser,
-JS no lo es).
-
-Soporte: Chrome 117+, Safari 17.5+. Si el target necesita soporte para
-navegadores mas antiguos, agregar fallback JS que replica el mismo efecto.
-
-#### WEBKIT-TEXT-STROKE — texto outline
-
-Si `extractFullDesignSystem()` detecto `textStroke` entries:
-
-```css
-.outline-heading {
-  -webkit-text-stroke: /* valor del source, ej: 1px #000 */;
-  -webkit-text-fill-color: /* valor del source, ej: transparent */;
-  /* Fallback para Firefox (no soporta text-stroke): */
-  color: /* color del source sin stroke */;
-}
-
-/* Soporte real */
-@supports (-webkit-text-stroke: 1px black) {
-  .outline-heading {
-    -webkit-text-fill-color: transparent;
-    -webkit-text-stroke: /* valor exacto */;
-  }
-}
-```
-
-REGLA: Incluir `@supports` para que los navegadores sin soporte muestren
-el texto con el color de fallback en vez de invisible.
-
-#### GSAP SCROLLSMOOTHER — smooth scroll premium
-
-Si `extractAnimationSystem()` detecto `gsap.scrollSmoother`:
-
-```tsx
-'use client';
-import { useLayoutEffect } from 'react';
-import dynamic from 'next/dynamic';
-
-// ScrollSmoother requiere GSAP premium (Club GreenSock)
-const initSmoother = async () => {
-  const { gsap } = await import('gsap');
-  const { ScrollTrigger } = await import('gsap/ScrollTrigger');
-  const { ScrollSmoother } = await import('gsap/ScrollSmoother');
-  gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
-
-  ScrollSmoother.create({
-    smooth: /* valor del source, ej: 1.5 */,
-    effects: /* valor del source, ej: true */,
-    smoothTouch: /* valor del source, ej: 0.1 */,
-    normalizeScroll: /* valor del source, ej: true */,
-  });
-};
-```
-
-HTML structure requerida por ScrollSmoother:
-```tsx
-<div id="smooth-wrapper">
-  <div id="smooth-content">
-    {/* Todo el contenido de la pagina */}
-  </div>
-</div>
-```
-
-REGLA: ScrollSmoother es INCOMPATIBLE con Lenis. Si el source usa ScrollSmoother,
-NO instalar Lenis. Si el source usa Lenis, NO instalar ScrollSmoother.
-
-#### GSAP FLIP — animaciones de layout
-
-Si GSAP Flip plugin fue detectado en el source:
-
-```tsx
-'use client';
-import { useRef, useCallback } from 'react';
-
-const flipAnimate = async (targets: Element[], containerRef: Element) => {
-  const { gsap } = await import('gsap');
-  const { Flip } = await import('gsap/Flip');
-  gsap.registerPlugin(Flip);
-
-  // 1. Capturar estado ANTES del cambio de layout
-  const state = Flip.getState(targets);
-
-  // 2. Hacer el cambio de layout (ej: reordenar, cambiar grid)
-  // ... manipulacion del DOM ...
-
-  // 3. Animar desde el estado anterior al nuevo
-  Flip.from(state, {
-    duration: /* valor del source */,
-    ease: /* valor del source */,
-    stagger: /* valor del source */,
-    absolute: true,
-    onComplete: () => { /* callbacks del source */ }
-  });
-};
-```
-
-REGLA: Flip se usa cuando el source anima elementos entre posiciones de layout
-(ej: un grid que se reordena, un item que pasa de lista a grid). NO sustituir
-por `transform` manual — el resultado no es igual porque Flip calcula los
-deltas automaticamente.
-
-#### GSAP MATCHMEDIA — animaciones responsive
-
-Si `extractAnimationSystem()` detecto `gsap.matchMediaUsed: true`:
-
-```tsx
-useLayoutEffect(() => {
-  const mm = gsap.matchMedia();
-
-  mm.add("(min-width: 768px)", () => {
-    // Animaciones para desktop/tablet
-    gsap.to(".hero-title", {
-      scrollTrigger: { /* config del source */ },
-      /* valores del source para desktop */
-    });
-    return () => { /* cleanup automatico */ };
-  });
-
-  mm.add("(max-width: 767px)", () => {
-    // Animaciones diferentes para mobile
-    gsap.to(".hero-title", {
-      /* valores del source para mobile */
-    });
-    return () => { /* cleanup */ };
-  });
-
-  return () => mm.revert();
-}, []);
-```
-
-REGLA: Si el source usa gsap.matchMedia, los breakpoints de las animaciones
-deben ser IDENTICOS a los del source (extraidos en matchMediaBreakpoints).
-NO usar los breakpoints de Tailwind si son diferentes a los de GSAP.
-
-## FASE 4: Verificacion QA
-
-### 4.1 Protocolo de espera antes de captura
-
-Ejecutar SIEMPRE antes de screenshot:
-
-```javascript
-await new Promise(r => setTimeout(r, 2500));
-document.querySelectorAll('img[loading="lazy"]').forEach(img => {
-  img.loading = 'eager';
-  if (img.dataset.src) img.src = img.dataset.src;
-});
-document.querySelectorAll('video').forEach(v => { if (v.paused && v.readyState >= 2) v.play().catch(() => {}); });
-await new Promise(r => requestAnimationFrame(() => setTimeout(r, 500)));
-```
-
-### 4.2 Deteccion de video
-
-```javascript
-const hasFullscreenVideo = (() => {
-  const v = document.querySelector('video');
-  return v ? v.offsetWidth >= window.innerWidth * 0.8 : false;
-})();
-```
-
-Si `hasFullscreenVideo === true`:
-- Usar computed style comparison en 0% (no pixel delta en hero)
-- Pixel delta solo desde 25% en adelante
-
-### 4.3 Multi-viewport verificacion
-
-Verificar en TRES viewports:
-- **Mobile**: 375px width
-- **Tablet**: 768px width
-- **Desktop**: 1440px width
-
-Para cada viewport, capturas en: 0%, 25%, 50%, 75%, 100% scroll.
-
-### 4.4 Computed style comparison
-
-Ejecutar en MCP-REF y MCP-TARGET, comparar resultados:
-
-```javascript
-(function extractComputedStyles() {
-  const selectors = [
-    'nav','header','footer','h1','h2','h3','h4','p',
-    '[class*="hero"]','[class*="section"]',
-    'button','a[class]','[class*="card"]','[class*="feature"]',
-    '[class*="btn"]','[class*="cta"]','input','textarea',
-    '[class*="grid"]','[class*="container"]'
-  ];
-  const result = {};
-  selectors.forEach(sel => {
-    const el = document.querySelector(sel);
-    if (!el) return;
-    const cs = getComputedStyle(el);
-    result[sel] = {
-      fontFamily: cs.fontFamily, fontSize: cs.fontSize,
-      fontWeight: cs.fontWeight, letterSpacing: cs.letterSpacing,
-      lineHeight: cs.lineHeight, color: cs.color,
-      backgroundColor: cs.backgroundColor, padding: cs.padding,
-      margin: cs.margin, borderRadius: cs.borderRadius,
-      transform: cs.transform, opacity: cs.opacity,
-      display: cs.display, position: cs.position, zIndex: cs.zIndex,
-      gap: cs.gap, maxWidth: cs.maxWidth, boxShadow: cs.boxShadow
-    };
-  });
-  return JSON.stringify(result, null, 2);
-})();
-```
-
-Criterios PASS (tolerancia CERO):
-- fontFamily: IDENTICO (misma fuente, mismo fallback stack)
-- fontSize: IDENTICO (valor exacto, no "+-2px")
-- fontWeight: IDENTICO
-- color: IDENTICO
-- backgroundColor: IDENTICO
-- borderRadius: IDENTICO
-- letterSpacing: IDENTICO
-- padding: IDENTICO
-- gap: IDENTICO
-- lineHeight: IDENTICO
-- boxShadow: IDENTICO
-- transform: IDENTICO
-- opacity: IDENTICO
-
-Si un valor difiere porque Tailwind redondea (ej: 47px → 48px), usar valor
-arbitrario exacto: `text-[47px]`, `p-[13px]`, etc. No aproximar NUNCA.
-
-Criterio FAIL: CUALQUIER diferencia visible en CUALQUIER propiedad.
-
-### 4.4.1 Diff automatizado de scroll snapshots
-
-Ejecutar `extractScrollSnapshot()` en MCP-REF y MCP-TARGET, guardar ambos JSONs.
-Ejecutar este script de comparacion:
-
-```javascript
-function compareScrollSnapshots(sourceSnapshots, targetSnapshots) {
-  const diffs = [];
-  sourceSnapshots.forEach((src, i) => {
-    const tgt = targetSnapshots[i];
-    if (!tgt) { diffs.push({ pct: src.pct, error: 'Missing target snapshot' }); return; }
-
-    // Nav comparison
-    if (src.nav && tgt.nav) {
-      ['bg','opacity','backdropFilter','transform'].forEach(prop => {
-        if (src.nav[prop] !== tgt.nav[prop]) {
-          diffs.push({ pct: src.pct, element: 'nav', property: prop, source: src.nav[prop], target: tgt.nav[prop] });
-        }
-      });
-    }
-
-    // Video currentTime comparison
-    src.videos?.forEach((sv, vi) => {
-      const tv = tgt.videos?.[vi];
-      if (tv && Math.abs(sv.currentTime - tv.currentTime) > 0.5) {
-        diffs.push({ pct: src.pct, element: `video[${vi}]`, property: 'currentTime', source: sv.currentTime, target: tv.currentTime, delta: Math.abs(sv.currentTime - tv.currentTime) });
-      }
-    });
-
-    // Visible sections comparison
-    src.visibleSections?.forEach((ss, si) => {
-      const ts = tgt.visibleSections?.[si];
-      if (!ts) { diffs.push({ pct: src.pct, element: `section[${si}]`, error: 'Missing in target' }); return; }
-      if (ss.opacity !== ts.opacity) diffs.push({ pct: src.pct, element: ss.classes, property: 'opacity', source: ss.opacity, target: ts.opacity });
-      if (ss.transform !== ts.transform) diffs.push({ pct: src.pct, element: ss.classes, property: 'transform', source: ss.transform, target: ts.transform });
-    });
-
-    // Pinned elements comparison
-    if (src.pinnedEls?.length !== tgt.pinnedEls?.length) {
-      diffs.push({ pct: src.pct, element: 'pinnedEls', error: `Count mismatch: source=${src.pinnedEls?.length} target=${tgt.pinnedEls?.length}` });
-    }
-
-    // Active animations comparison
-    if (src.activeAnimations !== null && tgt.activeAnimations !== null) {
-      if (Math.abs(src.activeAnimations - tgt.activeAnimations) > 2) {
-        diffs.push({ pct: src.pct, element: 'animations', source: src.activeAnimations, target: tgt.activeAnimations });
-      }
-    }
-  });
-
-  return { totalDiffs: diffs.length, pass: diffs.length === 0, diffs };
-}
-```
-
-Guardar resultado en: `docs/pds/qa-evidence/scroll-diff-[pagina].json`
-Si `pass === false`: CORREGIR todas las diffs antes de continuar.
-
-### 4.4.2 compareScrollBehavior() — verificacion programatica dual-site
-
-Esta es la verificacion MAS IMPORTANTE. Reemplaza la comparacion visual
-subjetiva por datos numericos exactos. Ejecuta `recordScrollBehavior()`
-(§1.15) en AMBOS sitios y compara los resultados automaticamente.
-
-```javascript
-function compareScrollBehavior(sourceBehavior, targetBehavior) {
-  const report = { pass: true, totalChecks: 0, totalFails: 0, details: [] };
-
-  sourceBehavior.positions.forEach((srcPos, i) => {
-    const tgtPos = targetBehavior.positions[i];
-    if (!tgtPos) {
-      report.details.push({ pct: srcPos.scrollPercent, error: 'Missing target position' });
-      report.pass = false; report.totalFails++; return;
-    }
-
-    // Comparar cada elemento tracked
-    Object.keys(srcPos.elements).forEach(selector => {
-      const srcEl = srcPos.elements[selector];
-      const tgtEl = tgtPos.elements?.[selector];
-      report.totalChecks++;
-
-      if (!tgtEl) {
-        report.details.push({ pct: srcPos.scrollPercent, selector, error: 'Element missing in target' });
-        report.pass = false; report.totalFails++; return;
-      }
-
-      // Comparar opacity
-      if (Math.abs(parseFloat(srcEl.opacity) - parseFloat(tgtEl.opacity)) > 0.05) {
-        report.details.push({ pct: srcPos.scrollPercent, selector, prop: 'opacity', src: srcEl.opacity, tgt: tgtEl.opacity });
-        report.pass = false; report.totalFails++;
-      }
-
-      // Comparar transform (extraer translateY)
-      const srcTY = parseTranslateY(srcEl.transform);
-      const tgtTY = parseTranslateY(tgtEl.transform);
-      if (srcTY !== null && tgtTY !== null && Math.abs(srcTY - tgtTY) > 10) {
-        report.details.push({ pct: srcPos.scrollPercent, selector, prop: 'translateY', src: srcTY, tgt: tgtTY, delta: Math.abs(srcTY - tgtTY) });
-        report.pass = false; report.totalFails++;
-      }
-
-      // Comparar visibility match
-      if (srcEl.isVisible !== tgtEl.isVisible) {
-        report.details.push({ pct: srcPos.scrollPercent, selector, prop: 'visibility', src: srcEl.isVisible, tgt: tgtEl.isVisible });
-        report.pass = false; report.totalFails++;
-      }
-
-      // Comparar rect position (dentro del 5% del viewport)
-      if (srcEl.rect && tgtEl.rect) {
-        const viewH = srcPos.viewportHeight || 900;
-        const yDelta = Math.abs(srcEl.rect.top - tgtEl.rect.top);
-        if (yDelta > viewH * 0.05) {
-          report.details.push({ pct: srcPos.scrollPercent, selector, prop: 'position.top', src: srcEl.rect.top, tgt: tgtEl.rect.top, delta: yDelta });
-          report.pass = false; report.totalFails++;
-        }
-      }
-    });
-
-    // Comparar video currentTime
-    if (srcPos.videoCurrentTime !== undefined && tgtPos.videoCurrentTime !== undefined) {
-      report.totalChecks++;
-      if (Math.abs(srcPos.videoCurrentTime - tgtPos.videoCurrentTime) > 0.5) {
-        report.details.push({ pct: srcPos.scrollPercent, prop: 'videoCurrentTime', src: srcPos.videoCurrentTime, tgt: tgtPos.videoCurrentTime });
-        report.pass = false; report.totalFails++;
-      }
-    }
-
-    // Comparar nav state
-    if (srcPos.navState && tgtPos.navState) {
-      report.totalChecks++;
-      if (srcPos.navState.backgroundColor !== tgtPos.navState.backgroundColor) {
-        report.details.push({ pct: srcPos.scrollPercent, prop: 'nav.backgroundColor', src: srcPos.navState.backgroundColor, tgt: tgtPos.navState.backgroundColor });
-        report.pass = false; report.totalFails++;
-      }
-    }
-  });
-
-  report.passRate = ((report.totalChecks - report.totalFails) / report.totalChecks * 100).toFixed(1) + '%';
-  return report;
-}
-
-function parseTranslateY(transform) {
-  if (!transform || transform === 'none') return 0;
-  const m = transform.match(/translateY\(([-\d.]+)px\)/);
-  if (m) return parseFloat(m[1]);
-  const mat = transform.match(/matrix\([^,]+,[^,]+,[^,]+,[^,]+,[^,]+,\s*([-\d.]+)\)/);
-  return mat ? parseFloat(mat[1]) : null;
-}
-```
-
-**Protocolo de ejecucion:**
-1. Ejecutar `recordScrollBehavior()` en MCP-REF → `scroll-behavior-source-[page].json`
-2. Ejecutar `recordScrollBehavior()` en MCP-TARGET → `scroll-behavior-target-[page].json`
-3. Ejecutar `compareScrollBehavior(source, target)` → resultado
-4. Si `pass === false`:
-   - Revisar `details[]` para cada fallo
-   - Corregir el componente target correspondiente
-   - Re-ejecutar comparacion
-   - Repetir hasta `pass === true`
-5. Guardar resultado final en `docs/pds/qa-evidence/scroll-behavior-diff-[page].json`
-
-**STOP condition**: Si `passRate < 90%` en cualquier pagina → revision fundamental
-de la reconstruccion de esa pagina.
-
-### 4.4.3 Verificacion de stacking contexts
-
-Comparar stacking contexts del source (de `advanced-patterns.json`) con el target:
-
-```javascript
-// Ejecutar en MCP-TARGET
-(function checkStackingContexts() {
-  const contexts = [];
-  document.querySelectorAll('*').forEach(el => {
-    const cs = getComputedStyle(el);
-    const creates = (cs.opacity !== '1' && cs.opacity !== '') ||
-      (cs.transform !== 'none' && cs.transform !== '') ||
-      (cs.filter !== 'none' && cs.filter !== '') ||
-      cs.isolation === 'isolate' || (cs.zIndex !== 'auto' && cs.position !== 'static');
-    if (creates) contexts.push({ tag: el.tagName, classes: (el.className||'').toString().slice(0,60), zIndex: cs.zIndex });
-  });
-  return contexts.slice(0, 30);
-})();
-```
-
-Comparar con el source: mismo numero de stacking contexts, mismo orden de z-index.
-Si difieren, ajustar `z-index`, `position`, `isolation` en el target.
-
-### 4.5 Comparacion visual lado a lado
-
-Para CADA pagina del PAGE_MAPPING:
-
-1. Abrir MCP-REF en source-url/pagina y MCP-TARGET en localhost/pagina
-2. Hacer scroll simultaneo desde 0% hasta 100% en incrementos de 10%
-3. En CADA posicion, comparar visualmente:
-   - Layout identico (mismas columnas, mismos bloques, mismo orden)
-   - Colores identicos (fondos, textos, bordes, sombras)
-   - Tipografia identica (familia, tamano, peso, espaciado)
-   - Imagenes/videos en la misma posicion y tamano
-   - Animaciones activas en ese punto son las mismas
-4. Si hay CUALQUIER diferencia visible: PARAR y corregir antes de continuar
-5. Guardar screenshot de cada posicion en `docs/pds/qa-evidence/[pagina]/`
-
-### 4.6 Verificacion de efectos y animaciones (EXHAUSTIVA)
-
-Para CADA entrada en ANIMATION_MANIFEST:
-
-1. Ir a la seccion correspondiente en MCP-REF
-2. Provocar el trigger (scroll, hover, click, page load)
-3. Observar el efecto exacto (que se mueve, cuanto, en que direccion, con que timing)
-4. Ir a la misma seccion en MCP-TARGET
-5. Provocar el mismo trigger
-6. El efecto DEBE ser identico: misma velocidad, mismo easing, misma distancia,
-   mismo elemento, mismo resultado visual
-7. Si NO es identico: PARAR, corregir, re-verificar
-8. Solo marcar ✅ cuando el efecto sea indistinguible del source
-
-Para `VIDEO_SCRUB`:
-1. Ejecutar `extractScrollScrubTrace()` en MCP-REF y MCP-TARGET.
-2. Comparar `currentTime` en 0/10/25/50/75/100.
-3. Screenshots por sample en `docs/pds/qa-evidence/video-scrub/`.
-4. PASS solo si el video del target sigue el scroll EXACTAMENTE como el source.
-5. FAIL si: el video usa `autoplay loop`, `currentTime` no cambia al hacer scroll,
-   el video no cubre el viewport igual que el source, o los frames no coinciden.
-
-Para `GSAP_SCROLLTRIGGER`:
-1. Scroll a la posicion start en REF y TARGET
-2. Comparar: que elemento se anima, en que direccion, con que velocidad
-3. Scroll a la posicion end
-4. Comparar: estado final del elemento
-5. Si hay pin: verificar que el pinning tiene la misma duracion y comportamiento
-
-Para `LENIS_INIT`:
-1. Hacer scroll con la rueda en REF y TARGET
-2. Comparar: suavidad, velocidad, inercia
-3. Deben sentirse IDENTICOS
-
-### 4.7 Verificacion de interacciones (EXHAUSTIVA)
-
-Para CADA elemento interactivo visible (nav links, botones, cards, inputs, etc.):
-
-1. Hover en MCP-REF: capturar que cambia (color, fondo, sombra, transform, escala)
-2. Hover en MCP-TARGET: capturar lo mismo
-3. Deben ser IDENTICOS: mismo color hover, misma sombra, misma transicion
-4. Si difieren: PARAR, corregir, re-verificar
-5. Focus states: tab a traves de elementos, comparar outline/ring
-6. Active states: click en botones, comparar respuesta visual
-
-### 4.8 Verificacion responsive (OBLIGATORIA)
-
-Para CADA pagina:
-1. Viewport 1440px: scroll completo 0-100%, comparar visualmente
-2. Viewport 768px: scroll completo 0-100%, comparar visualmente
-3. Viewport 375px: scroll completo 0-100%, comparar visualmente
-
-Verificar en cada viewport:
-- Menu mobile se abre/cierra igual
-- Grid/layout se reorganiza igual
-- Tipografia escala igual
-- Imagenes se redimensionan igual
-- Animaciones se comportan igual (o se desactivan si el source las desactiva)
-- Spacing se ajusta igual
-
-### 4.9 Verificacion de consola JS — CERO errores
-
-Ejecutar en MCP-TARGET en CADA pagina:
-
-```javascript
-(function checkConsoleErrors() {
-  const errors = [];
-  const originalError = console.error;
-  const originalWarn = console.warn;
-  console.error = (...args) => { errors.push({ type: 'error', message: args.join(' ') }); originalError.apply(console, args); };
-  console.warn = (...args) => { errors.push({ type: 'warn', message: args.join(' ') }); originalWarn.apply(console, args); };
-
-  // Capturar errores no manejados
-  window.addEventListener('error', (e) => { errors.push({ type: 'uncaught', message: e.message, source: e.filename, line: e.lineno }); });
-  window.addEventListener('unhandledrejection', (e) => { errors.push({ type: 'unhandled-promise', message: String(e.reason) }); });
-
-  // Esperar y reportar
-  setTimeout(() => {
-    console.error = originalError;
-    console.warn = originalWarn;
-    return { totalErrors: errors.filter(e => e.type === 'error' || e.type === 'uncaught').length, totalWarnings: errors.filter(e => e.type === 'warn').length, details: errors };
-  }, 5000);
-
-  return 'Monitoring console for 5 seconds...';
-})();
-```
-
-Criterios:
-- CERO errores JS en consola (ni errores de importacion, ni 404, ni TypeError)
-- Warnings aceptables: solo los que tambien existen en el source
-- Si el target tiene errores que el source NO tiene: FAIL → corregir
-
-### 4.10 Verificacion de red y carga de assets
-
-Ejecutar en MCP-TARGET:
-
-```javascript
-(function checkAssetLoading() {
-  const result = { fonts: [], images: [], videos: [], failedRequests: [] };
-
-  // Verificar fuentes cargadas
-  document.fonts.ready.then(() => {
-    document.fonts.forEach(f => {
-      result.fonts.push({ family: f.family, weight: f.weight, style: f.style, status: f.status });
-    });
-  });
-
-  // Verificar imagenes
-  document.querySelectorAll('img').forEach(img => {
-    result.images.push({
-      src: img.src?.slice(0, 150),
-      loaded: img.complete && img.naturalWidth > 0,
-      naturalW: img.naturalWidth,
-      naturalH: img.naturalHeight,
-      broken: img.complete && img.naturalWidth === 0
-    });
-  });
-
-  // Verificar videos
-  document.querySelectorAll('video').forEach(v => {
-    result.videos.push({
-      src: (v.src || v.currentSrc || '').slice(0, 150),
-      readyState: v.readyState, // 0=HAVE_NOTHING, 4=HAVE_ENOUGH_DATA
-      networkState: v.networkState,
-      error: v.error ? v.error.code : null
-    });
-  });
-
-  // Verificar PerformanceObserver para requests fallidos
-  if (window.performance) {
-    performance.getEntriesByType('resource').forEach(r => {
-      if (r.transferSize === 0 && r.decodedBodySize === 0 && !r.name.includes('data:')) {
-        result.failedRequests.push({ url: r.name.slice(0, 200), type: r.initiatorType });
-      }
-    });
-  }
-
-  return result;
-})();
-```
-
-Criterios:
-- TODAS las fuentes: status === 'loaded' (no 'error', no 'unloaded')
-- TODAS las imagenes: loaded === true, broken === false
-- TODOS los videos: readyState >= 2 (HAVE_CURRENT_DATA), error === null
-- CERO failed requests en assets criticos (fuentes, imagenes, videos)
-- Si alguna fuente no carga: verificar @font-face y next/font config
-- Si alguna imagen esta rota: verificar src path y public/ directory
-
-### 4.11 Verificacion de performance basica
-
-Ejecutar en MCP-TARGET:
-
-```javascript
-(function checkPerformance() {
-  const lcpEntries = performance.getEntriesByType('largest-contentful-paint');
-  const clsEntries = performance.getEntriesByType('layout-shift');
-  let cls = 0;
-  clsEntries.forEach(e => { if (!e.hadRecentInput) cls += e.value; });
-
-  return {
-    lcp: lcpEntries.length > 0 ? lcpEntries[lcpEntries.length - 1].startTime : null,
-    cls: cls,
-    domContentLoaded: performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart,
-    resourceCount: performance.getEntriesByType('resource').length,
-    jsHeapSize: performance.memory ? performance.memory.usedJSHeapSize : null
-  };
-})();
-```
-
-Este check es informativo, no bloqueante. Pero si LCP > 8s o CLS > 0.5,
-investigar que esta causando degradacion respecto al source.
-
-## FASE 5: RECORRIDO VISUAL FINAL — OBLIGATORIO
-
-Esta fase es la mas importante. Se ejecuta DESPUES de que todas las paginas
-esten reconstruidas y hayan pasado QA individual. Es la prueba definitiva
-de que el target es INDISTINGUIBLE del source.
-
-### 5.1 Recorrido pagina por pagina
-
-Para CADA pagina en PAGE_MAPPING, en orden:
-
-1. Abrir MCP-REF en la pagina del source
-2. Abrir MCP-TARGET en la pagina equivalente del target
-3. Viewport 1440px (desktop)
-
-4. **Scroll completo narrado (5% increments)**:
-   - Posicion 0% (top): comparar todo lo visible. Screenshot ambos.
-     ¿Son identicos? Si NO → anotar diferencia → corregir inmediatamente
-   - Scroll a 5%: comparar. ¿Identicos? Si NO → corregir
-   - Scroll a 10%: comparar. ¿Identicos? Si NO → corregir
-   - Scroll a 15%, 20%, 25%, 30%, 35%, 40%, 45%, 50%: cada posicion, comparar
-   - Scroll a 55%, 60%, 65%, 70%, 75%, 80%, 85%, 90%, 95%, 100%: cada posicion, comparar
-   - TOTAL: 21 posiciones verificadas por pagina por viewport
-
-5. **Efectos durante scroll**:
-   - ¿El video scrub avanza igual en ambos?
-   - ¿Los parallax se mueven a la misma velocidad?
-   - ¿Los elementos que hacen pin se quedan fijos el mismo tiempo?
-   - ¿Las animaciones de aparicion (fade, slide, reveal) se activan en el mismo punto?
-   - ¿La nav cambia de transparente a solida en el mismo punto?
-
-6. **Interacciones**:
-   - Hover sobre CADA link del nav: ¿mismo efecto?
-   - Hover sobre CADA boton visible: ¿mismo efecto?
-   - Hover sobre CADA card: ¿mismo efecto?
-   - Click en menu mobile (viewport 375px): ¿se abre igual?
-
-7. **Responsive**:
-   - Cambiar a 768px: scroll completo, comparar
-   - Cambiar a 375px: scroll completo, comparar
-
-### 5.2 Bucle de correccion
-
-Si CUALQUIER diferencia se encuentra durante el recorrido:
-
-```
-DIFERENCIA DETECTADA:
-  Pagina: [ruta]
-  Posicion scroll: [X%]
-  Viewport: [1440/768/375]
-  Elemento: [descripcion]
-  Source: [lo que se ve en source]
-  Target: [lo que se ve en target]
-  Accion: [que hay que corregir]
-```
-
-1. Corregir el archivo correspondiente
-2. `npm run build` — debe pasar
-3. Volver a verificar ESA seccion
-4. Si pasa, continuar el recorrido desde donde se detuvo
-5. Si falla de nuevo, corregir y repetir (max 3 intentos por diferencia)
-
-### 5.3 Criterio de aprobacion del recorrido
-
-El recorrido SOLO se considera aprobado cuando:
-- TODAS las paginas han sido recorridas completamente (0% a 100% en tramos de 5%)
-- EN LOS 3 viewports (1440, 768, 375)
-- 21 posiciones de scroll verificadas por pagina por viewport
-- CERO diferencias visuales pendientes
-- TODOS los efectos de scroll verificados y funcionando igual
-- TODAS las interacciones hover verificadas y funcionando igual
-
-Si falta verificar UNA pagina o UN viewport: el recorrido NO esta completo.
-
-### 5.4 Evidencia del recorrido
-
-Guardar en `docs/pds/qa-evidence/recorrido-final/`:
-- Screenshot por pagina, por viewport, en posiciones 0%, 25%, 50%, 75%, 100% (minimo)
-- Lista de diferencias encontradas y corregidas
-- Confirmacion final: "Recorrido visual completo: TODAS las paginas en 3 viewports, 21 posiciones de scroll cada una, son identicas al source"
-
-## FASE 6: Entregables
-
-### Antes de componentes (BLOQUEANTES):
-- `PAGE_MAPPING.md`
-- `ANIMATION_MANIFEST.md`
-- `docs/pds/build-baseline.txt`
-- `docs/pds/original-target-strings.txt`
-- `docs/pds/extraction/design-tokens.json`
-- `docs/pds/extraction/cross-origin-css.json` (si aplica)
-- `docs/pds/extraction/animations.json`
-- `docs/pds/extraction/intersection-observers.json`
-- `docs/pds/extraction/lottie-rive-spline.json` (si aplica)
-- `docs/pds/extraction/structure.json`
-- `docs/pds/extraction/interactions.json`
-- `docs/pds/extraction/assets.json`
-- `docs/pds/extraction/three-scene.json` (si aplica)
-- `docs/pds/extraction/dark-mode.json`
-- `docs/pds/extraction/accessibility.json`
-- `docs/pds/extraction/visual-fingerprint-[pagina].json` (por pagina)
-- `docs/pds/extraction/advanced-patterns.json`
-- `docs/pds/extraction/css-rules.json`
-- `docs/pds/extraction/scroll-snapshots-[pagina].json` (por pagina)
-- `docs/pds/extraction/scroll-scrub-trace-[pagina].json` (si aplica)
-- `docs/pds/extraction/scroll-narrative-[pagina].md` (por pagina)
-- `docs/pds/extraction/_checkpoint.json` (auto-generado)
-
-### Durante migracion:
-- `docs/pds/modified-files.md`
-- `docs/pds/qa-evidence/` (screenshots)
-- `docs/pds/qa-evidence/scroll-diff-[pagina].json` (diffs automatizados)
-
-### Final:
-- `docs/pds/assets-reemplazo-ia.md`
-- `docs/pds/assets-manual-download.md` (si aplica, assets que requieren descarga manual)
-- `MIGRATION_COMPLETE.md`
-
-### assets-reemplazo-ia.md
-
-Encabezado obligatorio: `# ASSETS REEMPLAZO IA`
-
-Para CADA asset visual usado en la reconstruccion (hero video, fondos, SVGs,
-texturas, fuentes), incluir prompt de generacion adaptado al negocio target:
-
-```markdown
-## [nombre-del-asset]
-- **Archivo**: hero-video.mp4
-- **Uso**: video de hero con scroll scrub
-- **Herramienta**: Kling (video cinematico)
-- **Prompt**: "Aerial cinematic shot of [negocio target], golden hour lighting,
-  drone moving slowly forward, shallow depth of field, color palette #hex1 #hex2,
-  aspect ratio 16:9, 6 seconds, 24fps, no text overlays"
-- **Exclusiones**: no logos, no texto, no personas identificables
-- **Duracion**: 6s
-- **Aspect ratio**: 16:9
-```
-
-## Reglas de build
-
-BUILD-1: archivo modificado -> build inmediato (`npm run build`).
-BUILD-2: build falla -> corregir ANTES de tocar otro archivo.
-BUILD-3: 3 fallos consecutivos en mismo archivo -> STOP + reporte al usuario.
-BUILD-4: cero imports de chunks/hashes/.next/server/.
-BUILD-5: PASS = exit 0, cero errores TypeScript, cero warnings nuevos.
-
-## Sistema de checkpoints
-
-Despues de cada seccion reconstruida y verificada con PASS:
-1. Actualizar `docs/pds/modified-files.md` con archivos tocados
-2. Marcar seccion como ✅ en PAGE_MAPPING.md
-3. Actualizar conteo en ANIMATION_MANIFEST.md
-
-Si la migracion se interrumpe, se puede retomar desde el ultimo checkpoint.
-
-## Stop conditions
-
-- PAGE_MAPPING.md inexistente cuando se intenta escribir codigo
-- `preExpandContent()` NO ejecutado antes de extraccion -> los datos son incompletos
-- Build sin resolver antes del siguiente archivo
-- Import fuera de `src/` o `node_modules/`
-- MCP-REF no puede cargar source-url (incluso tras protocolo anti-bot)
-- `design-tokens.json` vacio -> STOP + re-extraer
-- `design-tokens.json` sin `_metadata` -> STOP + re-extraer con metadata
-- `crossOriginSheets` no vacio y `cross-origin-css.json` no generado -> STOP
-- `shadowDOMElements` no vacio y no se extrajo shadow content -> STOP
-- `ScrollTrigger.getAll()` vacio con animaciones visibles -> scroll + re-extraer
-- `VIDEO_SCRUB` detectado en source y target usa autoplay/loop sin `currentTime`
-  ligado a scroll -> STOP + rehacer hero/section
-- `scroll-scrub-trace-[pagina].json` ausente para paginas con video/canvas
-  fullscreen -> STOP
-- Lottie/Rive/Spline detectado y no extraido -> STOP + ejecutar extractLottieRiveSpline
-- CSS scroll-timeline detectado y no implementado -> STOP + copiar reglas CSS
-- Texto del source encontrado en target despues de SWAP
-- Evidencia MCP ausente para item marcado ✅
-- 3 builds fallidos consecutivos en mismo archivo
-- Hydration mismatch warning en consola del target -> STOP + aplicar §3.0.5
-- Componente con useEffect/useState sin 'use client' -> STOP + anadir directive
-- Diferencia visual detectada durante recorrido final -> STOP + corregir antes
-  de avanzar a la siguiente pagina
-- Diff automatizado (`compareScrollSnapshots`) retorna `pass: false` -> STOP
-- Custom scrollbar en source y no replicado en target -> STOP + copiar reglas
-- ::before/::after con content visible en source y ausente en target -> STOP + replicar
-- Adobe Fonts detectadas y no incluidas en next/font config -> STOP + configurar
-- Valor de diseno hardcodeado que no proviene de JSON de extraccion -> STOP + extraer
-- `container-type` en source y no replicado en target elements -> STOP + los @container queries no funcionaran
-- `env(safe-area-inset-*)` usado en source y no replicado -> STOP + mobile notch handling roto
-- Iframes/embeds (YouTube, Vimeo, Maps) detectados en source y ausentes en target -> STOP + replicar
-- Se intenta declarar MIGRATION_COMPLETE sin haber hecho el recorrido visual
-  final (FASE 5) -> STOP
-- Se modifica CUALQUIER archivo de backend (API routes, middleware, auth,
-  server actions, prisma, drizzle, etc.) -> STOP INMEDIATO
-- `detectAnimationImplementation()` (§1.16) NO ejecutado antes de FASE 3
-  -> STOP + ejecutar primero — sin esto se instalan dependencias incorrectas
-- `recordScrollBehavior()` (§1.15) NO ejecutado para una pagina -> STOP
-  -> sin esto la verificacion programatica es imposible
-- `compareScrollBehavior()` (§4.4.2) retorna `pass: false` -> STOP + corregir
-  cada diff listada en `details[]` antes de avanzar
-- `compareScrollBehavior()` retorna `passRate < 90%` -> STOP + revision
-  fundamental de la reconstruccion de esa pagina
-- Target instala GSAP pero source NO usa GSAP (detectado en §1.16) -> STOP
-  + desinstalar GSAP + usar patrones nativos (§3.2.1)
-- Target instala Lenis pero source NO usa smooth scroll library -> STOP
-  + desinstalar Lenis + usar CSS `scroll-behavior` o nativo
-- Target usa patron GSAP ScrollTrigger para video scrub pero source usa
-  RAF nativo -> STOP + reimplementar con patron VIDEO_SCRUB_NATIVE (§3.2.1)
-- Target architecture (§2.4) no detectada antes de FASE 3 -> STOP
-- Target usa Tailwind v3 pero SKILL intenta generar @theme directive -> STOP
-  + usar tailwind.config.ts extend
-- Font name de source brand encontrado en target code -> STOP + renombrar (§2.5)
-- `extractElementStyleMap()` (§1.17) NO ejecutado -> STOP + sin esto los
-  hover/pseudo-element styles no se pueden replicar con precision
-- `extractNetworkProfile()` (§1.18) NO ejecutado -> STOP + puede haber librerias
-  CDN sin global que no se detectaron con §1.16
-- `extractSectionInventory()` (§1.19) NO ejecutado -> STOP + sin inventario
-  la paridad estructural no se puede verificar
-- Source usa `100dvh` y target usa `100vh` -> STOP + en iOS el resultado es
-  visualmente diferente (address bar dinamica)
-- Source usa `@starting-style` y target usa JS para la misma transicion -> STOP
-  + copiar las CSS rules nativas
-- Source usa `-webkit-text-stroke` y target no lo replica -> STOP + copiar valores
-- Source usa `color-mix()` y target usa color hardcodeado diferente -> STOP
-  + usar color-mix() o el valor computado exacto
-- ScrollSmoother Y Lenis instalados al mismo tiempo -> STOP + son incompatibles,
-  elegir el que usa el source
-
-## Criterios de completitud
-
-Completo SOLO si TODOS estos criterios se cumplen SIMULTANEAMENTE:
-
-### Visual (tolerancia cero)
-- RECORRIDO VISUAL FINAL completado (FASE 5) con CERO diferencias pendientes
-- TODAS las paginas verificadas en 3 viewports (1440, 768, 375)
-- TODAS las posiciones de scroll verificadas (0% a 100%)
-- Computed styles IDENTICOS (no "+-2px", sino EXACTOS)
-- TODOS los colores, tipografias, espaciados identicos al source
-- Stacking contexts coinciden entre source y target
-- Si un humano abre las dos webs lado a lado, NO puede distinguir cual es cual
-
-### Efectos y animaciones
-- ANIMATION_MANIFEST: grep -c "✅" == MANIFEST_TOTAL (100% verificados)
-- VIDEO_SCRUB: video.currentTime ligado a scroll, NO autoplay
-- GSAP/ScrollTrigger: mismos triggers, mismos valores, mismo comportamiento
-- Lenis: mismo smooth scroll, misma suavidad
-- Hover states: mismos cambios visuales en todos los elementos interactivos
-- Parallax/pin: misma velocidad, misma duracion, misma seccion
-- Lottie/Rive/Spline: mismas animaciones con mismos parametros
-- scroll-timeline CSS: mismas reglas nativas si el source las usa
-- IntersectionObserver: mismos threshold/rootMargin (del monkey-patch)
-- View Transitions: mismas transiciones de pagina si aplica
-- prefers-reduced-motion respetado si el source lo respeta
-
-### Tecnico
-- Build final PASS (exit 0, cero errores TS)
-- Cero hydration mismatches en consola
-- Todos los 'use client' colocados correctamente
-- Dynamic imports para libraries pesadas (GSAP, Three, Lenis, Swiper, Lottie)
-- Cero residuos visuales legacy del target
-- Texto target preservado (cero texto source sobrevive)
-- Backend INTOCABLE (cero cambios en API, auth, middleware, server actions)
-- Assets descargados a public/ (no hotlinkeados al source)
-- Assets IA documentados
-- Accesibilidad: ARIA labels, lang, dir, skip links preservados
-- Pseudo-elements (::before/::after/::selection) replicados
-- Custom scrollbar styles replicados si existen en source
-- CSS Motion Path replicado si existe en source
-- @property rules replicadas si existen en source
-- scroll-margin-top configurado si source tiene sticky header + anchor links
-- CERO valores de diseno hardcodeados — TODO viene de extraccion
-- container-type/container-name replicados si source usa @container queries
-- env(safe-area-inset-*) replicado si source lo usa (mobile notch)
-- color-scheme en :root replicado si source lo define
-- Iframes/embeds (YouTube, Vimeo, Maps) replicados con mismos src y dimensiones
-- touch-action, user-select, writing-mode replicados donde source los define
-- dvh/svh/lvh units replicados si source los usa (no sustituir por vh)
-- @starting-style replicado si source lo usa (no sustituir por JS)
-- -webkit-text-stroke replicado si source lo usa (con @supports fallback)
-- color-mix() replicado o valor computado exacto usado
-- ScrollSmoother y Lenis NUNCA instalados simultaneamente
-
-### Verificacion programatica (v3.4)
-- `detectAnimationImplementation()` ejecutado Y su resultado respetado en FASE 3
-- `recordScrollBehavior()` ejecutado en source Y target para CADA pagina
-- `compareScrollBehavior()` retorna `pass: true` para TODAS las paginas
-- `compareScrollBehavior().passRate` >= 95% para TODAS las paginas
-- Target NO instala dependencias que el source no usa (GSAP, Lenis, etc.)
-- Target USA el mismo patron de animacion que el source (native vs library)
-- `target-architecture.json` generado y respetado (monorepo, i18n, Tailwind version)
-- Font names del source brand NO aparecen en el codigo target
-- `extractElementStyleMap()` ejecutado y hover/pseudo styles replicados
-- `extractNetworkProfile()` ejecutado y librerias CDN detectadas
-- `extractSectionInventory()` ejecutado y paridad estructural verificada
-- Section count source == section count target (de §1.19)
-- gsap.matchMedia breakpoints respetados si source los usa
-
-### Documentacion
-- PAGE_MAPPING: todas las rutas ✅
-- Todos los JSONs de extraccion incluyen `_metadata`
-- Diff automatizado `pass: true` para todas las paginas
-- `scroll-behavior-diff-[page].json` generado para todas las paginas
-- Evidencia del recorrido visual final en docs/pds/qa-evidence/recorrido-final/
-- MIGRATION_COMPLETE.md generado
-
-## Output por seccion
-
-```
-SECCION: [nombre]
-PAGINA: [ruta]
-BUILD: [PASS|FAIL]
-VIEWPORTS VERIFICADOS: [1440px ✅ | 768px ✅ | 375px ✅]
-SCROLL COMPLETO (0-100%): [IDENTICO | DIFERENCIAS: lista]
-EFECTOS SCROLL: [video scrub ✅ | parallax ✅ | pin ✅ | reveal ✅]
-HOVER STATES: [todos verificados ✅ | pendientes: lista]
-COMPUTED STYLES: [IDENTICOS ✅ | DIFERENCIAS: lista]
-TEXTO PRESERVADO: [✅ target text, cero source text]
-BACKEND INTACTO: [✅ sin cambios en API/auth/middleware]
-ESTADO: [✅ | ❌]
-```
-
-## Output del recorrido visual final (FASE 5)
-
-```
-RECORRIDO VISUAL FINAL
-======================
-Paginas verificadas: [N/N]
-
-PAGINA: /
-  1440px: scroll 0-100% ✅ — IDENTICO al source
-  768px:  scroll 0-100% ✅ — IDENTICO al source
-  375px:  scroll 0-100% ✅ — IDENTICO al source
-  Efectos: video scrub ✅, parallax ✅, reveals ✅, nav transition ✅
-  Hover: nav links ✅, buttons ✅, cards ✅
-
-PAGINA: /technology
-  [...]
-
-DIFERENCIAS CORREGIDAS: [N]
-DIFERENCIAS PENDIENTES: 0 (obligatorio)
-RESULTADO: APROBADO / NO APROBADO
-```
+Fin de la skill v4.0.
