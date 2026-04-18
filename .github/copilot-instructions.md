@@ -1,7 +1,9 @@
-<!-- AUTO-GENERATED from AGENTS.md - do not edit directly.
+﻿<!-- AUTO-GENERATED from AGENTS.md - do not edit directly.
      Run `bash scripts/sync-agent-rules.sh` to regenerate. -->
 
-# Port Design System — CLON LITERAL PIXEL-PERFECT v5.0
+# Port Design System — CLON LITERAL PIXEL-PERFECT v6.0 FINAL
+
+> Skill completa en SKILL.md. Este archivo es el resumen de reglas para agentes sin acceso a SKILL.md.
 
 ## Regla absoluta — TOLERANCIA CERO
 
@@ -17,23 +19,58 @@ Lo unico que se conserva del target es:
 
 El BACKEND es INTOCABLE.
 
-## Invocacion
+## Invocacion — scope flexible (NUEVO v6.0)
 
 ```txt
+# Sitio completo (descubrimiento automatico MAX_PAGES=50)
 /port-design-system-from-local-clone "<target-path>" "<source-url>"
+
+# Pagina unica (sin crawler)
+/port-design-system-from-local-clone "<target-path>" "<source-url>" --page "/"
+
+# Lista de paginas especificas
+/port-design-system-from-local-clone "<target-path>" "<source-url>" --pages "/,/about,/contact"
 ```
 
-Ejemplo:
+Ejemplos:
 ```txt
-/port-design-system-from-local-clone "/Users/javi/port-design-system" "https://jobyaviation.com"
+/port-design-system-from-local-clone "/Users/javi/granja" "https://jobyaviation.com"
+/port-design-system-from-local-clone "C:\repos\target" "https://jobyaviation.com" --page "/"
+/port-design-system-from-local-clone "C:\repos\target" "https://jobyaviation.com" --pages "/,/aircraft"
 ```
 
-## Regla DS-FIRST — CRITICA (nueva en v5.0)
+## Protocolo anti-atajos — LEER ANTES DE CADA ACCION
+
+- ❌ NUNCA usar screenshot como fuente de verdad de layout, animaciones o scroll
+- ❌ NUNCA inventar el output de un script — ejecutarlo en MCP y esperar el JSON real
+- ❌ NUNCA avanzar de fase sin completar la fase actual
+- ❌ NUNCA escribir codigo antes de completar FASE 0.5 + FASE 0.6 + FASE 1
+- ✅ SIEMPRE ejecutar scripts via `mcp__chrome-devtools__evaluate_script`
+- ✅ SIEMPRE esperar el JSON real de cada script antes de continuar
+- ✅ SIEMPRE declarar fidelidad estimada (numero) antes de FASE 3
+
+Si te encuentras a punto de escribir codigo sin JSON de extraccion real → STOP → ejecutar script primero.
+
+## MCP tool mapping — NUNCA IMPROVISAR
+
+| Accion | Tool MCP |
+|---|---|
+| Ejecutar script en browser | `mcp__chrome-devtools__evaluate_script` |
+| Navegar a URL | `mcp__chrome-devtools__navigate_page` |
+| Nueva pestana | `mcp__chrome-devtools__new_page` |
+| Cambiar viewport | `mcp__chrome-devtools__emulate` |
+| Screenshot (solo evidencia humana) | `mcp__chrome-devtools__take_screenshot` |
+| Ver consola JS | `mcp__chrome-devtools__list_console_messages` |
+| Ver requests | `mcp__chrome-devtools__list_network_requests` |
+
+Si el output de evaluate_script es undefined o error → reportar al usuario, NO inventar resultado.
+
+## Regla DS-FIRST — CRITICA (v6.0)
 
 Antes de generar UNA SOLA LINEA de codigo, DEBES:
 1. Leer exhaustivamente el repo del DS: `src/components/**`, `globals.css`, `package.json`, `src/hooks`.
 2. Crear `docs/pds/extraction/ds-component-map.json` (inventario completo del DS).
-3. Extraer RAW el source (23 scripts).
+3. Extraer RAW el source via MCP (23 scripts — codigo embebido en SKILL.md §12).
 4. Crear `docs/pds/extraction/ds-section-mapping.json` (mapeo seccion→componente-DS + gap report).
 5. Declarar fidelidad estimada (% numerico; si < 95% visual o < 90% behavioral → STOP + esperar usuario).
 6. Solo entonces generar codigo.
@@ -47,6 +84,7 @@ El codigo generado usa EXCLUSIVAMENTE el sistema del design system del repo:
 - ❌ Copiar class names del source como strings en JSX
 - ❌ Crear archivos `.css` / `.module.css` externos al DS
 - ❌ Instalar librerias sin aprobacion explicita del usuario
+- ❌ Inventar valores CSS no extraidos de los JSONs de extraccion
 
 ## KEY-MAPPINGS — obligatorio en cada respuesta con codigo
 
@@ -59,9 +97,9 @@ En TODA respuesta que genere o modifique codigo, incluir esta tabla:
 | Button CTA | <Button> extendido + variante pds-cta | --color-orange → --color-pds-orange | CSS transition 200ms | ✅ nativo |
 ```
 
-## Reglas base v5.0 (resumen)
+## Reglas base v6.0 (resumen)
 
-- Screenshots estaticos NUNCA son fuente de verdad. Todo es RAW + numerico.
+- Screenshots estaticos NUNCA son fuente de verdad. Todo es RAW + numerico via MCP.
 - Viewports obligatorios: 1920x1080 (desktop full), 768x1024 (tablet), 375x812 (mobile iPhone).
 - 21 posiciones de scroll (0-100% cada 5%) por pagina por viewport.
 - `getBoundingClientRect()` + `getComputedStyle()` de TODOS los elementos visibles (sin limite).
@@ -69,8 +107,9 @@ En TODA respuesta que genere o modifique codigo, incluir esta tabla:
 - Assets visuales: hotlink directo del source por defecto. Cero assets decorativos del target.
 - Prompts IA solo para assets con branding source incrustado; la migracion inicial mantiene el asset source.
 - `detectAnimationImplementation()` manda: target usa lo MISMO que el source. No substituir librerias.
-- Cero valores hardcodeados. Todo viene de la extraccion RAW.
+- Cero valores hardcodeados. Todo viene de la extraccion RAW via MCP.
 - Fidelidad estimada declarada antes de FASE 3. Si < 95% visual → STOP + usuario decide.
+- NUEVO v6.0: Los 7 scripts criticos estan embebidos en SKILL.md §12 — nunca inventar su codigo.
 
 ## DISENO vs TEXTO — inmutable
 
@@ -92,49 +131,55 @@ Texto NO: clases CSS, valores de animacion, estructura JSX, configs de animacion
 - Cero componentes genericos reutilizados para secciones source diferentes.
 - Cero paginas placeholder/coming-soon cuando el source tiene diseno completo.
 
-## Checklist bloqueante (debe aparecer en cada respuesta)
+## Checklist bloqueante v6.0 (debe aparecer en cada respuesta)
 
 ```
-ANALISIS DS (FASE 0.5):
-[ ] ds-component-map.json generado (src/components/**, globals.css, package.json)
-[ ] ds-section-mapping.json generado post extraccion source
-[ ] Fidelidad estimada declarada (% numerico; razon si < 95%)
+CHECKLIST DS-FIRST PIXEL-PERFECT v6.0
 
-EXTRACCION SOURCE:
-[ ] FASE 0.6 RAW HTML + allCSS + keyframes + scrollData + assets capturados
-[ ] 23 scripts FASE 1 ejecutados — todos los JSONs con _metadata
-[ ] detectAnimationImplementation() ejecutado
-[ ] extractSectionInventory() ejecutado
-[ ] recordScrollBehavior() ejecutado en source
+FASE 0.5 — ANALISIS DS LOCAL:
+[ ] src/components/** leido con Glob + Read (herramientas de archivo, NO browser)
+[ ] globals.css leido — tokens @theme inline inventariados
+[ ] package.json leido — animation libs detectadas
+[ ] ds-component-map.json generado y guardado
 
-VIEWPORTS:
-[ ] Analisis 1920x1080 completado — 21 scroll positions
-[ ] Analisis 768x1024  completado — 21 scroll positions
-[ ] Analisis 375x812   completado — 21 scroll positions
-[ ] getBoundingClientRect + getComputedStyle de TODOS los visibles (sin limite)
+FASE 0.6 — RAW SOURCE (via MCP evaluate_script):
+[ ] preExpandContent() ejecutado en MCP — JSON real recibido
+[ ] Script RAW maestro ejecutado — raw-extraction-<page>.json guardado
+[ ] allCSS capturado (CORS_BLOCKED documentado si aplica)
 
-ASSETS Y ANIMACIONES:
-[ ] Todos los assets source usados (hotlink o descargados)
-[ ] Todas las animaciones/transiciones recreadas con valores numericos exactos
-[ ] Libreria de animacion detectada y usada (no substituida)
-[ ] Diferencia visual < 0.5% en los 3 viewports (medida numericamente)
-[ ] Hover/focus/active testeados programaticamente
-[ ] Motion trace DOWN + UP registrada para cada video/canvas/pin/parallax
-[ ] Prompts IA generados para cualquier asset con branding incrustado
+FASE 1 — 23 SCRIPTS (todos via MCP evaluate_script):
+[ ] extractFullDesignSystem() — JSON real recibido (SCRIPT 1 en SKILL.md §12)
+[ ] detectAnimationImplementation() — JSON real recibido — BLOQUEANTE FASE 3
+[ ] extractAnimationSystem() — JSON real recibido
+[ ] recordScrollBehavior() source — JSON real recibido — BLOQUEANTE
+[ ] extractSectionInventory() — JSON real recibido — BLOQUEANTE
+[ ] extractDeepVisualFingerprint() — JSON real recibido
+[ ] 17 scripts restantes ejecutados
+
+POST FASE 1:
+[ ] ds-section-mapping.json generado (cruza DS map + extraccion source)
+[ ] ANIMATION_MANIFEST.md generado
+[ ] Fidelidad estimada declarada: visual XX%, behavioral XX%
+
+VIEWPORTS (Fase 4 — via MCP):
+[ ] 1920x1080 — 21 scroll positions — getComputedStyle todos los visibles
+[ ] 768x1024  — 21 scroll positions
+[ ] 375x812   — 21 scroll positions
 
 DS-FIRST:
 [ ] Tokens source en @theme inline con prefijo pds-
-[ ] Cero class names del source copiados como strings en JSX
-[ ] Cero archivos .css/.module.css externos al DS
-[ ] Todos los componentes nuevos usan cn() + CVA + Tailwind
-[ ] KEY-MAPPINGS table incluida en esta respuesta
+[ ] Cero class names del source en JSX
+[ ] Cero .css/.module.css externos
+[ ] KEY-MAPPINGS table en esta respuesta
 
-BUILD Y QA:
-[ ] Build PASS (exit 0) + consola JS cero errores
+QA:
 [ ] compareScrollBehavior() passRate >= 95%
+[ ] Build PASS (exit 0, cero errores TS)
+[ ] Consola JS: cero errores (mcp__chrome-devtools__list_console_messages)
+[ ] Diferencia visual < 0.5% en 3 viewports
 ```
 
-Si cualquier item esta en ❌ o ⚠️, declarar `STATUS: NO APROBADO` con razon numerica.
+Si cualquier item esta en ❌ o ⚠️, declarar `STATUS: NO APROBADO — razon: <descripcion numerica>`.
 
 ## Deteccion de texto en media
 
@@ -143,14 +188,15 @@ Si cualquier item esta en ❌ o ⚠️, declarar `STATUS: NO APROBADO` con razon
 - Source brand en HTML/SVG del target → STOP + eliminar.
 - Videos → flagear para review manual de brand text en frames.
 
-## Flujo (fases v5.0)
+## Flujo (fases v6.0 FINAL)
 
 ### FASE 0 — Setup
 - Dual MCP (MCP-REF en source-url, MCP-TARGET en `localhost:3001`).
+- Scope: `all` (default) | `--page <path>` | `--pages <csv>`.
 - Anti-bot protocol + MCP crash recovery via `_checkpoint.json`.
-- Device emulation por viewport: 1920x1080, 768x1024, 375x812.
-- Descubrimiento automatico de paginas (crawler + sitemap.xml). MAX_PAGES=50, MAX_DEPTH=3.
-- `PAGE_MAPPING.md` generado automaticamente — BLOQUEANTE.
+- Device emulation: 1920x1080, 768x1024, 375x812.
+- Si `all`: descubrimiento automatico nav + sitemap.xml. MAX_PAGES=50, MAX_DEPTH=3.
+- `PAGE_MAPPING.md` generado — BLOQUEANTE (o entry unica si --page).
 - `preExpandContent()` obligatorio antes de cualquier extraccion.
 
 ### FASE 0.5 — Analisis profundo del repo DS local (NUEVA — BLOQUEANTE)
@@ -165,36 +211,36 @@ Ejecutar con herramientas de lectura de archivos (NO en browser):
 - Declarar fidelidad estimada (visual %, behavioral %) antes de FASE 3. Si < 95%/90% → STOP.
 
 ### FASE 0.6 — Inspeccion RAW source (BLOQUEANTE)
-Ejecutar en MCP-REF el script del PROMPT MAESTRO (ver SKILL.md §12). Capturar:
-- `url`, `fullHTML`, `allCSS` (con fetch de cross-origin), `jsBehaviors`,
-  `assets`, `scrollData` (21 posiciones), `animations`.
+Ejecutar en MCP-REF via `mcp__chrome-devtools__evaluate_script`. Scripts en SKILL.md §11.
+Capturar: `url`, `fullHTML`, `allCSS`, `assets`, `scrollData` (21 posiciones).
 Guardar en `docs/pds/extraction/raw-extraction-<page>.json`.
 Sin este JSON completo no se avanza.
 
 ### FASE 1 — Extraccion profunda (23 scripts RAW)
-1. `extractFullDesignSystem()` — tokens, tipografia, colores, spacing, sombras, gradientes, z-index, breakpoints, @font-face, @container, @layer, media queries extendidas (hover, pointer, prefers-*), CSS-in-JS, Shadow DOM, pseudo-elements, @property, @supports, Adobe Fonts, custom scrollbar, CSS Motion Path, scroll-margin, content-visibility, color-scheme, container-type/name, env(safe-area-inset-*), dvh/svh/lvh units, color-mix(), @starting-style, -webkit-text-stroke, oklch.
-2. `fetchCrossOriginCSS()` — hojas cross-origin.
-3. `extractShadowStyles()` — traversal Shadow DOM.
-4. `extractAnimationSystem()` — GSAP (22 plugins + matchMedia + ScrollSmoother), Lenis, Framer Motion, CSS keyframes, CSS transitions, IntersectionObserver, RAF, video scrub, canvas/WebGL, CSS scroll-driven animations, View Transitions API, Web Animations API, Lottie, Rive, Spline.
-5. `captureIntersectionObserverConfigs()` — threshold/rootMargin reales via monkey-patch.
-6. `extractLottieRiveSpline()` — Lottie/dotLottie, Rive, Spline.
-7. `extractScrollScrubTrace()` — video/canvas scrub a 0/10/25/50/75/100% scroll (BLOQUEANTE si hay media fullscreen).
-8. `extractDOMStructure()` — secciones, grid/flexbox, jerarquia, nav behavior, responsive.
-9. `extractInteractions()` — hover, focus, active, nav behavior, mobile menu.
-10. `extractAssets()` — imagenes, videos, SVGs (incluido sprites), fonts, backgrounds, iconos, preloads, iframes/embeds + protocolo de descarga/hotlink.
-11. `extractThreeJSScene()` — solo si Three.js / R3F / WebGL detectado.
-12. `extractDarkMode()` — temas, color-scheme, toggle mechanism.
-13. `extractDeepVisualFingerprint()` — 60+ CSS props de TODOS los elementos visibles (sin limite).
-14. `extractAdvancedPatterns()` — preloader, marquee, tabs, accordions, carousels, counters, text split, cursors, scroll snap, parallax, stagger, native dialog, Popover, grid subgrid/masonry, anchor scroll, cookie banners, stacking contexts, form controls, details/summary.
-15. `extractFullCSSRules()` — TODAS las CSS rules (hover, focus, active, media queries, transforms, animations, CSS nesting, scroll-timeline, view-transition-name, @container, @layer, @supports, @property, pseudo-elements, scrollbar, motion path, scroll-margin).
-16. `extractScrollSnapshot()` — 21 posiciones automatizadas.
-17. `extractAccessibility()` — ARIA, landmarks, skip links, tabindex, focus traps, prefers-reduced-motion.
-18. Scroll narrative textual (pseudo-video) a 5%.
-19. `recordScrollBehavior()` — 21 posiciones, estado de todos los elementos por CLAVE ESTRUCTURAL (section[N], video[N]), NO por CSS class name. BLOQUEANTE.
-20. `detectAnimationImplementation()` — detecta QUE usa el source (GSAP vs native RAF vs CSS). BLOQUEANTE para FASE 3.
-21. `extractElementStyleMap()` — per-element computed styles + hover CSS rules + pseudo-elements.
-22. `extractNetworkProfile()` — `performance.getEntriesByType`, CDN library detection, network summary.
-23. `extractSectionInventory()` — section count, bg colors, layout types, height ratios. BLOQUEANTE para paridad.
+Los 7 scripts criticos tienen codigo embebido en SKILL.md §12. Ejecutar TODOS via MCP:
+1. `extractFullDesignSystem()` — design-tokens.json
+2. `fetchCrossOriginCSS()` — cross-origin-css.json
+3. `extractShadowStyles()` — shadow-styles.json
+4. `extractAnimationSystem()` — animations.json
+5. `captureIntersectionObserverConfigs()` — dentro de animations.json
+6. `extractLottieRiveSpline()` — lottie-rive-spline.json
+7. `extractScrollScrubTrace()` — scroll-scrub-trace-<page>.json
+8. `extractDOMStructure()` — structure.json
+9. `extractInteractions()` — interactions.json
+10. `extractAssets()` — assets.json
+11. `extractThreeJSScene()` — three-scene.json
+12. `extractDarkMode()` — dark-mode.json
+13. `extractDeepVisualFingerprint()` — visual-fingerprint-<page>.json
+14. `extractAdvancedPatterns()` — advanced-patterns.json
+15. `extractFullCSSRules()` — css-rules.json
+16. `extractScrollSnapshot()` — scroll-snapshots-<page>.json
+17. `extractAccessibility()` — accessibility.json
+18. Scroll narrative — scroll-narrative-<page>.md
+19. `recordScrollBehavior()` — scroll-behavior-<page>.json — BLOQUEANTE
+20. `detectAnimationImplementation()` — animation-implementation.json — BLOQUEANTE FASE 3
+21. `extractElementStyleMap()` — element-style-map-<page>.json
+22. `extractNetworkProfile()` — network-profile.json
+23. `extractSectionInventory()` — section-inventory-<page>.json — BLOQUEANTE
 
 Todos los JSONs con `_metadata: { version, url, timestamp, viewport, userAgent }`.
 Entregable: `ANIMATION_MANIFEST.md` — BLOQUEANTE.
@@ -297,6 +343,9 @@ todos los JSONs, `ANIMATION_MANIFEST.md`, `PAGE_MAPPING.md`, `diff-report.md`, e
 - KEY-MAPPINGS table ausente en respuesta con codigo → STOP + incluir.
 - `ds-section-mapping.json` no generado antes de FASE 3 → STOP.
 - Fidelidad estimada no declarada antes de iniciar reconstruccion → STOP.
+- Script output inventado sin ejecutar en MCP → STOP (protocolo anti-atajos v6.0).
+- `mcp__chrome-devtools__evaluate_script` no usado para extraccion → STOP (v6.0).
+- Scope param `--page`/`--pages` ignorado cuando se especifico → STOP (v6.0).
 
 ## Criterios de completitud
 
@@ -317,7 +366,7 @@ todos los JSONs, `ANIMATION_MANIFEST.md`, `PAGE_MAPPING.md`, `diff-report.md`, e
 - `prefers-reduced-motion` respetado.
 - Scroll-driven CSS variables (`--progress`, `--translate-y-*`) actualizadas con la misma logica que el source.
 
-### Verificacion programatica v5.0
+### Verificacion programatica v6.0
 - `ds-component-map.json` y `ds-section-mapping.json` presentes y usados.
 - `raw-extraction-<page>.json` completo por pagina.
 - `recordScrollBehavior()` + `compareScrollBehavior()` `passRate >= 95%`.
@@ -329,6 +378,9 @@ todos los JSONs, `ANIMATION_MANIFEST.md`, `PAGE_MAPPING.md`, `diff-report.md`, e
 - `gsap.matchMedia` breakpoints respetados si aplica.
 - Cero class names del source copiados en JSX.
 - Todos los tokens del source en `@theme inline` con prefijo `pds-`.
+- NUEVO v6.0: Todos los scripts ejecutados via `mcp__chrome-devtools__evaluate_script` — JSONs reales.
+- NUEVO v6.0: Scope `--page`/`--pages` respetado si fue especificado.
+- NUEVO v6.0: Los 7 scripts criticos usados desde SKILL.md §12 — codigo verbatim, no inventado.
 
 ### Tecnico
 - Build PASS (exit 0, cero errores TS).
@@ -692,3 +744,5 @@ Texto en media / brand leaks (v3.2):
   [ ] Source brand en HTML/SVG target → eliminado
   [ ] Videos → flagged para review manual de brand text en frames
   [ ] Fonts renombradas (no usar nombres de fuente del source)
+
+

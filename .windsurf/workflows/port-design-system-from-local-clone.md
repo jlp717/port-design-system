@@ -2,144 +2,115 @@
      Run `node scripts/sync-skills.mjs` to regenerate. -->
 
 
-# /port-design-system-from-local-clone v5.0 — DS-FIRST PIXEL-PERFECT
+# /port-design-system-from-local-clone v6.0 FINAL
 
-## 0. PROMPT MAESTRO v5.0
+## 0. PROMPT MAESTRO — INSTRUCCIÓN PRINCIPAL
 
-> Instrucción principal. Nunca se resume, nunca se salta, nunca se suaviza.
+> Se aplica antes que cualquier otra regla. Nunca se resume, nunca se salta.
 
-ROLE: Eres un clonador web pixel-perfect con disciplina de design system. Tu misión dual es:
-(A) Hacer que el site destino sea indistinguible del original — tolerancia cero.
-(B) Hacerlo EXCLUSIVAMENTE usando los componentes y tokens del design system del repo target — jamás copiando class names CSS del source.
+**ROLE**: Clonador web pixel-perfect con disciplina de design system.
 
-Antes de escribir UNA SOLA LÍNEA de código, DEBES en este orden:
-1. Leer exhaustivamente el repo del design system (src/components/**, globals.css, package.json, hooks).
-2. Crear ds-component-map.json con el inventario completo del DS.
-3. Extraer RAW el source (HTML, CSS completo, JS behaviors, scroll, assets) — 23 scripts.
-4. Crear ds-section-mapping.json: mapeo sección→componente-DS + gap report.
-5. Declarar fidelidad estimada (% numérico, razón si < 95%).
-6. Solo entonces generar código.
+**Misión dual**:
+- (A) El target debe ser INDISTINGUIBLE del source — tolerancia cero.
+- (B) Construido EXCLUSIVAMENTE con los componentes y tokens del DS del repo target.
 
-Si la fidelidad < 95% es inevitable dado el estado actual del DS, DECIRLO EXPLÍCITAMENTE con razón numérica antes de comenzar la reconstrucción y esperar aprobación del usuario.
+**Protocolo anti-atajos** (leer antes de cada acción):
+- ❌ NUNCA usar `take_screenshot` como fuente de verdad de layout, animaciones o scroll.
+- ❌ NUNCA inventar output de un script — ejecutarlo en MCP y esperar el JSON real.
+- ❌ NUNCA avanzar de fase sin completar la fase actual.
+- ❌ NUNCA escribir código antes de completar FASE 0.5 + FASE 0.6 + FASE 1.
+- ✅ SIEMPRE usar `mcp__chrome-devtools__evaluate_script` para ejecutar scripts en browser.
+- ✅ SIEMPRE esperar el JSON real de cada script antes de continuar.
+- ✅ SIEMPRE declarar fidelidad estimada antes de FASE 3.
+
+**Auto-detección de atajos**: Si en cualquier momento te encuentras a punto de:
+- Escribir código sin haber visto JSON de extracción real → STOP → ejecutar script primero
+- Usar un screenshot para verificar scroll/animación → STOP → ejecutar `recordScrollBehavior()` en MCP
+- Inventar un valor CSS sin referencia en los JSONs → STOP → `getComputedStyle` en MCP
 
 ---
 
 ## 1. INVOCACIÓN
 
 ```txt
-/port-design-system-from-local-clone "<target-path>" "<source-url>"
+/port-design-system-from-local-clone "<target-path>" "<source-url>" [scope]
 ```
 
-- `<target-path>`: ruta local del proyecto Next.js (el design system a extender).
-- `<source-url>`: URL pública del sitio cuyo diseño se clona (fuente de verdad visual).
+**scope** (opcional):
+- Omitido o `all` → descubrir todas las páginas automáticamente (crawler + sitemap)
+- `/` o `home` → solo homepage
+- `/about,/services,/contact` → páginas específicas (separadas por coma)
+- `single` → solo la URL exacta proporcionada, sin crawler
+
+Ejemplos:
+```txt
+/port-design-system-from-local-clone "/Users/javi/granja" "https://jobyaviation.com" all
+/port-design-system-from-local-clone "/Users/javi/granja" "https://jobyaviation.com" /
+/port-design-system-from-local-clone "/Users/javi/granja" "https://jobyaviation.com" /,/aircraft,/about
+```
 
 ---
 
 ## 2. REGLA ABSOLUTA — TOLERANCIA CERO
 
-La source-url es la ÚNICA fuente de verdad visual. El target debe ser INDISTINGUIBLE del source en todos los viewports, todas las posiciones de scroll y todos los estados de interacción.
+La source-url es la ÚNICA fuente de verdad visual. Criterios de FAIL numérico:
 
-Criterios de FAIL numérico:
 - Color / backgroundColor fuera de match exacto → FAIL
-- fontFamily distinto, fontSize con delta > 0px, fontWeight distinto → FAIL
-- padding / margin / gap con delta > 0px → FAIL
-- transform / opacity / filter / boxShadow / borderRadius con delta medible → FAIL
-- Animación ausente o con duration/easing/delay distintos → FAIL
-- Hover/focus/active sin producir los mismos valores computados → FAIL
+- fontFamily distinto, fontSize delta > 0px, fontWeight distinto → FAIL
+- padding / margin / gap delta > 0px → FAIL
+- transform / opacity / filter / boxShadow / borderRadius delta medible → FAIL
+- Animación ausente o duration/easing/delay distintos → FAIL
+- Hover/focus/active sin mismos valores computados → FAIL
 - Scroll sin el mismo efecto (parallax, pin, video scrub, CSS var update) → FAIL
 - Layout grid/flex con columnas, gap, orden o alignment distintos → FAIL
 - Responsive con layout diferente en mobile/tablet → FAIL
 - Diferencia visual > 0.5% en cualquier viewport o scroll position → FAIL
 
-NO existen aproximaciones aceptables. Es clon literal o es FAIL.
-
 ---
 
 ## 3. QUÉ SE CONSERVA — INMUTABLE
 
-**DISEÑO** (100% del source, sin adaptar, sin reescribir):
-CSS tokens, custom properties, tipografía, colores, espaciado, sombras, gradientes,
-border-radius, z-index, breakpoints, grid/flexbox layout, animaciones (GSAP, Lenis, CSS
-keyframes, Framer Motion, Three.js, Lottie, Rive, Spline), assets decorativos,
-hover/focus/active states, dark mode tokens, @font-face, estructura JSX/HTML, keyframes,
-IntersectionObserver configs, RAF loops, scroll-driven CSS variables, pseudo-elements.
+**DISEÑO** (100% del source): CSS tokens, custom properties, tipografía, colores, espaciado, sombras, gradientes, border-radius, z-index, breakpoints, grid/flexbox layout, animaciones, assets decorativos, hover/focus/active states, dark mode tokens, @font-face, estructura JSX, keyframes, IntersectionObserver configs, RAF loops, scroll-driven CSS variables, pseudo-elements.
 
-**TEXTO Y NEGOCIO** (100% del target):
-Strings visibles en UI (h1, p, span, button, label, alt, title, meta, og:*),
-hrefs de negocio del target, nombres del negocio, rutas/redirects/rewrites,
-API routes, server actions, auth, middleware, analytics, handlers, validación,
-data fetching, mutations, base de datos, variables de entorno.
+**TEXTO Y NEGOCIO** (100% del target): Strings visibles en UI, hrefs de negocio, nombres del negocio, rutas, API routes, server actions, auth, middleware, DB, env vars.
 
-**BACKEND = INTOCABLE.** Tocar `app/api/*`, `middleware.ts`, `server/*`, `auth/*`, `db/*` → STOP INMEDIATO.
+**BACKEND = INTOCABLE.** `app/api/*`, `middleware.ts`, `server/*`, `auth/*`, `db/*` → STOP INMEDIATO.
 
 ---
 
-## 4. REGLA DS-FIRST — CRÍTICA (nueva en v5.0)
+## 4. REGLA DS-FIRST — CRÍTICA
 
-El código generado DEBE usar EXCLUSIVAMENTE el sistema del design system del repo target.
+### 4.1 Prohibiciones absolutas
 
-### 4.1 Lo que NUNCA se hace
+- ❌ Copiar class names del source en JSX (ej: `"Navigation-module__abc123"`)
+- ❌ Crear archivos `.css` o `.module.css` con clases extraídas del source
+- ❌ Instalar librerías sin aprobación explícita del usuario
+- ❌ Valores hardcodeados no extraídos de los JSONs de extracción
 
-- ❌ Copiar class names del source (CSS Modules, BEM, hashes, etc.) como strings literales en JSX
-- ❌ Crear archivos `.css` o `.module.css` paralelos con clases extraídas del source
-- ❌ Importar hojas CSS externas del source directamente
-- ❌ Instalar librerías que el source usa pero el DS NO tiene (sin aprobación explícita del usuario)
-- ❌ Usar `style={{}}` con valores hardcodeados no provenientes de extracción RAW
-- ❌ Usar valores numéricos arbitrarios no extraídos del source
+### 4.2 Obligaciones absolutas
 
-### 4.2 Lo que SIEMPRE se hace
+- ✅ Tokens del source → `globals.css` bloque `@theme inline` con prefijo `pds-`
+- ✅ Keyframes del source → `globals.css` con prefijo `pds-` + valores EXACTOS
+- ✅ `cn()` de `src/lib/utils.ts` para composición de clases
+- ✅ CVA para variantes de cada componente nuevo
+- ✅ Reutilizar / extender componentes DS existentes
+- ✅ `next/font` para fuentes
+- ✅ Dynamic imports (`ssr: false`) para libs pesadas
 
-- ✅ Extender `globals.css` → bloque `@theme inline { }` con los tokens del source (colores, spacing, easing, etc.)
-- ✅ Usar `cn()` de `src/lib/utils.ts` para composición de clases
-- ✅ Usar CVA (`class-variance-authority`) para variantes de nuevos componentes
-- ✅ Reutilizar componentes DS existentes cuando sean equivalentes
-- ✅ Extender variantes CVA existentes (ej: añadir variante `pds-cta` a `buttonVariants`)
-- ✅ Crear nuevos componentes siguiendo el patrón DS (CVA + cn + Tailwind utilities)
-- ✅ Usar Tailwind CSS v4 utilities que mapean a los tokens del `@theme`
-- ✅ Usar `next/font` para fuentes (nunca `@import` de Google Fonts en CSS)
-- ✅ Keyframes: añadir en `globals.css` con prefijo `pds-` (copiar valores EXACTOS del source)
-
-### 4.3 Mapeo token source → DS
-
-Para cada token del source, añadir en `globals.css` dentro de `@theme inline` con prefijo `pds-`:
-
-```css
-/* globals.css — añadir al bloque @theme inline existente */
-@theme inline {
-  /* ... tokens existentes del DS ... */
-
-  /* tokens del source (prefijo pds-) */
-  --color-pds-white: #f5f4df;
-  --color-pds-black: #0e1620;
-  --color-pds-blue: #007ae5;
-  --color-pds-dark-blue: #1c3f99;
-  --color-pds-orange: #eb6110;
-  --pds-ease-out-cubic: cubic-bezier(0.33, 1, 0.68, 1);
-  --pds-ease-power4-inout: cubic-bezier(0.77, 0, 0.175, 1);
-  --pds-ease-snappy: cubic-bezier(0.6, 0.6, 0, 1);
-  --pds-base-padding: 4rem;
-  --pds-gutter-width: 1.6rem;
-  /* ... todos los tokens extraídos de design-tokens.json */
-}
-```
-
-### 4.4 Patrón de componente DS-first
+### 4.3 Patrón DS correcto
 
 ```tsx
 // ❌ NUNCA:
-<section className="SectionHeroMedia-module__abc123 Navigation-module__9NlFDq">
+<section className="SectionHeroMedia-module__abc123">
 
 // ✅ SIEMPRE:
-const heroVariants = cva(
-  "relative flex items-center justify-center w-full overflow-hidden",
-  {
-    variants: {
-      theme: { dark: "bg-pds-dark-blue text-pds-white", light: "bg-pds-white text-pds-black" },
-      height: { full: "h-dvh", auto: "h-auto min-h-dvh" }
-    },
-    defaultVariants: { theme: "dark", height: "full" }
-  }
-)
+const heroVariants = cva("relative w-full overflow-hidden", {
+  variants: {
+    theme: { dark: "bg-pds-dark-blue text-pds-white", light: "bg-pds-white text-pds-black" },
+    height: { full: "h-dvh", auto: "h-auto min-h-dvh" }
+  },
+  defaultVariants: { theme: "dark", height: "full" }
+})
 export function HeroSection({ theme, height, className, children }: HeroSectionProps) {
   return <section className={cn(heroVariants({ theme, height }), className)}>{children}</section>
 }
@@ -147,163 +118,183 @@ export function HeroSection({ theme, height, className, children }: HeroSectionP
 
 ---
 
-## 5. VERIFICACIÓN PROGRAMÁTICA NUMÉRICA (NO SCREENSHOTS)
+## 5. MCP TOOL MAPPING — NUNCA IMPROVISAR
 
-Screenshots estáticos = JAMÁS fuente de verdad. Solo evidencia complementaria para humanos.
+| Acción | Tool MCP a usar |
+|---|---|
+| Ejecutar script en browser (source) | `mcp__chrome-devtools__evaluate_script` en tab source |
+| Ejecutar script en browser (target) | `mcp__chrome-devtools__evaluate_script` en tab target |
+| Navegar a URL | `mcp__chrome-devtools__navigate_page` |
+| Abrir nueva pestaña | `mcp__chrome-devtools__new_page` |
+| Cambiar tamaño viewport | `mcp__chrome-devtools__emulate` |
+| Screenshot (solo evidencia visual humana) | `mcp__chrome-devtools__take_screenshot` |
+| Ver consola JS | `mcp__chrome-devtools__list_console_messages` |
+| Ver requests de red | `mcp__chrome-devtools__list_network_requests` |
 
-Toda verificación DEBE ser programática y numérica:
-
-1. **RAW source code** (FASE 0.6): fullHTML, allCSS, keyframes, custom properties, @layer, @container, @property.
-2. **getComputedStyle** + **getBoundingClientRect** de TODOS los elementos visibles (sin límite de 200), en los 3 viewports, en las 21 posiciones de scroll.
-3. **Numeric diff**: delta = 0 en props discretas (fontFamily, color, fontWeight); delta ≤ 0.5% en props continuas (fontSize, padding, gap, opacity, transform).
-4. **Motion trace**: DOWN (0→100%) + UP (100→0%) — capturar `video.currentTime`, transforms, opacity por frame. Tolerancia ≤ 2%.
-5. **Interaction testing**: `dispatchEvent(new MouseEvent('mouseover'))` → computed styles antes/durante/después vs source. Delta 0 en props discretas.
-
----
-
-## 6. REGLA ANTI-HARDCODING
-
-CERO valores inventados. TODOS los valores visuales provienen de extracción RAW:
-- Colores → `design-tokens.json` / `raw-extraction.json`
-- Fuentes → `design-tokens.json` fontFaces / googleFonts / adobeFonts
-- Spacing, radii, shadows → `design-tokens.json`
-- Animaciones (duration, easing, delay, keyframes) → `animations.json` / `raw-extraction.allCSS`
-- Breakpoints, z-index → `design-tokens.json`
-- Hover/focus → `css-rules.json` / `interactions.json`
-
-Si un valor CSS no aparece en ningún JSON de extracción: re-ejecutar el script relevante. NUNCA adivinar.
+**Regla de oro**: Si el output de un `evaluate_script` es `undefined` o error → reportar el error exacto al usuario, NO inventar el resultado.
 
 ---
 
-## 7. CHECKLIST BLOQUEANTE — MOSTRAR EN CADA RESPUESTA
-
-Mostrar en TODA respuesta que toque código, extracción o QA. Solo ✅ si hay evidencia programática numérica.
+## 6. CHECKLIST BLOQUEANTE — MOSTRAR EN CADA RESPUESTA
 
 ```
-CHECKLIST DS-FIRST PIXEL-PERFECT v5.0
+CHECKLIST DS-FIRST PIXEL-PERFECT v6.0
 
-ANÁLISIS DS (FASE 0.5):
-[ ] Repo DS leído: src/components/**, globals.css, package.json, src/hooks
-[ ] ds-component-map.json generado con inventario completo
-[ ] ds-section-mapping.json generado (post extracción source)
-[ ] DS Gap Report generado — gaps y soluciones propuestas
-[ ] Fidelidad estimada declarada (% numérico; razón si < 95%)
+FASE 0.5 — ANÁLISIS DS LOCAL:
+[ ] src/components/** leído con Glob + Read
+[ ] globals.css leído — tokens @theme inline inventariados
+[ ] package.json leído — animation libs detectadas
+[ ] src/hooks/** leído
+[ ] ds-component-map.json generado y guardado
 
-EXTRACCIÓN SOURCE (FASE 0.6 + FASE 1):
-[ ] FASE 0.6 RAW HTML + allCSS + keyframes + scrollData + assets capturados
-[ ] 23 scripts FASE 1 ejecutados — todos los JSONs con _metadata
-[ ] detectAnimationImplementation() ejecutado — BLOQUEANTE para FASE 3
-[ ] extractSectionInventory() ejecutado — BLOQUEANTE para paridad
-[ ] recordScrollBehavior() ejecutado en source — BLOQUEANTE
+FASE 0.6 — RAW SOURCE:
+[ ] preExpandContent() ejecutado en MCP (output JSON real recibido)
+[ ] Script RAW maestro ejecutado en MCP (JSON real recibido)
+[ ] allCSS capturado (o CORS_BLOCKED documentado)
 
-VERIFICACIÓN VIEWPORT (FASE 4):
-[ ] 1920x1080 — 21 scroll positions — getComputedStyle TODOS los visibles
-[ ] 768x1024  — 21 scroll positions — getComputedStyle TODOS los visibles
-[ ] 375x812   — 21 scroll positions — getComputedStyle TODOS los visibles
+FASE 1 — 23 SCRIPTS:
+[ ] extractFullDesignSystem() → JSON real recibido
+[ ] detectAnimationImplementation() → JSON real recibido — BLOQUEANTE
+[ ] extractAnimationSystem() → JSON real recibido
+[ ] recordScrollBehavior() source → JSON real recibido — BLOQUEANTE
+[ ] extractSectionInventory() → JSON real recibido — BLOQUEANTE
+[ ] extractDeepVisualFingerprint() → JSON real recibido
+[ ] Restantes 17 scripts ejecutados
 
-ASSETS:
-[ ] Todos los assets source usados (hotlink o /public/pds-source-assets/)
-[ ] Cero assets del target usados como diseño
+POST FASE 1:
+[ ] ds-section-mapping.json generado
+[ ] ANIMATION_MANIFEST.md generado
+[ ] Fidelidad estimada declarada (visual %, behavioral %)
 
-ANIMACIONES:
-[ ] Todas las animaciones recreadas con valores numéricos exactos
-[ ] Librería de animación detectada y usada (no sustituida)
-[ ] Scroll-driven CSS variables replicadas exactamente
-[ ] Motion trace DOWN + UP registrada para cada video/canvas/pin/parallax
-[ ] Hover/focus/active testeados programáticamente
+VIEWPORTS (Fase 4):
+[ ] 1920x1080 — 21 scroll positions — getComputedStyle todos los visibles
+[ ] 768x1024  — 21 scroll positions
+[ ] 375x812   — 21 scroll positions
 
 DS-FIRST:
 [ ] Tokens source en @theme inline con prefijo pds-
-[ ] Cero class names del source copiados como strings en JSX
-[ ] Cero archivos .css/.module.css externos al DS
-[ ] Todos los componentes nuevos usan cn() + CVA + Tailwind
-[ ] DS components existentes reutilizados donde aplica
-[ ] Keyframes del source en globals.css con prefijo pds-
+[ ] Cero class names del source en JSX
+[ ] Cero .css/.module.css externos
+[ ] KEY-MAPPINGS table en esta respuesta
 
 QA:
-[ ] Diferencia visual < 0.5% en los 3 viewports (medida numéricamente)
-[ ] compareScrollBehavior() passRate >= 95% en todas las páginas
-[ ] Build PASS (exit 0, cero errores TS, cero warnings nuevos)
-[ ] Consola JS: cero errores (incluye hydration mismatch)
-[ ] Prompts IA generados para assets con branding incrustado
+[ ] compareScrollBehavior() passRate >= 95%
+[ ] Build PASS (exit 0, cero errores TS)
+[ ] Consola JS: cero errores
+[ ] Diferencia visual < 0.5% en 3 viewports
 ```
 
-Si cualquier ítem está en ❌ o ⚠️: incluir `STATUS: NO APROBADO — razón: <descripción numérica>`.
+Si cualquier ítem en ❌ o ⚠️: `STATUS: NO APROBADO — razón: <descripción numérica>`.
 
 ---
 
-## 8. KEY-MAPPINGS — OBLIGATORIO EN CADA RESPUESTA CON CÓDIGO (nuevo en v5.0)
-
-En TODA respuesta que genere o modifique código, incluir esta tabla antes del código:
+## 7. KEY-MAPPINGS — OBLIGATORIO EN CADA RESPUESTA CON CÓDIGO
 
 ```markdown
-### KEY-MAPPINGS
-
-| Sección Source | Componente DS | Tokens DS (source → pds-) | Animación | Gap / Solución |
+| Sección Source | Componente DS | Tokens (source → pds-) | Animación | Gap / Solución |
 |---|---|---|---|---|
-| `SectionHeroMedia` | `src/components/sections/HeroSection.tsx` (nuevo, CVA) | `--color-dark-blue` → `--color-pds-dark-blue` | GSAP ScrollTrigger + video.currentTime | ✅ GSAP instalado; RAF si no |
-| `Navigation` | `src/components/layout/Nav.tsx` (nuevo, CVA) | `--color-white` → `--color-pds-white` | CSS transition nativa | scroll handler: JS nativo |
-| `Button CTA orange` | `<Button>` extendido + variante `pds-cta` en buttonVariants | `--color-orange` → `--color-pds-orange` | CSS transition 200ms ease | ✅ buttonVariants extendido |
-| `SectionSlider` | `src/components/sections/Slider.tsx` (nuevo) | `--base-padding` → `--pds-base-padding` | Swiper (si source usa) | Instalar si source lo usa |
+| SectionHeroMedia | src/components/sections/HeroSection.tsx (nuevo CVA) | --color-dark-blue → --color-pds-dark-blue | GSAP ScrollTrigger scrub | ✅ gsap instalado |
+| Navigation | src/components/layout/Nav.tsx (nuevo CVA) | --color-white → --color-pds-white | CSS transition 200ms | JS scroll nativo |
+| Button CTA | <Button> + variante pds-cta en buttonVariants | --color-orange → --color-pds-orange | CSS transition ease | ✅ DS nativo |
 ```
-
-Campos obligatorios por fila:
-- **Sección Source**: nombre exacto del componente/sección del source
-- **Componente DS**: ruta exacta + `(nuevo)` / `(existente)` / `(extendido)`
-- **Tokens DS**: mapeo source-token → pds-token (todos los que usa esa sección)
-- **Animación**: tipo + librería + valores clave (duration, easing, trigger)
-- **Gap / Solución**: qué no puede replicar el DS actual y qué se propone
 
 ---
 
-## 9. VIEWPORTS OBLIGATORIOS — BLOQUEANTES
+## 8. VIEWPORTS — BLOQUEANTES
 
-| Viewport | Ancho | Alto  | Contexto               |
-|----------|-------|-------|------------------------|
-| Desktop  | 1920  | 1080  | Device emulation full  |
-| Tablet   | 768   | 1024  | Device emulation iPad  |
-| Mobile   | 375   | 812   | Device emulation iPhone|
+| Viewport | Ancho | Alto | Device |
+|---|---|---|---|
+| Desktop | 1920 | 1080 | Full emulation |
+| Tablet | 768 | 1024 | iPad emulation |
+| Mobile | 375 | 812 | iPhone emulation |
 
-Los tres son BLOQUEANTES. Saltarse uno = FAIL. Device emulation completo (userAgent, DPR, touch, viewport meta).
+Emular con `mcp__chrome-devtools__emulate`. Los tres son BLOQUEANTES.
 
 ---
 
-## 10. FASE 0 — SETUP Y DESCUBRIMIENTO
+## 9. FASE 0 — SETUP
 
-### 10.1 Dual MCP (primera acción)
+### 9.1 Dual MCP
 
-Abrir dos browsers MCP en paralelo y mantenerlos abiertos hasta `MIGRATION_COMPLETE.md`:
-- **MCP-REF**: `<source-url>`
-- **MCP-TARGET**: `http://localhost:3001`
-
-Compatibles: Playwright MCP, Puppeteer MCP, Browser-tools MCP, Chrome DevTools MCP.
-Modo degradado: usuario pega scripts en DevTools Console y comparte output RAW.
-
-### 10.2 Anti-bot + recovery
-
-- Cloudflare/hCaptcha: esperar 10s. Si persiste, reportar al usuario. NUNCA bypassear.
-- MCP crash: volcar `docs/pds/extraction/_checkpoint.json` con `{lastPhase, lastScript, lastPage, completedPages, timestamp}`.
-
-### 10.3 Device emulation
-
-```javascript
-// adaptar al API del MCP disponible
-await browser.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 1 });
-await browser.setUserAgent('Mozilla/5.0 ... Desktop');
-// repetir con 768x1024 y 375x812 (iPhone)
+```
+MCP-REF (source):   tab 1 → <source-url>
+MCP-TARGET (target): tab 2 → http://localhost:3001
 ```
 
-### 10.4 Descubrimiento de páginas
+Abrir con `mcp__chrome-devtools__new_page` + `mcp__chrome-devtools__navigate_page`. Mantener abiertos hasta `MIGRATION_COMPLETE.md`.
 
-Crawler: `<a href>` + `fetch('/sitemap.xml')` + enlaces de `nav`, `footer`, `[role=navigation]`.
-Límites: MAX_PAGES=50, MAX_DEPTH=3, visited set, same-origin only.
+### 9.2 Scope → PAGE_MAPPING.md
+
+Según el parámetro `scope`:
+- `all`: crawler `<a href>` + `fetch('/sitemap.xml')`. MAX_PAGES=50, MAX_DEPTH=3.
+- Lista de paths: usar directamente.
+- `single` / `home`: solo la URL base.
+
 Output: `PAGE_MAPPING.md` — BLOQUEANTE para cualquier código.
 
-### 10.5 preExpandContent (obligatorio antes de extracción)
+### 9.3 Anti-bot + recovery
 
-Ejecutar en CADA página ANTES de cualquier script RAW:
+- Cloudflare/hCaptcha: esperar 10s. Si persiste, reportar. NUNCA bypassear.
+- MCP crash: volcar `docs/pds/extraction/_checkpoint.json` con `{lastPhase, lastScript, lastPage, completedPages, timestamp}`.
+
+---
+
+## 10. FASE 0.5 — ANÁLISIS PROFUNDO DEL REPO LOCAL (BLOQUEANTE)
+
+Ejecutar con herramientas de archivos (Read, Glob, Grep) — NO en browser.
+Sin `ds-component-map.json` completo: NO avanzar.
+
+### 10.1 Pasos
+
+```bash
+# A. Inventario de componentes
+Glob: src/components/**/*.tsx
+→ Para cada archivo: Read → extraer exports, props, variantes CVA, primitivos base
+
+# B. Tokens del DS
+Read: src/app/globals.css
+→ Extraer bloque @theme inline completo
+→ Identificar: --color-*, --radius-*, --font-*, --spacing-*, easing functions
+
+# C. Animation libs instaladas
+Read: package.json
+→ Grep: gsap, @gsap/, lenis, framer-motion, motion, rive-canvas, @rive-app/, lottie-web, three, @react-three/
+
+# D. Hooks y utilities
+Glob: src/hooks/**/*.{ts,tsx}
+Glob: src/lib/**/*.{ts,tsx}
+→ Detectar: useScrollProgress, useGSAP, useInView, cn, etc.
+```
+
+### 10.2 ds-component-map.json
+
+```json
+{
+  "_metadata": { "version": "6.0", "timestamp": "...", "targetPath": "..." },
+  "dsComponents": [
+    {
+      "path": "src/components/ui/button.tsx",
+      "exports": ["Button", "buttonVariants"],
+      "variants": { "variant": ["default","outline","secondary","ghost","destructive","link"], "size": ["default","xs","sm","lg","icon"] },
+      "canExtendWith": ["pds-cta", "pds-ghost-dark"],
+      "primitive": "@base-ui/react/button"
+    }
+  ],
+  "dsTokenSystem": { "type": "tailwind-v4-theme-inline", "colors": [], "radius": [], "fonts": [] },
+  "dsAnimationLibs": [],
+  "dsHooks": [],
+  "tailwindVersion": 4
+}
+```
+
+---
+
+## 11. FASE 0.6 — INSPECCIÓN RAW SOURCE (BLOQUEANTE)
+
+### 11.1 preExpandContent — ejecutar PRIMERO en MCP-REF
 
 ```javascript
+// Ejecutar via: mcp__chrome-devtools__evaluate_script
 (async () => {
   const steps = Array.from({length: 20}, (_, i) => (i + 1) * 0.05);
   for (const pct of steps) {
@@ -320,146 +311,22 @@ Ejecutar en CADA página ANTES de cualquier script RAW:
   });
   window.scrollTo({ top: 0, behavior: 'instant' });
   await new Promise(r => setTimeout(r, 500));
-  return { finalHeight: document.body.scrollHeight, totalElements: document.querySelectorAll('*').length };
+  return { ok: true, finalHeight: document.body.scrollHeight, totalElements: document.querySelectorAll('*').length };
 })();
 ```
 
-Si `finalHeight` crece tras el primer pase: re-ejecutar.
+Si `finalHeight` crece: re-ejecutar.
 
----
-
-## 11. FASE 0.5 — ANÁLISIS PROFUNDO DEL REPO LOCAL (NUEVA — BLOQUEANTE)
-
-Esta fase analiza el design system del repo target ANTES de cualquier extracción del source.
-Se ejecuta con herramientas de lectura de archivos (Read, Glob, Grep), NO en el browser.
-Sin `docs/pds/extraction/ds-component-map.json` completo: NO se avanza a FASE 0.6.
-
-### 11.1 Pasos de análisis
-
-**Paso A — Inventario de componentes DS:**
-- Glob `<target-path>/src/components/**/*.tsx`
-- Para cada archivo: leer exports, props, variantes CVA, primitivos base (Base UI, Radix, shadcn)
-- Identificar qué componentes existen y qué secciones del source pueden mapear a ellos
-
-**Paso B — Sistema de tokens:**
-- Leer `<target-path>/src/app/globals.css` completo
-- Extraer el bloque `@theme inline` (Tailwind v4) o leer `tailwind.config.ts` `extend` (v3)
-- Inventariar: `--color-*`, `--radius-*`, `--font-*`, `--spacing-*`, easing functions, etc.
-- Detectar: Tailwind v4 (`@theme inline`) vs v3 (`tailwind.config.ts extend`)
-
-**Paso C — Librerías de animación instaladas:**
-- Leer `<target-path>/package.json`
-- Filtrar: `gsap`, `@gsap/*`, `lenis`, `framer-motion`, `motion`, `rive-canvas`, `@rive-app/*`, `lottie-web`, `@lottiefiles/*`, `three`, `@react-three/fiber`
-- Esta lista determina qué animaciones se pueden implementar SIN instalar nada nuevo
-
-**Paso D — Hooks y utilities:**
-- Glob `<target-path>/src/hooks/**/*.{ts,tsx}`
-- Glob `<target-path>/src/lib/**/*.{ts,tsx}`
-- Para cada archivo: detectar `useScrollProgress`, `useGSAP`, `useInView`, `cn`, etc.
-
-**Paso E — Tailwind plugins instalados:**
-- `package.json` → filtrar `@tailwindcss/*`, `tailwindcss-animate`, `tw-animate-css`
-
-### 11.2 Output obligatorio — ds-component-map.json
-
-Guardar en `docs/pds/extraction/ds-component-map.json`:
-
-```json
-{
-  "_metadata": { "version": "5.0", "timestamp": "...", "targetPath": "..." },
-  "dsComponents": [
-    {
-      "path": "src/components/ui/button.tsx",
-      "exports": ["Button", "buttonVariants"],
-      "variants": {
-        "variant": ["default", "outline", "secondary", "ghost", "destructive", "link"],
-        "size": ["default", "xs", "sm", "lg", "icon"]
-      },
-      "canExtendWith": ["new variant 'pds-cta'", "new variant 'pds-ghost-dark'"],
-      "primitive": "@base-ui/react/button"
-    }
-  ],
-  "dsTokenSystem": {
-    "type": "tailwind-v4-theme-inline",
-    "colors": ["--color-background", "--color-foreground", "..."],
-    "radius": ["--radius", "--radius-sm", "..."],
-    "fonts": ["--font-sans", "--font-mono", "--font-heading"],
-    "customProperties": []
-  },
-  "dsAnimationLibs": [],
-  "dsHooks": [],
-  "dsTailwindPlugins": ["tw-animate-css"],
-  "tailwindVersion": 4
-}
-```
-
-### 11.3 Output obligatorio — ds-section-mapping.json (post extracción FASE 1)
-
-Guardar en `docs/pds/extraction/ds-section-mapping.json`:
-
-```json
-{
-  "_metadata": { "version": "5.0", "timestamp": "...", "sourceUrl": "..." },
-  "sections": {
-    "SectionHeroMedia": {
-      "sourceFeatures": ["full-viewport video", "GSAP ScrollTrigger", "video scrub", "16-col grid"],
-      "dsMapping": "NUEVO src/components/sections/HeroSection.tsx — CVA variants: theme, height",
-      "dsTokensToAdd": ["--color-pds-dark-blue: #1c3f99", "--pds-base-padding: 4rem"],
-      "dsComponentsReused": [],
-      "dsAnimationStrategy": "GSAP ScrollTrigger — NO instalado en DS → propuesta: instalar gsap o RAF nativo",
-      "fidelityRisk": "HIGH — video scrub requiere GSAP o RAF nativo; sin instalar no es replicable",
-      "gapSolution": "Instalar gsap (preguntar usuario) o implementar RAF nativo para video.currentTime"
-    },
-    "Button CTA": {
-      "sourceFeatures": ["underline animation on hover", "color transition 200ms ease", "orange #eb6110"],
-      "dsMapping": "EXTENDER buttonVariants — añadir variante 'pds-cta'",
-      "dsTokensToAdd": ["--color-pds-orange: #eb6110", "--pds-ease-out-cubic: cubic-bezier(0.33,1,0.68,1)"],
-      "dsComponentsReused": ["Button"],
-      "dsAnimationStrategy": "CSS transition — nativo, ya soportado por DS",
-      "fidelityRisk": "LOW",
-      "gapSolution": null
-    }
-  },
-  "overallFidelityEstimate": {
-    "visual": "XX%",
-    "behavioral": "XX%",
-    "gaps": [
-      "GSAP ScrollTrigger no instalado — video scrub imposible sin instalarlo",
-      "CSS scroll-timeline (scroll-driven animations) — posible con CSS nativo"
-    ]
-  }
-}
-```
-
-### 11.4 Declaración de fidelidad obligatoria (antes de FASE 3)
-
-```
-FIDELIDAD ESTIMADA:
-- Visual: XX% (razón si < 95%)
-- Behavioral (animaciones, scroll, hover): XX% (razón si < 90%)
-- Gaps identificados: [lista numerada]
-- Propuestas: [lista numerada]
-STATUS: [APROBADO para continuar / REQUIERE DECISIÓN DEL USUARIO]
-```
-
-Si fidelidad visual < 95% o behavioral < 90%: STOP + esperar decisión del usuario antes de FASE 3.
-
----
-
-## 12. FASE 0.6 — INSPECCIÓN RAW SOURCE (BLOQUEANTE)
-
-Ejecutar en MCP-REF en CADA página. Guardar en `docs/pds/extraction/raw-extraction-<page>.json`.
+### 11.2 Script RAW maestro
 
 ```javascript
+// Ejecutar via: mcp__chrome-devtools__evaluate_script
+// Guardar output en: docs/pds/extraction/raw-extraction-<page>.json
 (async () => {
   const data = {
-    url: location.href,
-    fullHTML: document.documentElement.outerHTML,
-    allCSS: [],
-    jsBehaviors: [],
-    assets: [],
-    scrollData: [],
-    animations: []
+    _metadata: { version: '6.0', url: location.href, timestamp: Date.now(), viewport: `${window.innerWidth}x${window.innerHeight}`, userAgent: navigator.userAgent },
+    url: location.href, fullHTML: document.documentElement.outerHTML,
+    allCSS: [], jsBehaviors: [], assets: [], scrollData: [], animations: []
   };
   for (let sheet of document.styleSheets) {
     try {
@@ -480,205 +347,498 @@ Ejecutar en MCP-REF en CADA página. Guardar en `docs/pds/extraction/raw-extract
   for (let pos of positions) {
     window.scrollTo({ top: document.body.scrollHeight * pos, behavior: 'instant' });
     await new Promise(r => setTimeout(r, 150));
-    data.scrollData.push({
-      scrollPercent: pos * 100,
-      visibleElements: Array.from(document.querySelectorAll('*'))
-        .filter(el => el.getBoundingClientRect().height > 0).length
-    });
+    data.scrollData.push({ scrollPercent: pos * 100, scrollY: window.scrollY,
+      visibleElements: Array.from(document.querySelectorAll('*')).filter(el => el.getBoundingClientRect().height > 0).length });
   }
   window.scrollTo({ top: 0, behavior: 'instant' });
-  console.dir(data);
   return data;
 })();
 ```
 
-Campos obligatorios: `url`, `fullHTML`, `allCSS`, `jsBehaviors`, `assets`, `scrollData`, `animations`.
-Si falta algún campo: STOP + re-ejecutar.
-Si CORS bloquea una hoja: ejecutar §13.2 (`fetchCrossOriginCSS`).
+Campos obligatorios: `_metadata`, `url`, `fullHTML`, `allCSS`, `assets`, `scrollData`. Si falta alguno: STOP + re-ejecutar.
 
 ---
 
-## 13. FASE 1 — EXTRACCIÓN PROFUNDA (23 SCRIPTS RAW)
+## 12. FASE 1 — 23 SCRIPTS RAW (código embebido para los 7 críticos)
 
-Ejecutar EN ORDEN en MCP-REF por página. Todos los JSONs incluyen `_metadata: { version, url, timestamp, viewport, userAgent }`.
+Todos los scripts via `mcp__chrome-devtools__evaluate_script`. Todos los JSONs incluyen `_metadata`.
 
-| #  | Script                                | Salida                              | Bloqueante              |
-|----|---------------------------------------|-------------------------------------|-------------------------|
-| 1  | `extractFullDesignSystem()`           | `design-tokens.json`                | sí                      |
-| 2  | `fetchCrossOriginCSS()`               | `cross-origin-css.json`             | sí (si CORS)            |
-| 3  | `extractShadowStyles()`               | `shadow-styles.json`                | sí (si shadow DOM)      |
-| 4  | `extractAnimationSystem()`            | `animations.json`                   | sí                      |
-| 5  | `captureIntersectionObserverConfigs()`| dentro de `animations.json`         | sí                      |
-| 6  | `extractLottieRiveSpline()`           | `lottie-rive-spline.json`           | sí (si detectado)       |
-| 7  | `extractScrollScrubTrace()`           | `scroll-scrub-trace-<page>.json`    | sí (si video/canvas fullscreen) |
-| 8  | `extractDOMStructure()`               | `structure.json`                    | sí                      |
-| 9  | `extractInteractions()`               | `interactions.json`                 | sí                      |
-| 10 | `extractAssets()`                     | `assets.json` + protocolo hotlink   | sí                      |
-| 11 | `extractThreeJSScene()`               | `three-scene.json`                  | sí (si Three.js)        |
-| 12 | `extractDarkMode()`                   | `dark-mode.json`                    | sí                      |
-| 13 | `extractDeepVisualFingerprint()`      | `visual-fingerprint-<page>.json`    | sí                      |
-| 14 | `extractAdvancedPatterns()`           | `advanced-patterns.json`            | sí                      |
-| 15 | `extractFullCSSRules()`               | `css-rules.json`                    | sí                      |
-| 16 | `extractScrollSnapshot()`             | `scroll-snapshots-<page>.json`      | sí                      |
-| 17 | `extractAccessibility()`              | `accessibility.json`                | sí                      |
-| 18 | Scroll narrative textual              | `scroll-narrative-<page>.md`        | sí                      |
-| 19 | `recordScrollBehavior()`              | `scroll-behavior-<page>.json`       | sí                      |
-| 20 | `detectAnimationImplementation()`     | `animation-implementation.json`     | sí                      |
-| 21 | `extractElementStyleMap()`            | `element-style-map-<page>.json`     | sí                      |
-| 22 | `extractNetworkProfile()`             | `network-profile.json`              | sí                      |
-| 23 | `extractSectionInventory()`           | `section-inventory-<page>.json`     | sí                      |
+### SCRIPT 1: extractFullDesignSystem()
 
-Notas críticas:
-- `extractDeepVisualFingerprint()` captura 60+ CSS props de TODOS los visibles (sin límite de 200 elementos).
-- `recordScrollBehavior()` usa CLAVE ESTRUCTURAL (`section[0]`, `video[0]`), NO CSS class name.
-- `detectAnimationImplementation()` determina qué usa el source (GSAP vs Lenis vs native RAF vs CSS scroll-timeline vs IO). El DS target DEBE usar lo mismo.
+```javascript
+// Output: docs/pds/extraction/design-tokens.json
+(function extractFullDesignSystem() {
+  const meta = { version:'6.0', url:location.href, timestamp:Date.now(), viewport:`${window.innerWidth}x${window.innerHeight}`, userAgent:navigator.userAgent };
+  const result = { _metadata: meta, customProperties:{}, typography:{}, keyframes:{}, fontFaces:[], breakpoints:[], modernCSS:{} };
 
-Deliverable BLOQUEANTE: `ANIMATION_MANIFEST.md` con cada animación/efecto listado, tipo detectado, valores numéricos (duration, easing, delay, stagger, scrub, pin), pendiente de verificación FASE 4.
+  // Custom properties de :root / html
+  const rootStyles = getComputedStyle(document.documentElement);
+  const allRules = Array.from(document.styleSheets).flatMap(s => { try { return Array.from(s.cssRules||[]); } catch { return []; } });
+  allRules.filter(r => r.selectorText === ':root' || r.selectorText === 'html')
+    .flatMap(r => Array.from(r.style))
+    .forEach(prop => { if (prop.startsWith('--')) result.customProperties[prop] = rootStyles.getPropertyValue(prop).trim(); });
 
-Tipos de animación reconocidos:
-- Library: `GSAP_TWEEN`, `GSAP_SCROLLTRIGGER`, `GSAP_TIMELINE`, `GSAP_SPLITTEXT`, `GSAP_SCROLLSMOOTHER`, `GSAP_FLIP`, `GSAP_MATCHMEDIA`, `LENIS_INIT`, `FRAMER_MOTION`, `THREE_ANIMATION`, `LOTTIE`, `RIVE_ANIMATION`, `SPLINE_SCENE`
-- Native JS: `NATIVE_RAF_VIDEO_SCRUB`, `NATIVE_RAF_PARALLAX`, `INTERSECTION_OBS`, `RAF_LOOP`, `SCROLL_LISTENER`, `WEB_ANIMATION_API`
-- CSS-only: `CSS_KEYFRAME`, `CSS_TRANSITION`, `CSS_MODULE_ANIMATION`, `CSS_IO_REVEAL`, `CSS_SCROLL_TIMELINE`, `CSS_VIEW_TIMELINE`, `CSS_MOTION_PATH`, `CSS_PROPERTY_ANIM`, `PSEUDO_ELEMENT_ANIM`, `SCROLL_DRIVEN_ANIMATION`, `STARTING_STYLE`
-- Pattern: `VIDEO_SCRUB`, `CANVAS_SCROLL`, `MARQUEE`, `TAB_SWITCH`, `ACCORDION`, `CAROUSEL`, `COUNTER_ANIM`, `TEXT_SPLIT`, `MAGNETIC_HOVER`, `CUSTOM_CURSOR`, `SCROLL_SNAP`, `PARALLAX_LAYER`, `STAGGER_GROUP`, `PRELOADER`, `PAGE_TRANSITION`, `STICKY_ELEMENT`, `CLIP_PATH_ANIM`, `VIEW_TRANSITION`, `NATIVE_DIALOG`, `POPOVER_API`, `GRID_SUBGRID`, `CONTAINER_QUERY_ANIM`, `DETAILS_SUMMARY`
+  // @keyframes
+  allRules.forEach(rule => {
+    if (rule.type === CSSRule.KEYFRAMES_RULE) {
+      const frames = {};
+      Array.from(rule.cssRules).forEach(kf => { frames[kf.keyText] = kf.cssText; });
+      result.keyframes[rule.name] = frames;
+    }
+    if (rule.type === CSSRule.FONT_FACE_RULE) result.fontFaces.push(rule.cssText);
+    if (rule.type === CSSRule.MEDIA_RULE) {
+      const m = rule.conditionText || rule.media?.mediaText;
+      if (m && !result.breakpoints.includes(m)) result.breakpoints.push(m);
+    }
+  });
+
+  // Tipografía por selector
+  ['h1','h2','h3','h4','p','a','button','span','label'].forEach(sel => {
+    const el = document.querySelector(sel);
+    if (!el) return;
+    const cs = getComputedStyle(el);
+    result.typography[sel] = { fontFamily:cs.fontFamily, fontSize:cs.fontSize, fontWeight:cs.fontWeight,
+      lineHeight:cs.lineHeight, letterSpacing:cs.letterSpacing, textTransform:cs.textTransform,
+      color:cs.color, fontVariationSettings:cs.fontVariationSettings };
+  });
+
+  // Modern CSS detection
+  const cssText = allRules.map(r => r.cssText||'').join('\n');
+  result.modernCSS = {
+    usesDvh: cssText.includes('dvh'),
+    usesLvh: cssText.includes('lvh'),
+    usesColorMix: cssText.includes('color-mix('),
+    usesAtProperty: allRules.some(r => r.type === 7),
+    usesStartingStyle: cssText.includes('@starting-style'),
+    usesWebkitTextStroke: cssText.includes('-webkit-text-stroke'),
+    usesScrollTimeline: cssText.includes('scroll-timeline') || cssText.includes('animation-timeline'),
+    usesViewTimeline: cssText.includes('view-timeline'),
+    usesContainerQuery: allRules.some(r => r.type === CSSRule.SUPPORTS_RULE && r.conditionText?.includes('container')),
+    scrollDrivenVars: (cssText.match(/--(progress|scroll-[a-z-]+|translate-[a-z-]*)[:\s]/g)||[]).map(m=>m.replace(/[:\s]/,''))
+  };
+
+  return result;
+})();
+```
+
+### SCRIPT 20: detectAnimationImplementation() — BLOQUEANTE
+
+```javascript
+// Output: docs/pds/extraction/animation-implementation.json
+// BLOQUEANTE: FASE 3 no puede comenzar sin este output real
+(function detectAnimationImplementation() {
+  const meta = { version:'6.0', url:location.href, timestamp:Date.now(), viewport:`${window.innerWidth}x${window.innerHeight}`, userAgent:navigator.userAgent };
+  const result = { _metadata: meta, libraries:{}, nativePatterns:{}, cssPatterns:{}, recommendation:'' };
+
+  // GSAP
+  result.libraries.gsap = {
+    present: typeof window.gsap !== 'undefined',
+    version: window.gsap?.version || null,
+    plugins: {
+      ScrollTrigger: typeof window.ScrollTrigger !== 'undefined',
+      ScrollSmoother: typeof window.ScrollSmoother !== 'undefined',
+      SplitText: typeof window.SplitText !== 'undefined',
+      Flip: typeof window.Flip !== 'undefined',
+    },
+    scrollTriggerInstances: window.ScrollTrigger ? ScrollTrigger.getAll().length : 0,
+    scrollTriggerDetails: window.ScrollTrigger ? ScrollTrigger.getAll().map(st => ({
+      trigger: st.trigger?.tagName?.toLowerCase() || 'unknown',
+      start: st.vars?.start, end: st.vars?.end,
+      scrub: st.vars?.scrub, pin: !!st.vars?.pin,
+      toggleActions: st.vars?.toggleActions
+    })) : []
+  };
+
+  // Lenis
+  const lenisDetected = typeof window.Lenis !== 'undefined' || !!window.__lenis || !!document.querySelector('[data-lenis-prevent]');
+  result.libraries.lenis = { present: lenisDetected, config: window.__lenis ? { duration: window.__lenis.duration, lerp: window.__lenis.lerp } : null };
+
+  // Framer Motion
+  result.libraries.framerMotion = { present: !!document.querySelector('[data-framer-appear-id],[data-framer-component-type]') };
+
+  // CSS patterns
+  const allCSS = Array.from(document.styleSheets).flatMap(s => { try { return Array.from(s.cssRules||[]); } catch { return []; } }).map(r=>r.cssText||'').join('\n');
+  result.cssPatterns = {
+    hasScrollTimeline: allCSS.includes('animation-timeline') || allCSS.includes('scroll-timeline'),
+    hasViewTimeline: allCSS.includes('view-timeline'),
+    hasScrollDrivenVars: /--progress|--scroll-|--translate-y/.test(allCSS),
+    hasCSSKeyframes: !!document.querySelector('[class*="animate"], [class*="motion"]') || /animation:\s*\w/.test(allCSS)
+  };
+
+  // Native JS patterns
+  result.nativePatterns = {
+    hasVideoScrub: Array.from(document.querySelectorAll('video')).some(v => v.getBoundingClientRect().width >= window.innerWidth * 0.8),
+    hasIntersectionObserver: !!window.IntersectionObserver,
+    hasRAF: allCSS.includes('requestAnimationFrame') || false
+  };
+
+  // Recommendation
+  if (result.libraries.gsap.present && result.libraries.gsap.plugins.ScrollTrigger) {
+    result.recommendation = 'GSAP + ScrollTrigger — target MUST use GSAP. Substituting is FAIL.';
+  } else if (result.libraries.gsap.present) {
+    result.recommendation = 'GSAP (sin ScrollTrigger) — target debe usar GSAP.';
+  } else if (lenisDetected) {
+    result.recommendation = 'Lenis smooth scroll — target debe usar Lenis o equivalent scroll behavior.';
+  } else if (result.cssPatterns.hasScrollTimeline) {
+    result.recommendation = 'CSS Scroll-driven animations — replicar con CSS nativo, NO con JS.';
+  } else if (result.cssPatterns.hasScrollDrivenVars) {
+    result.recommendation = 'JS scroll listener actualizando CSS vars — replicar con hook nativo.';
+  } else {
+    result.recommendation = 'Native JS + CSS — replicar con IO + CSS transitions nativas.';
+  }
+
+  return result;
+})();
+```
+
+### SCRIPT 19: recordScrollBehavior() — BLOQUEANTE
+
+```javascript
+// Output: docs/pds/extraction/scroll-behavior-<page>.json
+// Ejecutar en MCP-REF (source) Y MCP-TARGET (target) por separado
+// Usar clave ESTRUCTURAL (section[N], video[N]) — NUNCA CSS class name
+(async function recordScrollBehavior() {
+  const meta = { version:'6.0', url:location.href, timestamp:Date.now(), viewport:`${window.innerWidth}x${window.innerHeight}`, userAgent:navigator.userAgent };
+  const result = { _metadata: meta, positions: [] };
+  const totalScrollable = document.body.scrollHeight - window.innerHeight;
+
+  for (let i = 0; i <= 20; i++) {
+    const pct = i * 5;
+    window.scrollTo({ top: totalScrollable * (pct / 100), behavior: 'instant' });
+    await new Promise(r => setTimeout(r, 300));
+    const snapshot = { scrollPercent: pct, scrollY: Math.round(window.scrollY), elements: {} };
+
+    // Secciones por índice estructural
+    document.querySelectorAll('section, [data-section], main > div, main > article').forEach((el, idx) => {
+      const cs = getComputedStyle(el);
+      const rect = el.getBoundingClientRect();
+      snapshot.elements[`section[${idx}]`] = {
+        visible: rect.height > 0 && rect.bottom > 0 && rect.top < window.innerHeight,
+        rect: { top: Math.round(rect.top), height: Math.round(rect.height) },
+        backgroundColor: cs.backgroundColor,
+        opacity: cs.opacity,
+        transform: cs.transform,
+        position: cs.position
+      };
+    });
+
+    // Videos por índice estructural
+    document.querySelectorAll('video').forEach((v, idx) => {
+      snapshot.elements[`video[${idx}]`] = {
+        currentTime: v.currentTime, paused: v.paused, duration: v.duration,
+        rect: (() => { const r = v.getBoundingClientRect(); return { top: Math.round(r.top), height: Math.round(r.height) }; })()
+      };
+    });
+
+    // Nav
+    const nav = document.querySelector('nav, header');
+    if (nav) {
+      const cs = getComputedStyle(nav);
+      snapshot.elements['nav[0]'] = {
+        position: cs.position, backgroundColor: cs.backgroundColor,
+        backdropFilter: cs.backdropFilter, transform: cs.transform, opacity: cs.opacity
+      };
+    }
+
+    result.positions.push(snapshot);
+  }
+
+  window.scrollTo({ top: 0, behavior: 'instant' });
+  return result;
+})();
+```
+
+### SCRIPT para compareScrollBehavior() (ejecutar post-reconstrucción)
+
+```javascript
+// Pasar sourceData y targetData (los JSONs de recordScrollBehavior de source y target)
+function compareScrollBehavior(sourceData, targetData) {
+  const result = { passCount: 0, failCount: 0, passRate: 0, diffs: [] };
+  const props = ['backgroundColor', 'opacity', 'transform', 'position'];
+
+  sourceData.positions.forEach((srcPos, posIdx) => {
+    const tgtPos = targetData.positions[posIdx];
+    if (!tgtPos) { result.diffs.push({ pos: srcPos.scrollPercent, type: 'POSITION_MISSING' }); result.failCount++; return; }
+
+    Object.keys(srcPos.elements).forEach(key => {
+      const srcEl = srcPos.elements[key];
+      const tgtEl = tgtPos.elements[key];
+      if (!tgtEl) { result.diffs.push({ pos: srcPos.scrollPercent, key, type: 'ELEMENT_MISSING' }); result.failCount++; return; }
+
+      props.forEach(prop => {
+        const s = srcEl[prop], t = tgtEl[prop];
+        if (s && t && s !== t) {
+          result.diffs.push({ pos: srcPos.scrollPercent, key, prop, source: s, target: t, type: prop.toUpperCase() + '_MISMATCH' });
+          result.failCount++;
+        } else if (s === t) { result.passCount++; }
+      });
+    });
+  });
+
+  const total = result.passCount + result.failCount;
+  result.passRate = total > 0 ? Math.round((result.passCount / total) * 100) : 0;
+  result.pass = result.passRate >= 95;
+  return result;
+}
+```
+
+### SCRIPT 23: extractSectionInventory() — BLOQUEANTE
+
+```javascript
+// Output: docs/pds/extraction/section-inventory-<page>.json
+(function extractSectionInventory() {
+  const meta = { version:'6.0', url:location.href, timestamp:Date.now(), viewport:`${window.innerWidth}x${window.innerHeight}`, userAgent:navigator.userAgent };
+  const result = { _metadata: meta, totalSections: 0, sections: [] };
+  const totalPageHeight = document.body.scrollHeight;
+
+  document.querySelectorAll('section, [data-section], main > div[class], main > article[class]').forEach((el, idx) => {
+    const cs = getComputedStyle(el);
+    const rect = el.getBoundingClientRect();
+    result.sections.push({
+      index: idx, tag: el.tagName.toLowerCase(),
+      heightPx: Math.round(rect.height),
+      heightRatio: (rect.height / totalPageHeight).toFixed(3),
+      backgroundColor: cs.backgroundColor,
+      backgroundImage: cs.backgroundImage.substring(0, 150),
+      display: cs.display,
+      layoutType: cs.display.includes('grid') ? 'grid' : cs.display.includes('flex') ? 'flex' : 'block',
+      gridTemplateColumns: cs.gridTemplateColumns,
+      position: cs.position,
+      hasVideo: !!el.querySelector('video'),
+      hasCanvas: !!el.querySelector('canvas'),
+      hasIframe: !!el.querySelector('iframe'),
+      childCount: el.children.length
+    });
+  });
+
+  result.totalSections = result.sections.length;
+  return result;
+})();
+```
+
+### SCRIPT 13: extractDeepVisualFingerprint() — SIN LÍMITE DE ELEMENTOS
+
+```javascript
+// Output: docs/pds/extraction/visual-fingerprint-<page>.json
+// ADVERTENCIA: output puede ser muy grande. Usar con scroll position 0.
+(function extractDeepVisualFingerprint() {
+  const meta = { version:'6.0', url:location.href, timestamp:Date.now(), viewport:`${window.innerWidth}x${window.innerHeight}`, userAgent:navigator.userAgent };
+  const result = { _metadata: meta, elements: [] };
+
+  Array.from(document.querySelectorAll('*')).filter(el => {
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0;
+  }).forEach(el => {
+    const cs = getComputedStyle(el);
+    const rect = el.getBoundingClientRect();
+    result.elements.push({
+      tag: el.tagName.toLowerCase(), id: el.id || null,
+      rect: { x:Math.round(rect.x), y:Math.round(rect.y), w:Math.round(rect.width), h:Math.round(rect.height) },
+      styles: {
+        color:cs.color, backgroundColor:cs.backgroundColor,
+        fontFamily:cs.fontFamily, fontSize:cs.fontSize, fontWeight:cs.fontWeight,
+        lineHeight:cs.lineHeight, letterSpacing:cs.letterSpacing,
+        fontVariationSettings:cs.fontVariationSettings,
+        padding:cs.padding, margin:cs.margin, gap:cs.gap,
+        display:cs.display, gridTemplateColumns:cs.gridTemplateColumns, flexDirection:cs.flexDirection,
+        position:cs.position, zIndex:cs.zIndex,
+        transform:cs.transform, opacity:cs.opacity,
+        borderRadius:cs.borderRadius, boxShadow:cs.boxShadow,
+        filter:cs.filter, backdropFilter:cs.backdropFilter,
+        transition:cs.transition, animation:cs.animation,
+        clipPath:cs.clipPath, mixBlendMode:cs.mixBlendMode,
+        maxWidth:cs.maxWidth, overflow:cs.overflow,
+        textDecoration:cs.textDecoration,
+        webkitTextStroke:cs.webkitTextStroke,
+        touchAction:cs.touchAction, userSelect:cs.userSelect,
+        containerType:cs.containerType, colorScheme:cs.colorScheme
+      }
+    });
+  });
+
+  return result;
+})();
+```
+
+### SCRIPT 4: extractAnimationSystem()
+
+```javascript
+// Output: docs/pds/extraction/animations.json
+(function extractAnimationSystem() {
+  const meta = { version:'6.0', url:location.href, timestamp:Date.now(), viewport:`${window.innerWidth}x${window.innerHeight}`, userAgent:navigator.userAgent };
+  const result = { _metadata: meta, gsap:null, lenis:null, cssKeyframes:{}, cssTransitions:[], cssScrollDriven:[], videoScrub:[], intersectionObservers:[] };
+  const allRules = Array.from(document.styleSheets).flatMap(s => { try { return Array.from(s.cssRules||[]); } catch { return []; } });
+
+  // GSAP detail
+  if (window.gsap) {
+    result.gsap = {
+      version: gsap.version,
+      scrollTriggers: window.ScrollTrigger ? ScrollTrigger.getAll().map(st => ({
+        trigger: st.trigger?.tagName + (st.trigger?.className ? '.'+st.trigger.className.split(' ')[0] : ''),
+        start: st.vars.start, end: st.vars.end, scrub: st.vars.scrub, pin: !!st.vars.pin,
+        toggleActions: st.vars.toggleActions, markers: st.vars.markers
+      })) : [],
+      matchMedia: window.gsap.matchMedia ? true : false
+    };
+  }
+
+  // Lenis
+  if (window.__lenis) {
+    result.lenis = { duration: window.__lenis.duration, easing: window.__lenis.easing?.toString().slice(0,100), lerp: window.__lenis.lerp };
+  }
+
+  // CSS keyframes + transitions
+  allRules.forEach(rule => {
+    if (rule.type === CSSRule.KEYFRAMES_RULE) {
+      const frames = {};
+      Array.from(rule.cssRules).forEach(kf => { frames[kf.keyText] = kf.cssText; });
+      result.cssKeyframes[rule.name] = frames;
+    }
+    if (rule.style?.transition && rule.style.transition !== 'none 0s ease 0s') {
+      result.cssTransitions.push({ selector: rule.selectorText, transition: rule.style.transition });
+    }
+    if (rule.cssText?.includes('animation-timeline') || rule.cssText?.includes('scroll-timeline')) {
+      result.cssScrollDriven.push({ selector: rule.selectorText, rule: rule.cssText.slice(0,400) });
+    }
+  });
+
+  // Video scrub
+  document.querySelectorAll('video').forEach((v, idx) => {
+    const rect = v.getBoundingClientRect();
+    result.videoScrub.push({
+      index: idx, src: v.src || v.currentSrc,
+      coversViewport: rect.width >= window.innerWidth * 0.8,
+      autoplay: v.autoplay, loop: v.loop, muted: v.muted, duration: v.duration
+    });
+  });
+
+  return result;
+})();
+```
+
+### Scripts restantes (16 sin código embebido — ejecutar igualmente)
+
+| # | Script | Output |
+|---|---|---|
+| 2 | `fetchCrossOriginCSS()` | `cross-origin-css.json` |
+| 3 | `extractShadowStyles()` | `shadow-styles.json` |
+| 5 | `captureIntersectionObserverConfigs()` | dentro de `animations.json` |
+| 6 | `extractLottieRiveSpline()` | `lottie-rive-spline.json` |
+| 7 | `extractScrollScrubTrace()` | `scroll-scrub-trace-<page>.json` |
+| 8 | `extractDOMStructure()` | `structure.json` |
+| 9 | `extractInteractions()` | `interactions.json` |
+| 10 | `extractAssets()` | `assets.json` |
+| 11 | `extractThreeJSScene()` | `three-scene.json` |
+| 12 | `extractDarkMode()` | `dark-mode.json` |
+| 14 | `extractAdvancedPatterns()` | `advanced-patterns.json` |
+| 15 | `extractFullCSSRules()` | `css-rules.json` |
+| 16 | `extractScrollSnapshot()` | `scroll-snapshots-<page>.json` |
+| 17 | `extractAccessibility()` | `accessibility.json` |
+| 18 | Scroll narrative textual | `scroll-narrative-<page>.md` |
+| 21 | `extractElementStyleMap()` | `element-style-map-<page>.json` |
+| 22 | `extractNetworkProfile()` | `network-profile.json` |
+
+Todos los JSONs incluyen `_metadata: { version, url, timestamp, viewport, userAgent }`.
+
+**Deliverable BLOQUEANTE de FASE 1**: `ANIMATION_MANIFEST.md` con cada animación/efecto del source, tipo, valores numéricos.
+
+---
+
+## 13. POST FASE 1 — ds-section-mapping.json + Declaración de Fidelidad
+
+### 13.1 ds-section-mapping.json
+
+Cruzar datos de `section-inventory-<page>.json` + `animation-implementation.json` con `ds-component-map.json`:
+
+```json
+{
+  "_metadata": { "version": "6.0", "timestamp": "...", "sourceUrl": "..." },
+  "sections": {
+    "SectionHeroMedia": {
+      "sourceFeatures": ["full-viewport video", "GSAP ScrollTrigger scrub", "16-col grid"],
+      "dsMapping": "NUEVO src/components/sections/HeroSection.tsx — CVA: theme, height",
+      "dsTokensToAdd": ["--color-pds-dark-blue: #1c3f99", "--pds-base-padding: 4rem"],
+      "dsComponentsReused": [],
+      "dsAnimationStrategy": "GSAP ScrollTrigger — detectado en source. DS NO tiene gsap instalado → PROPUESTA: instalar gsap",
+      "fidelityRisk": "HIGH — video scrub imposible sin GSAP o RAF nativo",
+      "gapSolution": "Instalar gsap (preguntar usuario) o RAF nativo como fallback"
+    }
+  },
+  "overallFidelityEstimate": { "visual": "XX%", "behavioral": "XX%", "gaps": [] }
+}
+```
+
+### 13.2 Declaración de fidelidad OBLIGATORIA (antes de FASE 3)
+
+```
+FIDELIDAD ESTIMADA — <page>:
+- Visual: XX% (razón si < 95%: ...)
+- Behavioral (animaciones, scroll, hover): XX% (razón si < 90%: ...)
+- Gaps declarados:
+  1. [gap] — propuesta: [solución]
+  2. ...
+STATUS: APROBADO / REQUIERE DECISIÓN DEL USUARIO
+```
+
+Si visual < 95% o behavioral < 90%: STOP + esperar decisión antes de FASE 3.
 
 ---
 
 ## 14. FASE 2 — ANÁLISIS DEL TARGET
 
 - Build baseline (`next build`) antes de tocar nada.
-- Extracción de strings de texto del target (grep de h1-h6, p, span, button, label, alt, title, meta, og:*).
-- Detección de arquitectura: monorepo, i18n, Tailwind v3/v4, UI library, Next.js App/Pages Router.
-- Verificar qué animation libs tiene el DS vs qué usa el source (`detectAnimationImplementation()` output).
-- Solo instalar nuevas dependencias si: (a) source las usa, (b) DS no las tiene, (c) usuario aprueba explícitamente.
-- Detección y renombramiento de font names del source brand.
-- `target-architecture.json` obligatorio antes de FASE 3.
+- Extracción de strings de texto del target.
+- Detección de arquitectura: monorepo, i18n, Tailwind v3/v4, UI library.
+- Verificar libs DS vs libs source (`animation-implementation.json`). Solo instalar si source las usa Y usuario aprueba.
+- Renombrar font names del source brand.
+- `target-architecture.json` obligatorio.
 
 ---
 
 ## 15. FASE 3 — RECONSTRUCCIÓN DS-FIRST
 
-Orden: tokens → tailwind → fonts → animation libs (solo si source las usa Y DS no las tiene Y usuario aprueba) → navbar → footer → páginas → compartidos.
+Orden: tokens → tailwind → fonts → animation libs → navbar → footer → páginas → compartidos.
 
-### 15.1 Paso 1 — Extender el token system del DS
+### 15.1 Tokens en globals.css
 
-Todos los tokens del source que no existen en el DS: añadir en `globals.css` con prefijo `pds-` dentro del bloque `@theme inline` existente.
-
-Keyframes del source: añadir en `globals.css` con prefijo `pds-`, copiando valores EXACTOS:
 ```css
-/* globals.css */
-@keyframes pds-fade-in {
-  /* valores EXACTOS de raw-extraction.allCSS — no inventar */
-}
-@keyframes pds-translate-out-in-x {
-  /* valores EXACTOS del source */
-}
-```
+/* globals.css — DENTRO del bloque @theme inline existente */
+@theme inline {
+  /* ... tokens DS existentes ... */
 
-### 15.2 Paso 2 — Mapear secciones a componentes DS (consultar ds-section-mapping.json)
-
-**A) Reutilizar componente DS existente** (cuando sea equivalente):
-```tsx
-// Botón CTA del source → usar Button existente con variante extendida
-<Button variant="pds-cta" size="lg">Learn More</Button>
-```
-
-**B) Extender variante CVA existente**:
-```tsx
-// button.tsx — añadir variante pds-cta al CVA existente
-const buttonVariants = cva("...", {
-  variants: {
-    variant: {
-      // ... variantes existentes ...
-      "pds-cta": [
-        "bg-pds-orange text-pds-white",
-        "transition-all duration-200",
-        "ease-[var(--pds-ease-out-cubic)]",
-        "hover:opacity-90"
-      ].join(" "),
-    }
-  }
-})
-```
-
-**C) Crear nuevo componente DS-first** (para secciones sin equivalente):
-```tsx
-// src/components/sections/HeroSection.tsx
-'use client'
-import { cn } from "@/lib/utils"
-import { cva, type VariantProps } from "class-variance-authority"
-
-const heroVariants = cva(
-  "relative flex items-center justify-center w-full overflow-hidden",
-  {
-    variants: {
-      theme: { dark: "bg-pds-dark-blue text-pds-white", light: "bg-pds-white text-pds-black" },
-      height: { full: "h-dvh", auto: "h-auto min-h-dvh" }
-    },
-    defaultVariants: { theme: "dark", height: "full" }
-  }
-)
-
-interface HeroSectionProps extends VariantProps<typeof heroVariants> {
-  className?: string
-  children: React.ReactNode
+  /* tokens source (prefijo pds-) — valores EXACTOS de design-tokens.json */
+  --color-pds-white: #f5f4df;
+  --color-pds-black: #0e1620;
+  --color-pds-blue: #007ae5;
+  --color-pds-dark-blue: #1c3f99;
+  --color-pds-orange: #eb6110;
+  --pds-ease-out-cubic: cubic-bezier(0.33, 1, 0.68, 1);
+  --pds-ease-power4-inout: cubic-bezier(0.77, 0, 0.175, 1);
+  --pds-ease-snappy: cubic-bezier(0.6, 0.6, 0, 1);
+  --pds-base-padding: 4rem;
+  --pds-gutter-width: 1.6rem;
 }
 
-export function HeroSection({ theme, height, className, children }: HeroSectionProps) {
-  return (
-    <section className={cn(heroVariants({ theme, height }), className)}>
-      {children}
-    </section>
-  )
-}
+/* Keyframes source — DESPUÉS del @theme block, con prefijo pds- */
+@keyframes pds-fade-in { /* valores EXACTOS de cssKeyframes en animations.json */ }
+@keyframes pds-translate-out-in-x { /* valores EXACTOS */ }
 ```
 
-### 15.3 Paso 3 — Animaciones: fidelidad de comportamiento
+### 15.2 Animaciones — fidelidad de comportamiento
 
-**Regla cardinal**: usar lo mismo que el source. `detectAnimationImplementation()` manda. Nunca implementar silenciosamente una alternativa inferior.
-
-**CSS Transitions nativas** (source usa CSS transitions):
-```tsx
-// Usar Tailwind utilities con token pds- para timing exacto
-<a className="transition-opacity duration-200 ease-[var(--pds-ease-out-cubic)] hover:opacity-70">
-```
-
-**CSS Keyframes** (source usa @keyframes):
-```tsx
-// Los keyframes están en globals.css como pds-fade-in etc.
-<div className="animate-[pds-fade-in_0.4s_var(--pds-ease-out-cubic)_forwards]">
-```
-
-**CSS Scroll-driven animations** (source usa `animation-timeline: scroll()`):
-```css
-/* Copiar LITERALMENTE en globals.css — nunca reemplazar por JS */
-@property --pds-progress {
-  syntax: '<number>';
-  inherits: true;
-  initial-value: 0;
-}
-.pds-hero-scroll-driven {
-  animation: pds-progress-anim linear;
-  animation-timeline: scroll();
-  animation-range: 0% 100%;
-}
-```
-
-**Scroll JS listener** (source usa JS para actualizar CSS custom properties):
+**Scroll JS listener → hook nativo** (cuando source usa JS para actualizar CSS vars):
 ```typescript
 // src/hooks/usePdsScrollProgress.ts
 'use client'
 import { useEffect, type RefObject } from 'react'
-
 export function usePdsScrollProgress(ref: RefObject<HTMLElement>) {
   useEffect(() => {
-    const el = ref.current
-    if (!el) return
+    const el = ref.current; if (!el) return
     const onScroll = () => {
       const rect = el.getBoundingClientRect()
-      // Replicar EXACTAMENTE la fórmula del source (de raw-extraction.allCSS / jsBehaviors)
+      // Fórmula EXACTA del source (de jsBehaviors en raw-extraction.json)
       const progress = Math.max(0, Math.min(1, -rect.top / (rect.height - window.innerHeight)))
       el.style.setProperty('--progress', String(progress))
-      // Replicar TODAS las CSS custom vars que el source actualiza en este listener
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
@@ -686,336 +846,273 @@ export function usePdsScrollProgress(ref: RefObject<HTMLElement>) {
 }
 ```
 
-**GSAP ScrollTrigger** (source usa GSAP, DS lo tiene instalado):
+**CSS scroll-driven** (cuando source usa `animation-timeline: scroll()`):
+```css
+/* Copiar LITERAL en globals.css — nunca reemplazar por JS */
+.pds-section-scroll-driven {
+  animation: pds-scroll-anim linear;
+  animation-timeline: scroll();
+  animation-range: 0% 100%;
+}
+```
+
+**GSAP ScrollTrigger** (cuando DS lo tiene instalado):
 ```typescript
-// src/hooks/usePdsGSAP.ts — patrón DS con valores EXACTOS del source
 'use client'
 import { useGSAP } from '@gsap/react'
-import gsap from 'gsap'
-import ScrollTrigger from 'gsap/ScrollTrigger'
-
+import gsap from 'gsap'; import ScrollTrigger from 'gsap/ScrollTrigger'
 gsap.registerPlugin(ScrollTrigger)
-
-export function usePdsHeroScrub(containerRef: RefObject<HTMLElement>, videoRef: RefObject<HTMLVideoElement>) {
+export function usePdsVideoScrub(containerRef: RefObject<HTMLElement>, videoRef: RefObject<HTMLVideoElement>) {
   useGSAP(() => {
     if (!containerRef.current || !videoRef.current) return
-    // Valores EXACTOS de animations.json / scroll-scrub-trace.json
     ScrollTrigger.create({
-      trigger: containerRef.current,
-      start: 'top top',
-      end: 'bottom bottom',
-      scrub: true,
-      onUpdate: (self) => {
-        if (videoRef.current) videoRef.current.currentTime = self.progress * videoRef.current.duration
-      }
+      trigger: containerRef.current, start: 'top top', end: 'bottom bottom', scrub: true,
+      // valores EXACTOS de scrollTriggerDetails en animation-implementation.json
+      onUpdate: (self) => { if (videoRef.current) videoRef.current.currentTime = self.progress * (videoRef.current.duration || 0) }
     })
   }, { scope: containerRef })
 }
 ```
 
-**GSAP ScrollTrigger** (source usa GSAP, DS NO lo tiene):
-→ STOP. Declarar en KEY-MAPPINGS. Proponer al usuario: instalar gsap (recomendado) o implementar RAF nativo (degradado con fidelidad menor). NUNCA instalar sin aprobación.
+**GSAP ScrollTrigger** (cuando DS NO lo tiene): → STOP. Declarar gap. Esperar aprobación.
 
-**IntersectionObserver** (source usa IO nativo):
+**Botones / hover states** (valores EXACTOS de css-rules.json):
+```tsx
+// Extender buttonVariants con variante pds-cta
+"pds-cta": [
+  "bg-pds-orange text-pds-white",
+  "transition-[color,background-color,opacity]",
+  "duration-[200ms]",
+  "ease-[var(--pds-ease-out-cubic)]",
+  "hover:opacity-90"
+].join(" "),
+```
+
+**IntersectionObserver** (valores EXACTOS de captureIntersectionObserverConfigs):
 ```typescript
-// Replicar threshold y rootMargin EXACTOS de captureIntersectionObserverConfigs()
 const observer = new IntersectionObserver(callback, {
-  threshold: [0.1],       // valor EXACTO del source
-  rootMargin: '0px 0px -100px 0px'  // valor EXACTO del source
+  threshold: [0.1], // EXACTO del source
+  rootMargin: '0px 0px -100px 0px' // EXACTO del source
 })
 ```
 
-**font-variation-settings** (source usa variable fonts):
-```tsx
-// Usar Tailwind o style prop con valor EXACTO del source
-<h1 className="font-[family-name:var(--font-pds-display)]"
-    style={{ fontVariationSettings: '"wght" 550' }}>
-```
+### 15.3 Assets — HOTLINK obligatorio
 
-**`@starting-style`** (source usa CSS @starting-style):
-```css
-/* Copiar en globals.css — nunca sustituir por JS */
-@starting-style {
-  .pds-element-reveal {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-}
-```
-
-### 15.4 Paso 4 — Assets (HOTLINK obligatorio)
-
-Por defecto: HOTLINK con URL original del source (`<img src="https://source.com/assets/hero.jpg" />`).
-CORS bloqueado: descargar a `public/pds-source-assets/<path>` y servir desde ahí.
-Asset con branding incrustado: mantener hotlink + generar prompt IA en `docs/pds/assets-reemplazo-ia.md`.
+Por defecto: `<img src="https://source.com/assets/hero.jpg" />` (URL original del source).
+CORS: descargar a `public/pds-source-assets/`.
+Branding incrustado: hotlink + prompt IA en `docs/pds/assets-reemplazo-ia.md`.
 CERO assets del target como diseño.
 
-### 15.5 Loop INSPECT → BUILD → SWAP → VERIFY
+### 15.4 Loop por sección
 
-Por cada sección:
-1. **INSPECT**: leer JSON de extracción relevantes.
-2. **BUILD**: JSX + extend tokens en `globals.css`.
-3. **SWAP**: reemplazar strings visibles con texto del target.
-4. **BUILD verify**: `next build` → exit 0.
-5. **VERIFY**: dual MCP — `recordScrollBehavior()` + `compareScrollBehavior()` source vs target.
+1. INSPECT → leer JSONs de extracción
+2. BUILD → JSX + tokens en globals.css
+3. SWAP → reemplazar strings visibles con texto del target
+4. BUILD verify → `next build` exit 0
+5. VERIFY → `recordScrollBehavior()` source + target → `compareScrollBehavior()` passRate >= 95%
+
+### 15.5 Next.js App Router
+
+- `'use client'` si hay hooks / event handlers / browser APIs / animation libs
+- Dynamic imports (`ssr: false`) para GSAP, Lenis, Three.js, Lottie, Rive
+- `next/font` para todas las fuentes
+- `next/image` con `sizes` y `priority`
+- `suppressHydrationWarning` o `useIsClient` para prevenir hydration mismatch
 
 ### 15.6 Reglas de build
 
-- BUILD-1: archivo modificado → build inmediato.
-- BUILD-2: build falla → corregir antes de tocar otro archivo.
-- BUILD-3: 3 fallos consecutivos en mismo archivo → STOP + reporte.
-- BUILD-4: cero imports de chunks/hashes/`.next/server/`.
-- BUILD-5: PASS = exit 0, cero errores TS, cero warnings nuevos.
-
-### 15.7 Next.js App Router
-
-- `'use client'` obligatorio si hay: hooks, event handlers, animation libs, browser APIs.
-- Dynamic imports (`ssr: false`) para libs pesadas (GSAP, Lenis, Three.js, Lottie, Rive).
-- `next/font` para TODAS las fuentes.
-- `next/image` con `sizes` y `priority` correctos (igualar atributos del source).
-- `useIsClient()` o `suppressHydrationWarning` para prevenir hydration mismatch.
+- BUILD-1: archivo modificado → build inmediato
+- BUILD-2: falla → corregir antes de tocar otro
+- BUILD-3: 3 fallos consecutivos en mismo archivo → STOP + reporte
+- BUILD-4: cero imports de `.next/server/` o hashes
+- BUILD-5: exit 0, cero errores TS, cero warnings nuevos
 
 ---
 
-## 16. FASE 4 — VERIFICACIÓN QA (PÁGINA POR PÁGINA, GATE HUMANO)
+## 16. FASE 4 — QA PROGRAMÁTICA (GATE HUMANO ENTRE PÁGINAS)
 
 ### 16.1 Dual-MCP sync scroll
 
-Source y target simultáneamente. Scroll sincronizado: 0%, 5%, 10%... 100% (21 posiciones).
-En cada posición: `getBoundingClientRect` + `getComputedStyle` de todos los visibles.
-Delta > 0.5% en cualquier propiedad: STOP + corregir.
+```javascript
+// Ejecutar getComputedStyle comparativo en ambos MCPs
+// En cada posición: delta en color, fontSize, padding, transform, opacity
+// Si delta > 0.5%: STOP + corregir
+```
 
 ### 16.2 recordScrollBehavior + compareScrollBehavior
 
-Ejecutar en source Y target por página. Clave estructural (`section[N]`, `video[N]`), NO CSS class name.
-Reportar: `BG_MISMATCH`, `VIDEO_TIME`, `HEIGHT_RATIO`, `ELEMENT_MISSING`, `TRANSFORM_DELTA`, `OPACITY_DELTA`.
-`passRate >= 95%` obligatorio. `scroll-behavior-diff-<page>.json` generado.
+- Ejecutar Script 19 en source Y target
+- `compareScrollBehavior(sourceData, targetData)` → `passRate >= 95%`
+- Guardar `docs/pds/extraction/scroll-behavior-diff-<page>.json`
 
-### 16.3 Multi-viewport
+### 16.3 Interactions testing
 
-1920x1080, 768x1024, 375x812 — los tres con dual-MCP + 21 scroll positions + compare.
+```javascript
+// Por cada elemento interactivo en MCP-TARGET:
+element.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+await new Promise(r => setTimeout(r, 100));
+const afterHover = getComputedStyle(element);
+// Comparar con source hover state de css-rules.json
+```
 
-### 16.4 Interactions testing programático
+### 16.4 Motion trace
 
-Para cada elemento interactivo (nav, button, link, card, menu, tab, accordion, input):
-- Disparar `mouseover`, `mouseenter`, `focus`, `mousedown`, `click` via JS.
-- Capturar computed styles ANTES / DURANTE / DESPUÉS.
-- Comparar source vs target — delta 0 en propiedades discretas.
+DOWN (0→100%) + UP (100→0%) para cada `video`, `canvas`, `STICKY`, `PARALLAX`, `PIN`.
+Capturar `video.currentTime`, transforms, opacity. Delta ≤ 2%.
 
-### 16.5 Motion trace
+### 16.5 Verificaciones adicionales
 
-Para cada `VIDEO_SCRUB`, `CANVAS_SCROLL`, `STICKY_ELEMENT`, `PARALLAX_LAYER`, `PIN`:
-- DOWN (0→100%) + UP (100→0%).
-- Capturar `video.currentTime`, transform matrix, opacity, filter en cada frame.
-- Delta ≤ 2%.
-
-### 16.6 Verificaciones adicionales
-
-- Consola JS: CERO errores (incluye hydration mismatch).
-- Assets: 200 OK para todas las fuentes, imágenes, videos, iframes.
-- Stacking contexts verificados.
-- Accesibilidad: landmarks, ARIA, skip links, focus order, `prefers-reduced-motion`.
+- Consola JS: CERO errores (`mcp__chrome-devtools__list_console_messages`)
+- Assets: 200 OK (`mcp__chrome-devtools__list_network_requests`)
+- Stacking contexts, accesibilidad, `prefers-reduced-motion`
 
 ---
 
 ## 17. FASE 5 — RECORRIDO VISUAL FINAL (GATE HUMANO)
 
-Obligatorio antes de `MIGRATION_COMPLETE.md`:
-- 21 posiciones × 3 viewports por página.
-- Side-by-side source/target + diff numérico en cada posición.
-- Bucle de corrección inmediata si delta > 0.5%.
-- `diff-report.md` con toda anomalía detectada y su fix.
-- Gate de aprobación humana explícita.
+- 21 posiciones × 3 viewports por página
+- Side-by-side source/target + diff numérico
+- Bucle de corrección inmediata si delta > 0.5%
+- `diff-report.md`
+- Gate de aprobación humana explícita antes de `MIGRATION_COMPLETE.md`
 
 ---
 
-## 18. FASE 6 — ENTREGABLES FINALES
+## 18. FASE 6 — ENTREGABLES
 
 ```
 PAGE_MAPPING.md
 ANIMATION_MANIFEST.md
-docs/pds/extraction/ds-component-map.json           (FASE 0.5)
-docs/pds/extraction/ds-section-mapping.json         (FASE 0.5 post-extracción)
-docs/pds/extraction/raw-extraction-*.json           (FASE 0.6)
+docs/pds/extraction/ds-component-map.json
+docs/pds/extraction/ds-section-mapping.json
+docs/pds/extraction/raw-extraction-*.json
 docs/pds/extraction/design-tokens.json
 docs/pds/extraction/animations.json
+docs/pds/extraction/animation-implementation.json
+docs/pds/extraction/section-inventory-*.json
+docs/pds/extraction/visual-fingerprint-*.json
+docs/pds/extraction/scroll-behavior-*.json
+docs/pds/extraction/scroll-behavior-diff-*.json
 docs/pds/extraction/structure.json
 docs/pds/extraction/interactions.json
 docs/pds/extraction/assets.json
-docs/pds/extraction/dark-mode.json
-docs/pds/extraction/visual-fingerprint-*.json
-docs/pds/extraction/advanced-patterns.json
 docs/pds/extraction/css-rules.json
 docs/pds/extraction/cross-origin-css.json
-docs/pds/extraction/shadow-styles.json
-docs/pds/extraction/lottie-rive-spline.json
-docs/pds/extraction/accessibility.json
-docs/pds/extraction/scroll-snapshots-*.json
-docs/pds/extraction/scroll-scrub-trace-*.json
-docs/pds/extraction/scroll-narrative-*.md
-docs/pds/extraction/scroll-behavior-*.json
-docs/pds/extraction/scroll-diff-*.json
-docs/pds/extraction/animation-implementation.json
 docs/pds/extraction/element-style-map-*.json
 docs/pds/extraction/network-profile.json
-docs/pds/extraction/section-inventory-*.json
+docs/pds/extraction/scroll-scrub-trace-*.json
+docs/pds/extraction/scroll-snapshots-*.json
+docs/pds/extraction/scroll-narrative-*.md
+docs/pds/extraction/advanced-patterns.json
+docs/pds/extraction/accessibility.json
+docs/pds/extraction/dark-mode.json
 docs/pds/extraction/target-architecture.json
-docs/pds/modified-files.md
-docs/pds/assets-reemplazo-ia.md                    (solo assets con branding incrustado)
-docs/pds/assets-manual-download.md
-docs/pds/qa-evidence/
-docs/pds/qa-evidence/recorrido-final/
-docs/pds/qa-evidence/pixel-diff-summary.json
-docs/pds/qa-evidence/motion-down-up.json
+docs/pds/assets-reemplazo-ia.md
 docs/pds/diff-report.md
-MIGRATION_COMPLETE.md                              (solo si TODO PASS)
+docs/pds/qa-evidence/
+MIGRATION_COMPLETE.md   (solo si TODO PASS)
 ```
 
 ---
 
-## 19. PROMPTS IA PARA ASSETS CON BRANDING
+## 19. STOP CONDITIONS DEFINITIVAS
 
-Solo cuando un asset contiene branding del source incrustado. La migración inicial mantiene el asset source (hotlink/local). El prompt IA es entregable posterior.
+**DS-First:**
+- `ds-component-map.json` no generado → STOP
+- `ds-section-mapping.json` no generado antes de FASE 3 → STOP
+- Fidelidad estimada no declarada antes de FASE 3 → STOP
+- Fidelidad < 95% visual o < 90% behavioral sin aprobación → STOP
+- Class name del source copiado en JSX → STOP + refactorizar
+- Archivo `.css`/`.module.css` externo creado → STOP + migrar
+- Tokens fuera de `@theme inline` → STOP + mover
+- Componente nuevo sin `cn()` + CVA → STOP + refactorizar
+- KEY-MAPPINGS table ausente en respuesta con código → STOP + incluir
+- Lib instalada sin aprobación del usuario → STOP + desinstalar
 
-Estructura en `docs/pds/assets-reemplazo-ia.md`:
+**Extracción:**
+- Screenshot estático como única evidencia → STOP + ejecutar script en MCP
+- JSON de extracción inventado (sin output real de MCP) → STOP + re-ejecutar
+- `raw-extraction-<page>.json` incompleto → STOP
+- JSON sin `_metadata` → STOP
+- `detectAnimationImplementation()` no ejecutado → STOP (BLOQUEANTE FASE 3)
+- `recordScrollBehavior()` no ejecutado → STOP
+- `extractSectionInventory()` no ejecutado → STOP
+- `preExpandContent()` no ejecutado → STOP
+- Cross-origin CSS no extraída → STOP
+- `PAGE_MAPPING.md` inexistente → STOP
 
-```yaml
-- sourceUrl: <url original>
-  usedInRoute: <ruta>
-  visualRole: <hero bg / decorative / icon / texture / logo>
-  sourceDescription: <qué muestra literalmente>
-  targetBusinessConcept: <equivalente conceptual del target>
-  imagePrompt | videoPrompt: <prompt ultra-detallado>
-  negativePrompt: <qué NO debe aparecer>
-  aspectRatio: <w:h>
-  duration / fps / cameraMotion: <solo video>
-  mustMatchSourceStyle: color, lens, composition, crop, motion, lighting
-```
+**QA:**
+- `compareScrollBehavior()` passRate < 95% → STOP + corregir
+- Diferencia > 0.5% durante recorrido final → STOP + corregir
+- Consola JS con errores → STOP + corregir
+- Hydration mismatch → STOP + corregir
+- 3 builds fallidos en mismo archivo → STOP + reporte
+- Viewport faltante (3 obligatorios) → STOP
+- Gate humano no obtenido entre páginas → STOP
+- FASE 5 no completa antes de `MIGRATION_COMPLETE.md` → STOP
 
----
-
-## 20. STOP CONDITIONS
-
-- `ds-component-map.json` no generado → STOP (FASE 0.5 incompleta).
-- `raw-extraction-<page>.json` ausente o con menos de 7 campos → STOP.
-- `PAGE_MAPPING.md` inexistente al intentar código → STOP.
-- Fidelidad estimada < 95% visual o < 90% behavioral SIN aprobación del usuario → STOP.
-- Build sin resolver antes del siguiente archivo → STOP.
-- `ScrollTrigger.getAll()` vacío con animaciones visibles → STOP.
-- `VIDEO_SCRUB` en source y target usa `autoplay/loop` sin `currentTime` ligado a scroll → STOP.
-- Evidencia MCP programática ausente para ítem marcado ✅ → STOP.
-- 3 builds fallidos consecutivos en mismo archivo → STOP.
-- Diferencia > 0.5% durante recorrido final → STOP + corregir.
-- FASE 5 no completada antes de `MIGRATION_COMPLETE.md` → STOP.
-- Archivo backend modificado → STOP INMEDIATO.
-- `preExpandContent()` no ejecutado → STOP.
-- JSON de extracción sin `_metadata` → STOP.
-- Cross-origin stylesheets no extraídas via `fetchCrossOriginCSS()` → STOP.
-- Shadow DOM detectado y no extraído → STOP.
-- CSS scroll-timeline en source y target usa JS listener en vez de CSS nativo → STOP.
-- Hydration mismatch en consola → STOP.
-- Componente con hooks/event handlers sin `'use client'` → STOP.
-- `compareScrollBehavior()` con passRate < 95% → STOP.
-- Dual-MCP sync scroll no ejecutado → STOP.
-- Gate de aprobación humana no obtenida → STOP.
-- Viewport faltante (los tres son obligatorios) → STOP.
-- Checklist con ítem en ❌ o ⚠️ → STOP + declarar NO APROBADO.
-- Iframes/embeds del source ausentes en target → STOP.
-- Section inventory mismatch → STOP.
-- Background color de sección difiere del source → STOP.
-- Layout type mismatch (grid vs flex) → STOP.
-- `detectAnimationImplementation()` no ejecutado antes de FASE 3 → STOP.
-- `recordScrollBehavior()` no ejecutado para una página → STOP.
-- Target instala lib que source no usa → STOP + desinstalar.
-- `target-architecture.json` no generado antes de FASE 3 → STOP.
-- Font name de source brand en código target → STOP + renombrar.
-- Source usa `100dvh` y target usa `100vh` → STOP.
-- Source usa `@starting-style` y target lo sustituye por JS → STOP.
-- Source usa `-webkit-text-stroke` y target no lo replica → STOP.
-- `ScrollSmoother` + `Lenis` instalados simultáneamente → STOP.
-- Asset decorativo del target usado en vez del source → STOP.
-- Screenshot estático como única evidencia de animación/scroll → STOP.
-- Screenshot estático presentado como única evidencia → STOP + ejecutar extracción RAW.
-- **NUEVO v5.0**: Class name del source copiado literalmente en JSX (ej: `"Navigation-module__abc"`) → STOP + refactorizar a CVA.
-- **NUEVO v5.0**: Archivo `.css` o `.module.css` externo creado con clases del source → STOP + migrar a `globals.css` + Tailwind.
-- **NUEVO v5.0**: Librería de animación instalada sin aprobación explícita del usuario → STOP + desinstalar.
-- **NUEVO v5.0**: Tokens del source añadidos fuera del bloque `@theme inline` → STOP + mover.
-- **NUEVO v5.0**: Componente nuevo sin `cn()` + CVA cuando el source tiene variantes → STOP + refactorizar.
-- **NUEVO v5.0**: KEY-MAPPINGS table ausente en respuesta con código → incluir antes de continuar.
-- **NUEVO v5.0**: `ds-section-mapping.json` no generado antes de FASE 3 → STOP.
-- **NUEVO v5.0**: DS Gap Report no generado antes de FASE 3 → STOP.
-- **NUEVO v5.0**: Fidelidad estimada no declarada antes de iniciar reconstrucción → STOP.
+**Backend / estructura:**
+- Archivo backend modificado → STOP INMEDIATO
+- Section inventory mismatch → STOP
+- Layout type mismatch (grid vs flex) → STOP
+- Background color sección difiere → STOP
+- `@starting-style` source sustituido por JS → STOP
+- Source usa `100dvh` y target usa `100vh` → STOP
+- `-webkit-text-stroke` source no replicado → STOP
+- `ScrollSmoother` + `Lenis` simultáneamente → STOP
+- Iframes/embeds source ausentes en target → STOP
+- `detectAnimationImplementation()` ignorado (source usa GSAP, target no) → STOP
 
 ---
 
-## 21. CRITERIOS DE COMPLETITUD
+## 20. CRITERIOS DE COMPLETITUD
 
-### Visual (tolerancia cero)
-- FASE 5 con CERO diferencias > 0.5% en los 3 viewports.
-- 21 posiciones de scroll verificadas por página y viewport.
-- Computed styles idénticos (delta 0 en props discretas).
+### Visual
+- CERO diferencias > 0.5% en 3 viewports, 21 posiciones por página
 
-### Efectos y animaciones
-- `ANIMATION_MANIFEST.md` 100% verificado (grep -c "✅" == TOTAL).
-- VIDEO_SCRUB con `currentTime` ligado a scroll, NO autoplay/loop.
-- Hover/focus/active con deltas 0 vs source.
-- Lottie/Rive/Spline reproducción idéntica.
-- CSS scroll-timeline: source CSS → target CSS (nunca JS sustituto).
-- IntersectionObserver: threshold y rootMargin idénticos.
-- View Transitions: si source las usa, target también.
-- `prefers-reduced-motion` respetado.
-- Scroll-driven CSS variables (`--progress`, `--translate-y-*`) actualizadas con la misma lógica que el source.
+### DS-First
+- `ds-component-map.json` y `ds-section-mapping.json` usados en todas las decisiones
+- Cero class names del source en JSX
+- Todos los tokens en `@theme inline` con prefijo `pds-`
+- Todos los componentes nuevos: `cn()` + CVA + Tailwind
 
-### DS-First (nuevo en v5.0)
-- `ds-component-map.json` presente y usado en todas las decisiones de componentes.
-- `ds-section-mapping.json` presente con fidelidad estimada declarada.
-- Cero class names del source copiados literalmente en JSX.
-- Cero archivos CSS externos al DS.
-- Todos los tokens del source en `@theme inline` con prefijo `pds-`.
-- Todos los componentes nuevos usan `cn()` + CVA + Tailwind utilities.
-- DS components existentes reutilizados donde aplica.
-- Animaciones implementadas con la misma librería que el source (o gap declarado explícitamente y aprobado).
+### Animaciones
+- `ANIMATION_MANIFEST.md` 100% verificado
+- Video scrub: `currentTime` ligado a scroll
+- Hover/focus/active: deltas 0 vs source
+- Scroll-driven CSS vars: misma lógica que source
+- Librería de animación: misma que source (o gap declarado y aprobado)
+- `prefers-reduced-motion` respetado
 
 ### Técnico
-- Build PASS (exit 0, cero errores TS, cero warnings nuevos).
-- Consola JS: cero errores (cero hydration mismatch).
-- Assets source: 100% hotlinkeados o descargados (cero assets del target como diseño).
-- Texto target preservado. Backend intocable.
-- Dynamic imports para libs pesadas.
-- `'use client'` en todo componente con hooks/event handlers.
-- `next/font` para todas las fuentes.
-- Iframes/embeds replicados.
-- `container-type/name`, `env(safe-area-inset-*)`, `color-scheme` replicados si aplican.
-- Section inventory paridad exacta.
-- Cero componentes genéricos reutilizados para secciones source distintas.
+- Build PASS, cero errores TS, cero warnings
+- Consola JS: cero errores
+- Assets source: hotlinkeados o descargados (cero assets del target)
+- Backend intocable
 
 ---
 
-## 22. CÓMO USAR LA SKILL v5.0 — PASO A PASO
+## 21. CÓMO USAR — PASO A PASO
 
-1. Dev server del target en `http://localhost:3001`.
-2. Invocar: `/port-design-system-from-local-clone "<target-path>" "<source-url>"`
-3. **FASE 0**: Dual MCP + descubrimiento + `PAGE_MAPPING.md`.
-4. **FASE 0.5**: Análisis profundo del repo DS local → `ds-component-map.json` (herramientas de archivo, NO browser).
-5. **FASE 0.6**: RAW inspection del source → `raw-extraction-<page>.json`.
-6. **FASE 1**: 23 scripts de extracción → todos los JSONs con `_metadata`.
-7. **FASE 0.5b**: Crear `ds-section-mapping.json` (cruzar DS map con extracción source) + declarar fidelidad estimada.
-8. **FASE 2**: Build baseline + strings + arquitectura + `target-architecture.json`.
-9. **FASE 3**: Reconstrucción DS-first: tokens → tailwind → fonts → animation libs → navbar → footer → páginas.
-10. **FASE 4**: QA programática numérica — dual MCP + 21 scroll × 3 viewports — gate humano entre páginas.
-11. **FASE 5**: Recorrido visual final — gate humano.
-12. **FASE 6**: Entregables + `MIGRATION_COMPLETE.md` (solo si TODO PASS).
+1. Dev server del target en `http://localhost:3001`
+2. Chrome DevTools MCP conectado a un tab de Chrome
+3. Invocar: `/port-design-system-from-local-clone "<target>" "<source>" [scope]`
+4. **FASE 0**: Dual MCP + scope → PAGE_MAPPING.md
+5. **FASE 0.5**: Análisis DS local (Read/Glob/Grep) → ds-component-map.json
+6. **FASE 0.6**: preExpandContent() en MCP + script RAW → raw-extraction-<page>.json
+7. **FASE 1**: 23 scripts en MCP (código embebido arriba para los 7 críticos)
+8. **Post-FASE 1**: ds-section-mapping.json + declaración de fidelidad
+9. **FASE 2**: Build baseline + arquitectura + target-architecture.json
+10. **FASE 3**: tokens → tailwind → fonts → animation libs → navbar → footer → páginas
+11. **FASE 4**: QA dual MCP (21 scroll × 3 viewports) — gate humano entre páginas
+12. **FASE 5**: Recorrido visual final — gate humano
+13. **FASE 6**: Entregables → MIGRATION_COMPLETE.md
 
-En cada respuesta con código:
-- Mostrar CHECKLIST bloqueante.
-- Mostrar KEY-MAPPINGS table.
-- Declarar `STATUS: APROBADO` o `STATUS: NO APROBADO — razón: <descripción numérica>`.
+En cada respuesta con código: CHECKLIST + KEY-MAPPINGS + STATUS.
 
 ---
 
-## 23. MANTENIMIENTO
+## 22. MANTENIMIENTO
 
-Fuente de verdad: `.claude/skills/port-design-system-from-local-clone/SKILL.md`.
-Sync a todas las plataformas: `node scripts/sync-skills.mjs && bash scripts/sync-agent-rules.sh`.
-
-Fin de la skill v5.0.
+Fuente de verdad: `.claude/skills/port-design-system-from-local-clone/SKILL.md`
+Sync: `node scripts/sync-skills.mjs && bash scripts/sync-agent-rules.sh`

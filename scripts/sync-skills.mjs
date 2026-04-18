@@ -15,7 +15,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SKILL_NAME = 'port-design-system-from-local-clone';
 const STALE_NAMES = ['port-design'];
 const SHORT_DESC =
-  'CLON LITERAL PIXEL-PERFECT v5.0. DS-FIRST: before generating any code, exhaustively analyzes the design system repo (components, tokens, hooks, animation patterns) and creates a section→DS-component map. Uses EXCLUSIVELY existing DS components and tokens — never copies source class names. RAW extraction of fullHTML + allCSS + keyframes + scrollData + assets + JS behaviors. Programmatic numeric verification: getBoundingClientRect + getComputedStyle of ALL visible elements, 21 scroll positions, 3 viewports. Absolute honesty about fidelity gaps. Visual difference < 0.5% or FAIL.';
+  'CLON LITERAL PIXEL-PERFECT v6.0 FINAL. DS-FIRST + EMBEDDED SCRIPTS: analyzes DS repo before any code, then runs 23 RAW extraction scripts in MCP (actual JS code embedded — never invent output). Uses EXCLUSIVELY cn() + CVA + @theme inline tokens. Never screenshots as evidence. Flexible scope: single page, list, or full site. Mandatory numeric fidelity declaration. 7 critical scripts embedded verbatim. Visual difference < 0.5% or FAIL.';
 const ARGUMENT_HINT = '"<target-path>" "<source-url>"';
 const NO_ARGS_TEXT =
   'the target path and source URL provided by the user';
